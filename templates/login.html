@@ -22,6 +22,8 @@
             font-size: 18px;
             color: #555;
         }
+    
+
     </style>
     <script>
         function togglePassword() {
@@ -73,6 +75,12 @@
             </div>
 
             <button type="submit">Login</button>
+            <a
+                href="{{ url_for('change_password') }}"
+                class="change-password-link"
+            >
+                Change Password
+            </a>
 
         </form>
 

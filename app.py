@@ -57,7 +57,170 @@ def login():
 
     return render_template("login.html", message=message)
 
+@app.route("/change-password", methods=["GET", "POST"])
+def change_password():
 
+    message = ""
+    message_type = ""
+
+
+    if request.method == "POST":
+
+        username = request.form["username"].strip()
+
+        current_password = request.form["current_password"]
+
+        new_password = request.form["new_password"]
+
+        confirm_password = request.form["confirm_password"]
+
+
+        # ----------------------------------
+        # CHECK NEW PASSWORDS MATCH
+        # ----------------------------------
+
+        if new_password != confirm_password:
+
+            message = "New passwords do not match."
+            message_type = "error"
+
+            return render_template(
+                "change_password.html",
+                message=message,
+                message_type=message_type
+            )
+
+
+        # ----------------------------------
+        # PASSWORD LENGTH
+        # ----------------------------------
+
+        if len(new_password) < 8:
+
+            message = "New password must be at least 8 characters."
+            message_type = "error"
+
+            return render_template(
+                "change_password.html",
+                message=message,
+                message_type=message_type
+            )
+
+
+        cursor = conn.cursor()
+
+
+        # ----------------------------------
+        # FIND USER
+        # ----------------------------------
+
+        cursor.execute("""
+            SELECT
+                UserID,
+                PasswordHash
+
+            FROM Users
+
+            WHERE
+                Username = ?
+                AND IsActive = 1
+        """, (username,))
+
+        row = cursor.fetchone()
+
+
+        if not row:
+
+            message = "Invalid username or current password."
+            message_type = "error"
+
+            return render_template(
+                "change_password.html",
+                message=message,
+                message_type=message_type
+            )
+
+
+        user_id, stored_hash = row
+
+
+        # ----------------------------------
+        # VERIFY CURRENT PASSWORD
+        # ----------------------------------
+
+        if not bcrypt.checkpw(
+            current_password.encode("utf-8"),
+            stored_hash.encode("utf-8")
+        ):
+
+            message = "Invalid username or current password."
+            message_type = "error"
+
+            return render_template(
+                "change_password.html",
+                message=message,
+                message_type=message_type
+            )
+
+
+        # ----------------------------------
+        # DON'T ALLOW SAME PASSWORD
+        # ----------------------------------
+
+        if bcrypt.checkpw(
+            new_password.encode("utf-8"),
+            stored_hash.encode("utf-8")
+        ):
+
+            message = "New password must be different from your current password."
+            message_type = "error"
+
+            return render_template(
+                "change_password.html",
+                message=message,
+                message_type=message_type
+            )
+
+
+        # ----------------------------------
+        # HASH NEW PASSWORD
+        # ----------------------------------
+
+        new_hash = bcrypt.hashpw(
+            new_password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+
+        # ----------------------------------
+        # UPDATE DATABASE
+        # ----------------------------------
+
+        cursor.execute("""
+            UPDATE Users
+
+            SET PasswordHash = ?
+
+            WHERE UserID = ?
+        """, (
+            new_hash,
+            user_id
+        ))
+
+
+        conn.commit()
+
+
+        message = "Password changed successfully."
+        message_type = "success"
+
+
+    return render_template(
+        "change_password.html",
+        message=message,
+        message_type=message_type
+    )
+    
 @app.route("/my-pipelines")
 def my_pipelines():
     if "user_id" not in session:

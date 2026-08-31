@@ -95,3 +95,15 @@ button:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
+.change-password-link {
+    display: block;
+    margin-top: 15px;
+    text-align: center;
+    color: #930669;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.change-password-link:hover {
+    color: #2c011f;
+}
