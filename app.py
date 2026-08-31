@@ -220,7 +220,7 @@ def change_password():
         message=message,
         message_type=message_type
     )
-    
+
 @app.route("/my-pipelines")
 def my_pipelines():
     if "user_id" not in session:
@@ -931,6 +931,7 @@ def regional_manager_dashboard():
             WHERE u.IsActive = 1
         )
 
+
         SELECT
             th.TeamLeadID,
             th.TeamLeadName,
@@ -940,7 +941,7 @@ def regional_manager_dashboard():
 
         LEFT JOIN Pipelines p
             ON p.[Account Manager] =
-               (th.FirstName + ' ' + th.LastName)
+            (th.FirstName + ' ' + th.LastName)
 
         GROUP BY
             th.TeamLeadID,
@@ -954,47 +955,16 @@ def regional_manager_dashboard():
     team_names = []
     team_revenues = []
 
+
     for row in cursor.fetchall():
 
         team_names.append(row[1])
-        team_revenues.append(row[2] or 0)
 
-
-    # ========================================================
-    # RM'S OWN REVENUE
-    #
-    # Optional separate "My Pipelines" bar
-    # ========================================================
-
-    cursor.execute("""
-        SELECT
-            COALESCE(SUM(p.[Total Project Revenue]), 0)
-
-        FROM Pipelines p
-
-        INNER JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
-
-        WHERE u.UserID = ?
-    """, (regional_manager_id,))
-
-
-    rm_revenue = cursor.fetchone()[0] or 0
-
-
-    if rm_revenue != 0:
-
-        team_names.insert(
-            0,
-            "My Pipelines"
+        team_revenues.append(
+            row[2] or 0
         )
 
-        team_revenues.insert(
-            0,
-            rm_revenue
-        )
-
+ 
 
     # ========================================================
     # REGION PIPELINE STATUS
