@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Portal - Login</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+        .password-container input {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+        }
+        .toggle-eye {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #555;
+        }
+    </style>
+    <script>
+        function togglePassword() {
+            const pwdField = document.getElementById("password");
+            const eyeIcon = document.getElementById("eyeIcon");
+            if (pwdField.type === "password") {
+                pwdField.type = "text";
+                eyeIcon.textContent = "🙈"; // change icon when visible
+            } else {
+                pwdField.type = "password";
+                eyeIcon.textContent = "👁️"; // change icon when hidden
+            }
+        }
+    </script>
+</head>
+
+<body>
+
+    <div class="login-container">
+
+        <img src="{{ url_for('static', filename='jazz-world-logo.png') }}" 
+             alt="Company Logo" class="logo">
+
+        <h1>Sales Portal</h1>
+
+        {% if message %}
+            <p style="color:red; text-align:center;">{{ message }}</p>
+        {% endif %}
+
+        <form method="POST">
+
+            <label for="username">Username</label>
+            <input
+                type="text"
+                id="username"
+                name="username"
+                required
+            >
+
+            <label for="password">Password</label>
+            <div class="password-container">
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                >
+                <span id="eyeIcon" class="toggle-eye" onclick="togglePassword()">👁️</span>
+            </div>
+
+            <button type="submit">Login</button>
+
+        </form>
+
+    </div>
+
+</body>
+</html>

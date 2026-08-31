@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html>
+<head>
+
+    <title>Add Pipeline</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            background: linear-gradient(
+                to bottom,
+                #c62828,
+                #4b0082
+            );
+
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .topbar {
+            min-height: 100px;
+            padding: 15px 35px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background: rgba(0, 0, 0, 0.25);
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+            box-sizing: border-box;
+        }
+
+        .logo {
+            width: 160px;
+            height: auto;
+            max-height: 75px;
+            object-fit: contain;
+        }
+
+        .user-info {
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+
+        .container {
+            max-width: 1100px;
+            margin: 40px auto;
+            padding: 0 25px;
+        }
+
+        .page-title {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .page-subtitle {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+
+        /* =========================
+           FORM CARD
+        ========================= */
+
+        .form-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+
+            border-radius: 10px;
+
+            padding: 30px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+
+        /* =========================
+           FORM GRID
+        ========================= */
+
+        .form-grid {
+            display: grid;
+
+            grid-template-columns: 1fr 1fr;
+
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .full-width {
+            grid-column: span 2;
+        }
+
+
+        /* =========================
+           LABELS
+        ========================= */
+
+        label {
+            color: #dddddd;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            margin-bottom: 7px;
+        }
+
+
+        /* =========================
+           INPUTS
+        ========================= */
+
+        input,
+        select {
+
+            width: 100%;
+
+            background: #242424;
+
+            color: #ffffff;
+
+            border: 1px solid #414141;
+
+            border-radius: 5px;
+
+            padding: 10px;
+
+            font-size: 14px;
+
+            box-sizing: border-box;
+        }
+
+        input:focus,
+        select:focus {
+
+            outline: none;
+
+            border-color: #7b1fa2;
+
+            box-shadow: 0 0 0 2px rgba(123, 31, 162, 0.2);
+        }
+
+
+        /* =========================
+           BUTTONS
+        ========================= */
+
+        .form-buttons {
+
+            margin-top: 30px;
+
+            display: flex;
+
+            justify-content: flex-end;
+
+            gap: 12px;
+        }
+
+        .btn-cancel {
+
+            padding: 9px 18px;
+
+            background: #292929;
+
+            color: #dddddd;
+
+            border: 1px solid #444444;
+
+            border-radius: 5px;
+
+            text-decoration: none;
+
+            font-size: 13px;
+        }
+
+        .btn-cancel:hover {
+
+            background: #353535;
+
+            color: #ffffff;
+        }
+
+        .btn-save {
+
+            padding: 9px 20px;
+
+            background: linear-gradient(
+                to bottom,
+                rgba(229, 46, 46, 0.6),
+                #4b0082
+            );
+
+            color: #ffffff;
+
+            border: none;
+
+            border-radius: 5px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition: all 0.2s ease;
+        }
+
+        .btn-save:hover {
+
+            transform: scale(1.03);
+
+            box-shadow:
+                0 4px 12px rgba(0, 0, 0, 0.4);
+        }
+
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 768px) {
+
+            .topbar {
+                padding: 15px 20px;
+            }
+
+            .logo {
+                width: 120px;
+            }
+
+            .container {
+                margin-top: 25px;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .full-width {
+                grid-column: span 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+
+<!-- TOP BAR -->
+
+<div class="topbar">
+
+    <img
+        src="{{ url_for('static', filename='jazz-logo.png') }}"
+        alt="Company Logo"
+        class="logo"
+    >
+
+    <div class="user-info">
+        Logged in as <strong>{{ edo_name }}</strong>
+    </div>
+
+</div>
+
+
+<!-- MAIN CONTENT -->
+
+<div class="container">
+
+    <div class="page-title">
+        Add Pipeline
+    </div>
+
+    <div class="page-subtitle">
+        Enter the details for the new sales pipeline
+    </div>
+
+
+    <div class="form-card">
+
+        <form method="POST">
+
+            <div class="form-grid">
+
+
+                <!-- VERTICAL -->
+
+                <div class="form-group">
+
+                    <label for="vertical">
+                        Vertical
+                    </label>
+
+                    <select id="vertical" name="vertical" required>
+
+                        <option value="" disabled selected>
+                            Select Vertical
+                        </option>
+
+                        <option value="Commercial">
+                            Commercial
+                        </option>
+
+                        <option value="FinTech">
+                            FinTech
+                        </option>
+
+                        <option value="Healthcare">
+                            Healthcare
+                        </option>
+
+                        <option value="Manufacturing">
+                            Manufacturing
+                        </option>
+
+                        <option value="Telecom">
+                            Telecom
+                        </option>
+
+                        <option value="Others">
+                            Others
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- ACCOUNT NAME -->
+
+                <div class="form-group">
+
+                    <label for="account_name">
+                        Account Name
+                    </label>
+
+                    <input
+                        type="text"
+                        id="account_name"
+                        name="account_name"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- PRODUCT -->
+
+                <div class="form-group">
+
+                    <label for="product">
+                        Product
+                    </label>
+
+                    <input
+                        type="text"
+                        id="product"
+                        name="product"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- REGION -->
+
+                <div class="form-group">
+
+                    <label for="region">
+                        Region
+                    </label>
+
+                    <select id="region" name="region" required>
+
+                        <option value="" disabled selected>
+                            Select Region
+                        </option>
+
+                        <option value="Central">
+                            Central
+                        </option>
+
+                        <option value="CVM">
+                            CVM
+                        </option>
+
+                        <option value="North">
+                            North
+                        </option>
+
+                        <option value="South">
+                            South
+                        </option>
+
+                        <option value="Others">
+                            Others
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- MRC -->
+
+                <div class="form-group">
+
+                    <label for="mrc">
+                        MRC
+                    </label>
+
+                    <input
+                        type="number"
+                        id="mrc"
+                        name="mrc"
+                        step="0.01"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- CONTRACT DURATION -->
+
+                <div class="form-group">
+
+                    <label for="contract_duration">
+                        Contract Duration (Months)
+                    </label>
+
+                    <input
+                        type="number"
+                        id="contract_duration"
+                        name="contract_duration"
+                        step="0.01"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- ARR -->
+
+                <div class="form-group">
+
+                    <label for="arr">
+                        ARR
+                    </label>
+
+                    <input
+                        type="number"
+                        id="arr"
+                        name="arr"
+                        step="0.01"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- PROJECT OTC -->
+
+                <div class="form-group">
+
+                    <label for="project_otc">
+                        Project OTC
+                    </label>
+
+                    <input
+                        type="number"
+                        id="project_otc"
+                        name="project_otc"
+                        step="0.01"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- TOTAL PROJECT REVENUE -->
+
+                <div class="form-group">
+
+                    <label for="total_project_revenue">
+                        Total Project Revenue
+                    </label>
+
+                    <input
+                        type="number"
+                        id="total_project_revenue"
+                        name="total_project_revenue"
+                        step="0.01"
+                        min="0"
+                    >
+
+                </div>
+
+
+                <!-- ESTIMATED CLOSURE DATE -->
+
+                <div class="form-group">
+
+                    <label for="closure_date">
+                        Estimated Closure Date
+                    </label>
+
+                    <input
+                        type="date"
+                        id="closure_date"
+                        name="closure_date"
+                        required
+                    >
+
+                </div>
+
+
+                <!-- SALES CYCLE STATUS -->
+
+                <div class="form-group">
+
+                    <label for="sales_cycle_status">
+                        Sales Cycle Status
+                    </label>
+
+                    <select
+                        id="sales_cycle_status"
+                        name="sales_cycle_status"
+                        required
+                    >
+
+                        <option value="" disabled selected>
+                            Select Status
+                        </option>
+
+                        <option value="Customer Visit (20%)">
+                            Customer Visit (20%)
+                        </option>
+
+                        <option value="Ask for Proposal (40%)">
+                            Ask for Proposal (40%)
+                        </option>
+
+                        <option value="Negotiations (60%)">
+                            Negotiations (60%)
+                        </option>
+
+                        <option value="Documentation/Acceptance/Processing (80%)">
+                            Documentation/Acceptance/Processing (80%)
+                        </option>
+
+                        <option value="System Entry/Revenue Locked (100%)">
+                            System Entry/Revenue Locked (100%)
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <!-- ACCOUNT MANAGER -->
+
+                <div class="form-group">
+                    <label for="account_manager">Account Manager</label>
+                    <input type="text" id="account_manager" name="account_manager"
+                            value="{{ edo_name }}" readonly class="form-control">
+                </div>
+
+
+
+                <!-- NEXT ACTION -->
+
+                <div class="form-group">
+
+                    <label for="next_action">
+                        Next Action
+                    </label>
+
+                    <input
+                        type="text"
+                        id="next_action"
+                        name="next_action"
+                    >
+
+                </div>
+
+            </div>
+
+
+            <!-- BUTTONS -->
+
+            <div class="form-buttons">
+
+                <a
+                    href="{{ url_for('edo_dashboard') }}"
+                    class="btn-cancel"
+                >
+                    Cancel
+                </a>
+
+                <button
+                    type="submit"
+                    class="btn-save"
+                >
+                    Add Pipeline
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+</body>
+</html>
