@@ -46,6 +46,8 @@ def login():
                     return redirect(url_for("my_pipelines"))
                 elif role == "Team Lead":
                     return redirect(url_for("teamlead_dashboard"))
+                elif role == "Regional Manager":
+                    return redirect(url_for("regional_manager_dashboard"))
                 elif role == "Head":
                     return redirect(url_for("head_dashboard"))
             else:
@@ -61,7 +63,7 @@ def my_pipelines():
     if "user_id" not in session:
         return redirect(url_for("login"))
     edo_name = f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
-
+    role = session.get("role")
     cursor = conn.cursor()
     cursor.execute("""
         SELECT PipelineID, [Vertical], [Account Name], [Product], [Region], [MRC],
@@ -73,7 +75,7 @@ def my_pipelines():
     """, (edo_name,))
     pipelines = cursor.fetchall()
 
-    return render_template("my_pipelines.html", edo_name=edo_name, pipelines=pipelines)
+    return render_template("my_pipelines.html", edo_name=edo_name, role=role, pipelines=pipelines)
 
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
@@ -532,5 +534,811 @@ def add_pipeline():
     # Return to dashboard
 
     return redirect(url_for("my_pipelines"))
+
+
+
+@app.route("/regional-manager")
+def regional_manager_dashboard():
+
+    # -------------------------
+    # ACCESS CHECK
+    # -------------------------
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "Regional Manager":
+        return redirect(url_for("login"))
+
+
+    regional_manager_id = session["user_id"]
+    first_name = session.get("first_name", "")
+
+    cursor = conn.cursor()
+
+
+    # ========================================================
+    # TEAM LEADS DIRECTLY UNDER THIS REGIONAL MANAGER
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            UserID,
+            FirstName,
+            LastName
+
+        FROM Users
+
+        WHERE
+            ManagerID = ?
+            AND Role = 'Team Lead'
+            AND IsActive = 1
+
+        ORDER BY
+            FirstName,
+            LastName
+    """, (regional_manager_id,))
+
+
+    team_leads = [
+        {
+            "UserID": row[0],
+            "FullName": f"{row[1]} {row[2]}"
+        }
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # ALL INDIVIDUAL USERS IN THIS REGION
+    #
+    # Includes:
+    # - Regional Manager
+    # - Team Leads
+    # - EDOs below those Team Leads
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            -- Start with the Regional Manager
+            SELECT
+                UserID,
+                FirstName,
+                LastName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE UserID = ?
+
+
+            UNION ALL
+
+
+            -- Add everyone underneath them
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.UserID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            UserID,
+            FirstName,
+            LastName,
+            Role
+
+        FROM UserHierarchy
+
+        ORDER BY
+            FirstName,
+            LastName
+    """, (regional_manager_id,))
+
+
+    region_users = [
+        {
+            "UserID": row[0],
+            "FullName": f"{row[1]} {row[2]}",
+            "Role": row[3]
+        }
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # REGION SUMMARY
+    #
+    # Includes RM + Team Leads + EDOs
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            SELECT
+                UserID,
+                FirstName,
+                LastName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE UserID = ?
+
+
+            UNION ALL
+
+
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.UserID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            COALESCE(SUM(p.[MRC]), 0),
+            COALESCE(SUM(p.[Project OTC]), 0),
+            COALESCE(SUM(p.[Total Project Revenue]), 0),
+            COUNT(p.PipelineID)
+
+        FROM UserHierarchy uh
+
+        LEFT JOIN Pipelines p
+            ON p.[Account Manager] =
+               (uh.FirstName + ' ' + uh.LastName)
+    """, (regional_manager_id,))
+
+
+    summary_row = cursor.fetchone()
+
+    summary = {
+        "TotalMRC": summary_row[0] or 0,
+        "TotalOTC": summary_row[1] or 0,
+        "TotalRevenue": summary_row[2] or 0,
+        "TotalPipelines": summary_row[3] or 0
+    }
+
+
+    # ========================================================
+    # REVENUE BY TEAM
+    #
+    # Each Team Lead bar includes:
+    # - Team Lead's own pipelines
+    # - EDO pipelines underneath them
+    # ========================================================
+
+    cursor.execute("""
+        WITH TeamHierarchy AS (
+
+            -- Start from Team Leads under the RM
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.ManagerID,
+                u.UserID AS TeamLeadID,
+                (u.FirstName + ' ' + u.LastName) AS TeamLeadName
+
+            FROM Users u
+
+            WHERE
+                u.ManagerID = ?
+                AND u.Role = 'Team Lead'
+                AND u.IsActive = 1
+
+
+            UNION ALL
+
+
+            -- Add users beneath those Team Leads
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.ManagerID,
+                th.TeamLeadID,
+                th.TeamLeadName
+
+            FROM Users u
+
+            INNER JOIN TeamHierarchy th
+                ON u.ManagerID = th.UserID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            th.TeamLeadID,
+            th.TeamLeadName,
+            COALESCE(SUM(p.[Total Project Revenue]), 0)
+
+        FROM TeamHierarchy th
+
+        LEFT JOIN Pipelines p
+            ON p.[Account Manager] =
+               (th.FirstName + ' ' + th.LastName)
+
+        GROUP BY
+            th.TeamLeadID,
+            th.TeamLeadName
+
+        ORDER BY
+            th.TeamLeadName
+    """, (regional_manager_id,))
+
+
+    team_names = []
+    team_revenues = []
+
+    for row in cursor.fetchall():
+
+        team_names.append(row[1])
+        team_revenues.append(row[2] or 0)
+
+
+    # ========================================================
+    # RM'S OWN REVENUE
+    #
+    # Optional separate "My Pipelines" bar
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            COALESCE(SUM(p.[Total Project Revenue]), 0)
+
+        FROM Pipelines p
+
+        INNER JOIN Users u
+            ON p.[Account Manager] =
+               (u.FirstName + ' ' + u.LastName)
+
+        WHERE u.UserID = ?
+    """, (regional_manager_id,))
+
+
+    rm_revenue = cursor.fetchone()[0] or 0
+
+
+    if rm_revenue != 0:
+
+        team_names.insert(
+            0,
+            "My Pipelines"
+        )
+
+        team_revenues.insert(
+            0,
+            rm_revenue
+        )
+
+
+    # ========================================================
+    # REGION PIPELINE STATUS
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            SELECT
+                UserID,
+                FirstName,
+                LastName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE UserID = ?
+
+
+            UNION ALL
+
+
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.UserID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            p.[Sales Cycle Status],
+            COUNT(*)
+
+        FROM Pipelines p
+
+        INNER JOIN UserHierarchy uh
+            ON p.[Account Manager] =
+               (uh.FirstName + ' ' + uh.LastName)
+
+        GROUP BY
+            p.[Sales Cycle Status]
+    """, (regional_manager_id,))
+
+
+    status_labels = []
+    status_counts = []
+
+    for row in cursor.fetchall():
+
+        status_labels.append(row[0])
+        status_counts.append(row[1])
+
+
+    # ========================================================
+    # ALL REGION PIPELINES
+    #
+    # Includes:
+    # - RM
+    # - Team Leads
+    # - EDOs
+    #
+    # IMPORTANT:
+    # UserID is now included so HTML can filter by individual.
+    # ========================================================
+
+    cursor.execute("""
+        WITH TeamHierarchy AS (
+
+            -- Team Leads directly under RM
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID,
+
+                u.UserID AS TeamLeadID,
+
+                (u.FirstName + ' ' + u.LastName)
+                    AS TeamLeadName
+
+            FROM Users u
+
+            WHERE
+                u.ManagerID = ?
+                AND u.Role = 'Team Lead'
+                AND u.IsActive = 1
+
+
+            UNION ALL
+
+
+            -- Everyone underneath each Team Lead
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID,
+
+                th.TeamLeadID,
+                th.TeamLeadName
+
+            FROM Users u
+
+            INNER JOIN TeamHierarchy th
+                ON u.ManagerID = th.UserID
+
+            WHERE u.IsActive = 1
+        ),
+
+
+        RegionUsers AS (
+
+            -- Regional Manager
+            SELECT
+                u.UserID,
+                u.FirstName,
+                u.LastName,
+
+                NULL AS TeamLeadID,
+
+                'Regional Manager'
+                    AS TeamName
+
+            FROM Users u
+
+            WHERE u.UserID = ?
+
+
+            UNION ALL
+
+
+            -- Team Leads + EDOs
+            SELECT
+                th.UserID,
+                th.FirstName,
+                th.LastName,
+
+                th.TeamLeadID,
+
+                th.TeamLeadName
+                    AS TeamName
+
+            FROM TeamHierarchy th
+        )
+
+
+        SELECT
+            ru.UserID,
+
+            p.[Account Manager],
+
+            ru.TeamName,
+
+            ru.TeamLeadID,
+
+            p.[Account Name],
+
+            p.[MRC],
+
+            p.[Total Project Revenue],
+
+            p.[Sales Cycle Status],
+
+            p.[Next Action]
+
+        FROM Pipelines p
+
+        INNER JOIN RegionUsers ru
+            ON p.[Account Manager] =
+               (ru.FirstName + ' ' + ru.LastName)
+
+        ORDER BY
+            p.[Account Manager],
+            p.[Account Name]
+    """, (
+        regional_manager_id,
+        regional_manager_id
+    ))
+
+
+    pipelines = [
+        {
+            "UserID":
+                row[0],
+
+            "AccountManager":
+                row[1],
+
+            "TeamName":
+                row[2],
+
+            "TeamLeadID":
+                row[3],
+
+            "AccountName":
+                row[4],
+
+            "MRC":
+                row[5],
+
+            "TotalProjectRevenue":
+                row[6],
+
+            "SalesCycleStatus":
+                row[7],
+
+            "NextAction":
+                row[8]
+        }
+
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # RENDER DASHBOARD
+    # ========================================================
+
+    return render_template(
+        "regional_manager.html",
+
+        first_name=first_name,
+
+        summary=summary,
+
+        team_leads=team_leads,
+
+        # NEW:
+        # Used by the individual dropdown
+        region_users=region_users,
+
+        team_names=team_names,
+        team_revenues=team_revenues,
+
+        status_labels=status_labels,
+        status_counts=status_counts,
+
+        pipelines=pipelines
+    )
+
+# ============================================================
+# REGIONAL MANAGER -> TEAM DRILL-DOWN
+# ============================================================
+
+@app.route("/regional-manager/team/<int:teamlead_id>")
+def regional_manager_team_dashboard(teamlead_id):
+
+    # -------------------------
+    # ACCESS CHECK
+    # -------------------------
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "Regional Manager":
+        return redirect(url_for("login"))
+
+
+    regional_manager_id = session["user_id"]
+    viewer_first_name = session.get("first_name", "")
+
+    cursor = conn.cursor()
+
+
+    # ========================================================
+    # MAKE SURE THIS TEAM LEAD ACTUALLY REPORTS TO THIS RM
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            UserID,
+            FirstName,
+            LastName
+
+        FROM Users
+
+        WHERE
+            UserID = ?
+            AND ManagerID = ?
+            AND Role = 'Team Lead'
+            AND IsActive = 1
+    """, (teamlead_id, regional_manager_id))
+
+
+    teamlead_row = cursor.fetchone()
+
+    if not teamlead_row:
+        return redirect(url_for("regional_manager_dashboard"))
+
+
+    teamlead_name = f"{teamlead_row[1]} {teamlead_row[2]}"
+
+
+    # ========================================================
+    # TEAM MEMBERS
+    #
+    # Includes the Team Lead + EDOs directly below them.
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            UserID,
+            FirstName,
+            LastName
+
+        FROM Users
+
+        WHERE
+            (
+                UserID = ?
+                OR ManagerID = ?
+            )
+            AND IsActive = 1
+
+        ORDER BY
+            FirstName,
+            LastName
+    """, (teamlead_id, teamlead_id))
+
+
+    team_members = [
+        {
+            "UserID": row[0],
+            "FullName": f"{row[1]} {row[2]}"
+        }
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # TEAM SUMMARY
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            COALESCE(SUM(p.[MRC]), 0),
+            COALESCE(SUM(p.[Project OTC]), 0),
+            COALESCE(SUM(p.[Total Project Revenue]), 0),
+            COUNT(p.PipelineID)
+
+        FROM Users u
+
+        LEFT JOIN Pipelines p
+            ON p.[Account Manager] =
+               (u.FirstName + ' ' + u.LastName)
+
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
+    """, (teamlead_id, teamlead_id))
+
+
+    summary_row = cursor.fetchone()
+
+    summary = {
+        "TotalMRC": summary_row[0] or 0,
+        "TotalOTC": summary_row[1] or 0,
+        "TotalRevenue": summary_row[2] or 0,
+        "ActivePipelines": summary_row[3] or 0
+    }
+
+
+    # ========================================================
+    # REVENUE BY TEAM MEMBER
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            (u.FirstName + ' ' + u.LastName) AS FullName,
+            COALESCE(SUM(p.[Total Project Revenue]), 0)
+
+        FROM Users u
+
+        LEFT JOIN Pipelines p
+            ON p.[Account Manager] =
+               (u.FirstName + ' ' + u.LastName)
+
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
+
+        GROUP BY
+            u.UserID,
+            u.FirstName,
+            u.LastName
+
+        ORDER BY
+            u.FirstName,
+            u.LastName
+    """, (teamlead_id, teamlead_id))
+
+
+    member_names = []
+    member_revenues = []
+
+    for row in cursor.fetchall():
+        member_names.append(row[0])
+        member_revenues.append(row[1] or 0)
+
+
+    # ========================================================
+    # TEAM PIPELINE STATUS
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            p.[Sales Cycle Status],
+            COUNT(*)
+
+        FROM Pipelines p
+
+        INNER JOIN Users u
+            ON p.[Account Manager] =
+               (u.FirstName + ' ' + u.LastName)
+
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
+
+        GROUP BY
+            p.[Sales Cycle Status]
+    """, (teamlead_id, teamlead_id))
+
+
+    status_labels = []
+    status_counts = []
+
+    for row in cursor.fetchall():
+        status_labels.append(row[0])
+        status_counts.append(row[1])
+
+
+    # ========================================================
+    # TEAM PIPELINES
+    #
+    # Member ID is passed to HTML so filtering is instant.
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            u.UserID,
+            p.[Account Manager],
+            p.[Account Name],
+            p.[MRC],
+            p.[Total Project Revenue],
+            p.[Sales Cycle Status],
+            p.[Next Action]
+
+        FROM Pipelines p
+
+        INNER JOIN Users u
+            ON p.[Account Manager] =
+               (u.FirstName + ' ' + u.LastName)
+
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
+
+        ORDER BY
+            p.[Account Manager],
+            p.[Account Name]
+    """, (teamlead_id, teamlead_id))
+
+
+    pipelines = [
+        {
+            "UserID": row[0],
+            "AccountManager": row[1],
+            "AccountName": row[2],
+            "MRC": row[3],
+            "TotalProjectRevenue": row[4],
+            "SalesCycleStatus": row[5],
+            "NextAction": row[6]
+        }
+        for row in cursor.fetchall()
+    ]
+
+
+    return render_template(
+        "regional_manager_team.html",
+
+        viewer_first_name=viewer_first_name,
+        teamlead_name=teamlead_name,
+
+        team_members=team_members,
+
+        summary=summary,
+
+        member_names=member_names,
+        member_revenues=member_revenues,
+
+        status_labels=status_labels,
+        status_counts=status_counts,
+
+        pipelines=pipelines
+    )
+
 if __name__ == "__main__":
     app.run(debug=True)
