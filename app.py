@@ -43,7 +43,7 @@ def login():
                 session["role"] = role
 
                 if role == "EDO":
-                    return redirect(url_for("edo_dashboard"))
+                    return redirect(url_for("my_pipelines"))
                 elif role == "Team Lead":
                     return redirect(url_for("teamlead_dashboard"))
                 elif role == "Head":
@@ -56,8 +56,10 @@ def login():
     return render_template("login.html", message=message)
 
 
-@app.route("/edo")
-def edo_dashboard():
+@app.route("/my-pipelines")
+def my_pipelines():
+    if "user_id" not in session:
+        return redirect(url_for("login"))
     edo_name = f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
 
     cursor = conn.cursor()
@@ -71,7 +73,7 @@ def edo_dashboard():
     """, (edo_name,))
     pipelines = cursor.fetchall()
 
-    return render_template("edo.html", edo_name=edo_name, pipelines=pipelines)
+    return render_template("my_pipelines.html", edo_name=edo_name, pipelines=pipelines)
 
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
@@ -112,7 +114,7 @@ def edit_pipeline(pipeline_id):
             cursor.execute(sql, params)
             conn.commit()
 
-        return redirect(url_for("edo_dashboard"))
+        return redirect(url_for("my_pipelines"))
 
     # Load pipeline for editing
     cursor.execute("""
@@ -128,11 +130,13 @@ def edit_pipeline(pipeline_id):
         "Ask for Proposal (40%)",
         "Negotiations (60%)",
         "Documentation/Acceptance/Processing (80%)",
-        "System Entry/Revenue Locked (100%)"
+        "System Entry/Revenue Locked (100%)",
+        "Lost to Competitor",
+        "Retired - No Decision"
+
     ]
 
     return render_template("edit_pipeline.html", pipeline=pipeline, statuses=statuses)
-
 
 @app.route("/teamlead", methods=["GET"])
 def teamlead_dashboard():
@@ -140,7 +144,7 @@ def teamlead_dashboard():
     teamlead_id = session.get("user_id")
     first_name = session.get("first_name")
 
-    # Default view = all EDOs
+    # Default view = all team pipelines
     selected_edo = request.args.get("edo_id", "all")
 
     cursor = conn.cursor()
@@ -148,6 +152,7 @@ def teamlead_dashboard():
 
     # =========================
     # SUMMARY METRICS
+    # Team Lead + assigned EDOs
     # =========================
 
     cursor.execute("""
@@ -156,39 +161,34 @@ def teamlead_dashboard():
             SUM(p.[Project OTC]) AS TotalOTC,
             SUM(p.[Total Project Revenue]) AS TotalRevenue,
             COUNT(*) AS ActivePipelines
+
         FROM Pipelines p
 
         JOIN Users u
             ON p.[Account Manager] =
                (u.FirstName + ' ' + u.LastName)
 
-        WHERE u.ManagerID = ?
-    """, (teamlead_id,))
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
+    """, (teamlead_id, teamlead_id))
 
 
     summary_row = cursor.fetchone()
 
 
     summary = {
-
-        "TotalMRC":
-            summary_row[0] or 0,
-
-        "TotalOTC":
-            summary_row[1] or 0,
-
-        "TotalRevenue":
-            summary_row[2] or 0,
-
-        "ActivePipelines":
-            summary_row[3] or 0
-
+        "TotalMRC": summary_row[0] or 0,
+        "TotalOTC": summary_row[1] or 0,
+        "TotalRevenue": summary_row[2] or 0,
+        "ActivePipelines": summary_row[3] or 0
     }
 
 
 
     # =========================
-    # EDO LIST
+    # TEAM MEMBER LIST
+    # Team Lead + assigned EDOs
     # =========================
 
     cursor.execute("""
@@ -199,27 +199,30 @@ def teamlead_dashboard():
 
         FROM Users
 
-        WHERE ManagerID = ?
-    """, (teamlead_id,))
+        WHERE
+            UserID = ?
+            OR ManagerID = ?
+
+        ORDER BY
+            FirstName,
+            LastName
+    """, (teamlead_id, teamlead_id))
 
 
     edos = [
-
         {
             "UserID": row[0],
-
-            "FullName":
-                f"{row[1]} {row[2]}"
+            "FullName": f"{row[1]} {row[2]}"
         }
 
         for row in cursor.fetchall()
-
     ]
 
 
 
     # =========================
-    # REVENUE PER EDO
+    # REVENUE PER PERSON
+    # Team Lead + assigned EDOs
     # =========================
 
     cursor.execute("""
@@ -234,11 +237,13 @@ def teamlead_dashboard():
             ON p.[Account Manager] =
                (u.FirstName + ' ' + u.LastName)
 
-        WHERE u.ManagerID = ?
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
 
         GROUP BY
             (u.FirstName + ' ' + u.LastName)
-    """, (teamlead_id,))
+    """, (teamlead_id, teamlead_id))
 
 
     edo_names = []
@@ -247,18 +252,14 @@ def teamlead_dashboard():
 
     for row in cursor.fetchall():
 
-        edo_names.append(
-            row[0]
-        )
-
-        edo_revenues.append(
-            row[1] or 0
-        )
+        edo_names.append(row[0])
+        edo_revenues.append(row[1] or 0)
 
 
 
     # =========================
     # PIPELINE STATUS
+    # Team Lead + assigned EDOs
     # =========================
 
     cursor.execute("""
@@ -272,11 +273,13 @@ def teamlead_dashboard():
             ON p.[Account Manager] =
                (u.FirstName + ' ' + u.LastName)
 
-        WHERE u.ManagerID = ?
+        WHERE
+            u.UserID = ?
+            OR u.ManagerID = ?
 
         GROUP BY
             p.[Sales Cycle Status]
-    """, (teamlead_id,))
+    """, (teamlead_id, teamlead_id))
 
 
     status_labels = []
@@ -285,13 +288,8 @@ def teamlead_dashboard():
 
     for row in cursor.fetchall():
 
-        status_labels.append(
-            row[0]
-        )
-
-        status_counts.append(
-            row[1]
-        )
+        status_labels.append(row[0])
+        status_counts.append(row[1])
 
 
 
@@ -303,7 +301,8 @@ def teamlead_dashboard():
 
 
     # -------------------------
-    # ALL EDOs
+    # ALL TEAM PIPELINES
+    # Team Lead + EDOs
     # -------------------------
 
     if selected_edo == "all":
@@ -323,73 +322,54 @@ def teamlead_dashboard():
                 ON p.[Account Manager] =
                    (u.FirstName + ' ' + u.LastName)
 
-            WHERE u.ManagerID = ?
+            WHERE
+                u.UserID = ?
+                OR u.ManagerID = ?
 
             ORDER BY
                 p.[Account Manager],
                 p.[Account Name]
-        """, (teamlead_id,))
+        """, (teamlead_id, teamlead_id))
 
 
         pipelines = [
-
             {
-                "AccountManager":
-                    row[0],
-
-                "AccountName":
-                    row[1],
-
-                "MRC":
-                    row[2],
-
-                "TotalProjectRevenue":
-                    row[3],
-
-                "SalesCycleStatus":
-                    row[4],
-
-                "NextAction":
-                    row[5]
+                "AccountManager": row[0],
+                "AccountName": row[1],
+                "MRC": row[2],
+                "TotalProjectRevenue": row[3],
+                "SalesCycleStatus": row[4],
+                "NextAction": row[5]
             }
 
             for row in cursor.fetchall()
-
         ]
 
 
     # -------------------------
-    # SPECIFIC EDO
+    # SPECIFIC TEAM MEMBER
     # -------------------------
 
     elif selected_edo:
 
         try:
-
-            selected_edo = int(
-                selected_edo
-            )
+            selected_edo = int(selected_edo)
 
         except ValueError:
-
             selected_edo = "all"
 
 
         if selected_edo != "all":
 
             selected_edo_name = next(
-
                 (
                     edo["FullName"]
 
                     for edo in edos
 
-                    if edo["UserID"] ==
-                       selected_edo
+                    if edo["UserID"] == selected_edo
                 ),
-
                 None
-
             )
 
 
@@ -415,29 +395,16 @@ def teamlead_dashboard():
 
 
                 pipelines = [
-
                     {
-                        "AccountManager":
-                            row[0],
-
-                        "AccountName":
-                            row[1],
-
-                        "MRC":
-                            row[2],
-
-                        "TotalProjectRevenue":
-                            row[3],
-
-                        "SalesCycleStatus":
-                            row[4],
-
-                        "NextAction":
-                            row[5]
+                        "AccountManager": row[0],
+                        "AccountName": row[1],
+                        "MRC": row[2],
+                        "TotalProjectRevenue": row[3],
+                        "SalesCycleStatus": row[4],
+                        "NextAction": row[5]
                     }
 
                     for row in cursor.fetchall()
-
                 ]
 
 
@@ -447,7 +414,6 @@ def teamlead_dashboard():
     # =========================
 
     return render_template(
-
         "teamlead.html",
 
         first_name=first_name,
@@ -467,10 +433,7 @@ def teamlead_dashboard():
         status_labels=status_labels,
 
         status_counts=status_counts
-
     )
-
-
 @app.route("/head")
 def head_dashboard():
     return render_template("head.html", username=session.get("username"))
@@ -562,12 +525,12 @@ def add_pipeline():
     conn.commit()
     cursor.close()
 
-    return redirect(url_for("edo_dashboard"))
+    return redirect(url_for("my_pipelines"))
 
 
 
     # Return to dashboard
 
-    return redirect(url_for("edo_dashboard"))
+    return redirect(url_for("my_pipelines"))
 if __name__ == "__main__":
     app.run(debug=True)

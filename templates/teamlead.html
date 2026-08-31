@@ -362,6 +362,51 @@
 
 
         /* =========================
+           TABLE SORTING
+        ========================= */
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sortable:hover {
+            color: #ffffff;
+        }
+
+        .sort-icon {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            margin-left: 7px;
+            vertical-align: 2px;
+
+            border-right: 1.5px solid #777777;
+            border-bottom: 1.5px solid #777777;
+
+            transform: rotate(45deg);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .sortable:hover .sort-icon {
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-asc .sort-icon {
+            transform: rotate(225deg);
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-desc .sort-icon {
+            transform: rotate(45deg);
+            border-color: #ffffff;
+        }
+
+
+        /* =========================
            RESPONSIVE
         ========================= */
 
@@ -437,9 +482,17 @@
         (Team Lead)
 
         <a
+            href="{{ url_for('my_pipelines') }}"
+            class="btn btn-sm btn-light"
+            style="margin-left:15px;"
+        >
+            My Pipelines
+        </a>
+
+        <a
             href="{{ url_for('login') }}"
             class="btn btn-sm btn-danger"
-            style="margin-left:15px;"
+            style="margin-left:8px;"
         >
             Logout
         </a>
@@ -572,7 +625,7 @@
                 <div class="chart-header">
 
                     <h2 class="chart-title">
-                        Revenue by EDO
+                        Revenue by Team Member
                     </h2>
 
                 </div>
@@ -623,7 +676,7 @@
         <div class="table-header">
 
             <h2 class="table-title">
-                EDO Pipeline Overview
+                Team Pipeline Overview
             </h2>
 
 
@@ -643,7 +696,7 @@
                         value="all"
                         {% if selected_edo == "all" %}selected{% endif %}
                     >
-                        All EDOs
+                        All
                     </option>
 
 
@@ -676,9 +729,22 @@
 
                         <th>Account Manager</th>
                         <th>Account Name</th>
-                        <th>MRC</th>
-                        <th>Total Revenue</th>
-                        <th>Status</th>
+
+                        <th class="sortable" data-column="2" data-type="number">
+                            MRC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th class="sortable" data-column="3" data-type="number">
+                            Total Revenue
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th class="sortable" data-column="4" data-type="status">
+                            Status
+                            <span class="sort-icon"></span>
+                        </th>
+
                         <th>Next Action</th>
 
                     </tr>
@@ -750,6 +816,134 @@
 ========================= -->
 
 <script>
+
+    /* =========================
+       TABLE SORTING
+    ========================= */
+
+    const sortableHeaders =
+        document.querySelectorAll('.pipeline-table th.sortable');
+
+
+    const statusOrder = {
+        "Customer Visit (20%)": 1,
+        "Ask for Proposal (40%)": 2,
+        "Negotiations (60%)": 3,
+        "Documentation/Acceptance/Processing (80%)": 4,
+        "System Entry/Revenue Locked (100%)": 5,
+        "Lost to Competitor": 6,
+        "Retired - No Decision": 7
+    };
+
+
+    sortableHeaders.forEach(header => {
+
+        header.addEventListener('click', function () {
+
+            const table = this.closest('table');
+            const tbody = table.querySelector('tbody');
+
+            const columnIndex = parseInt(this.dataset.column);
+            const dataType = this.dataset.type;
+
+
+            const currentlyAscending =
+                this.classList.contains('sort-asc');
+
+            const direction =
+                currentlyAscending ? 'desc' : 'asc';
+
+
+            sortableHeaders.forEach(otherHeader => {
+
+                otherHeader.classList.remove(
+                    'sort-asc',
+                    'sort-desc'
+                );
+
+            });
+
+
+            this.classList.add(
+                direction === 'asc'
+                    ? 'sort-asc'
+                    : 'sort-desc'
+            );
+
+
+            const rows = Array.from(
+                tbody.querySelectorAll('tr')
+            );
+
+
+            if (
+                rows.length === 1 &&
+                rows[0].querySelector('.empty-message')
+            ) {
+                return;
+            }
+
+
+            rows.sort((rowA, rowB) => {
+
+                const valueA =
+                    rowA.cells[columnIndex]
+                        .textContent
+                        .trim();
+
+                const valueB =
+                    rowB.cells[columnIndex]
+                        .textContent
+                        .trim();
+
+
+                let comparison = 0;
+
+
+                if (dataType === 'number') {
+
+                    const numberA =
+                        parseFloat(
+                            valueA.replace(/,/g, '')
+                        ) || 0;
+
+                    const numberB =
+                        parseFloat(
+                            valueB.replace(/,/g, '')
+                        ) || 0;
+
+                    comparison = numberA - numberB;
+
+                }
+
+                else if (dataType === 'status') {
+
+                    const statusA =
+                        statusOrder[valueA] || 999;
+
+                    const statusB =
+                        statusOrder[valueB] || 999;
+
+                    comparison = statusA - statusB;
+
+                }
+
+
+                return direction === 'asc'
+                    ? comparison
+                    : -comparison;
+
+            });
+
+
+            rows.forEach(row => {
+                tbody.appendChild(row);
+            });
+
+        });
+
+    });
+
 
     const revenueCtx =
         document

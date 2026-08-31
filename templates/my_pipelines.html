@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>EDO Dashboard</title>
+    <title>My Pipelines</title>
 
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
@@ -355,8 +355,23 @@
 
     <div class="user-info">
         Logged in as <strong>{{ edo_name }}</strong>
-        <!-- Logout button -->
-        <a href="{{ url_for('login') }}" class="btn btn-sm btn-danger" style="margin-left:15px;">
+        {% if session.get('role') == 'Team Lead' %}
+
+            <a
+                href="{{ url_for('teamlead_dashboard') }}"
+                class="btn btn-sm btn-light"
+                style="margin-left:15px;"
+            >
+                Team Dashboard
+            </a>
+
+        {% endif %}
+
+        <a
+            href="{{ url_for('login') }}"
+            class="btn btn-sm btn-danger"
+            style="margin-left:8px;"
+        >
             Logout
         </a>
     </div>
