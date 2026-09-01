@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 
+{% from "components/column_selector.html" import column_selector %}
+
 <head>
 
     <title>Team Dashboard</title>
@@ -9,6 +11,11 @@
 
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+    
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -459,15 +466,8 @@
 
         Logged in as
         <strong>{{ viewer_first_name }}</strong>
-        (Regional Manager)
+        ({{ viewer_role }})
 
-        <a
-            href="{{ url_for('my_pipelines') }}"
-            class="btn btn-sm btn-light"
-            style="margin-left:15px;"
-        >
-            My Pipelines
-        </a>
 
         <a
             href="{{ url_for('login') }}"
@@ -487,12 +487,25 @@
 
     <div class="back-row">
 
+        {% if viewer_role == "Regional Head" %}
+
+        <a
+            href="{{ url_for('regional_head_dashboard') }}"
+            class="back-button"
+        >
+            ← Back to Regional Head Dashboard
+        </a>
+
+        {% else %}
+
         <a
             href="{{ url_for('regional_manager_dashboard') }}"
             class="back-button"
         >
             ← Back to Region Dashboard
         </a>
+
+        {% endif %}
 
     </div>
 
@@ -652,26 +665,50 @@
             </h2>
 
 
-            <div class="table-filter">
+            <div class="table-header-controls">
 
-                <select
-                    id="memberFilter"
-                    class="form-select"
-                >
+                <div class="table-filter">
 
-                    <option value="all">
-                        All
-                    </option>
+                    <select
+                        id="memberFilter"
+                        class="form-select"
+                    >
 
-                    {% for member in team_members %}
+                        <option value="all">
+                            All
+                        </option>
 
-                    <option value="{{ member.EmpID }}">
-                        {{ member.FullName }}
-                    </option>
+                        {% for member in team_members %}
 
-                    {% endfor %}
+                        <option value="{{ member.EmpID }}">
+                            {{ member.FullName }}
+                        </option>
 
-                </select>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                {{ column_selector(
+                    [
+                        ('account-manager', 'Account Manager'),
+                        ('account-name', 'Account Name'),
+                        ('mrc', 'MRC'),
+                        ('total-revenue', 'Total Revenue'),
+                        ('status', 'Status'),
+                        ('next-action', 'Next Action')
+                    ],
+
+                    [
+                        'account-manager',
+                        'account-name',
+                        'mrc',
+                        'total-revenue',
+                        'status',
+                        'next-action'
+                    ]
+                ) }}
 
             </div>
 
@@ -687,13 +724,19 @@
 
                     <tr>
 
-                        <th>Account Manager</th>
-                        <th>Account Name</th>
+                        <th data-col="account-manager">
+                            Account Manager
+                        </th>
+
+                        <th data-col="account-name">
+                            Account Name
+                        </th>
 
                         <th
                             class="sortable"
                             data-column="2"
                             data-type="number"
+                            data-col="mrc"
                         >
                             MRC
                             <span class="sort-icon"></span>
@@ -703,6 +746,7 @@
                             class="sortable"
                             data-column="3"
                             data-type="number"
+                            data-col="total-revenue"
                         >
                             Total Revenue
                             <span class="sort-icon"></span>
@@ -712,12 +756,15 @@
                             class="sortable"
                             data-column="4"
                             data-type="status"
+                            data-col="status"
                         >
                             Status
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th>Next Action</th>
+                        <th data-col="next-action">
+                            Next Action
+                        </th>
 
                     </tr>
 
@@ -730,27 +777,33 @@
 
                     <tr data-user-id="{{ pipeline.EmpID }}">
 
-                        <td class="account-manager">
+                        <td
+                            class="account-manager"
+                            data-col="account-manager"
+                        >
                             {{ pipeline.AccountManager }}
                         </td>
 
-                        <td class="account-name">
+                        <td
+                            class="account-name"
+                            data-col="account-name"
+                        >
                             {{ pipeline.AccountName }}
                         </td>
 
-                        <td>
+                        <td data-col="mrc">
                             {{ pipeline.MRC }}
                         </td>
 
-                        <td>
+                        <td data-col="total-revenue">
                             {{ pipeline.TotalProjectRevenue }}
                         </td>
 
-                        <td>
+                        <td data-col="status">
                             {{ pipeline.SalesCycleStatus }}
                         </td>
 
-                        <td>
+                        <td data-col="next-action">
                             {{ pipeline.NextAction }}
                         </td>
 
@@ -783,6 +836,14 @@
 
 
 
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script
+    src="{{ url_for('static', filename='js/pipeline_columns.js') }}">
+</script>
+
 <script>
 
     /* =========================
@@ -810,7 +871,7 @@
 
                 if (
                     selectedMember === 'all' ||
-                    row.dataset.EmpID === selectedMember
+                    row.dataset.userId === selectedMember
                 ) {
                     row.style.display = '';
                 }

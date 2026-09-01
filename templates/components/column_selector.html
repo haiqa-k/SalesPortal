@@ -1,0 +1,64 @@
+{% macro column_selector(columns, default_columns=None) %}
+
+<div class="dropdown column-selector">
+
+    <button
+        class="btn btn-outline-light dropdown-toggle"
+        type="button"
+        data-bs-toggle="dropdown"
+        data-bs-auto-close="outside"
+        aria-expanded="false"
+    >
+        Columns
+    </button>
+
+    <div class="dropdown-menu dropdown-menu-dark p-3 column-menu">
+
+        <div class="column-menu-title">
+            Show Columns
+        </div>
+
+        {% for key, label in columns %}
+
+            <label class="column-option">
+
+                <input
+                    type="checkbox"
+                    class="column-toggle"
+                    data-column="{{ key }}"
+
+                    {% if default_columns is none or key in default_columns %}
+                        checked
+                    {% endif %}
+                >
+
+                {{ label }}
+
+            </label>
+
+        {% endfor %}
+
+
+        <div class="column-menu-actions">
+
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-light show-all-columns"
+            >
+                Show All
+            </button>
+
+            <button
+                type="button"
+                class="btn btn-sm btn-outline-light reset-columns"
+            >
+                Reset
+            </button>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endmacro %}

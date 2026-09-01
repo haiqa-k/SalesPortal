@@ -1,0 +1,2603 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Regional Head Dashboard</title>
+
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    >
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+
+    <style>
+
+        /* =========================
+        DEADLINES
+        ========================= */
+
+        .deadline-badge {
+            display: inline-block;
+
+            padding: 5px 10px;
+
+            border-radius: 20px;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            min-width: 75px;
+
+            text-align: center;
+        }
+
+
+        .deadline-today {
+            background: rgba(198, 40, 40, 0.25);
+
+            color: #ff8a80;
+
+            border: 1px solid rgba(255, 138, 128, 0.35);
+        }
+
+
+        .deadline-urgent {
+            background: rgba(239, 83, 80, 0.18);
+
+            color: #ef9a9a;
+
+            border: 1px solid rgba(239, 83, 80, 0.30);
+        }
+
+
+        .deadline-soon {
+            background: rgba(255, 167, 38, 0.15);
+
+            color: #ffcc80;
+
+            border: 1px solid rgba(255, 167, 38, 0.30);
+        }
+
+
+        .deadline-later {
+            background: rgba(126, 87, 194, 0.17);
+
+            color: #b39ddb;
+
+            border: 1px solid rgba(126, 87, 194, 0.30);
+        }
+        /* =========================
+           PAGE
+        ========================= */
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            background: linear-gradient(
+                to bottom,
+                #c62828,
+                #4b0082
+            );
+
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+
+        /* =========================
+           TOP BAR
+        ========================= */
+
+        .topbar {
+            min-height: 100px;
+            padding: 15px 35px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background: rgba(0, 0, 0, 0.25);
+
+            border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+
+            box-sizing: border-box;
+        }
+
+        .logo {
+            width: 160px;
+            height: auto;
+            max-height: 75px;
+            object-fit: contain;
+        }
+
+        .topbar-title {
+            margin: 0;
+            font-size: 40px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .user-info {
+            color: #ffffff;
+            font-size: 14px;
+        }
+
+        .user-info strong {
+            font-weight: 600;
+        }
+
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+
+        .dashboard-container {
+            padding: 40px 35px;
+        }
+
+        .dashboard-title {
+            color: #ffffff;
+            font-size: 40px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .dashboard-subtitle {
+            color: rgba(255, 255, 255, 0.75);
+            font-size: 14px;
+            margin-bottom: 30px;
+        }
+
+
+        /* =========================
+           SUMMARY CARDS
+        ========================= */
+
+        .summary-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+
+            height: 100%;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                0 14px 35px rgba(0, 0, 0, 0.45);
+        }
+
+        .summary-card .card-body {
+            padding: 22px;
+        }
+
+        .summary-label {
+            color: #bdbdbd;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            margin-bottom: 10px;
+        }
+
+        .summary-value {
+            color: #ffffff;
+
+            font-size: 24px;
+            font-weight: 600;
+
+            margin: 0;
+        }
+
+
+        /* =========================
+           CHART CARDS
+        ========================= */
+
+        .chart-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .chart-header {
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+        }
+
+        .chart-title {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .chart-body {
+            padding: 25px;
+
+            min-height: 350px;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .chart-body canvas {
+            max-height: 300px;
+        }
+
+
+        /* =========================
+           TEAMS
+        ========================= */
+
+        .teams-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .teams-header {
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 20px;
+        }
+
+        .teams-title {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .teams-filter {
+            min-width: 240px;
+        }
+
+        .teams-body {
+            padding: 22px;
+        }
+
+        .team-card {
+            background: #202020;
+
+            border: 1px solid #343434;
+            border-radius: 9px;
+
+            padding: 20px;
+
+            height: 100%;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .team-card:hover {
+            transform: translateY(-3px);
+
+            background: #272727;
+
+            border-color: #555555;
+
+            box-shadow:
+                0 10px 24px rgba(0, 0, 0, 0.30);
+        }
+
+        .team-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            gap: 15px;
+        }
+        
+        .team-card-link,
+        .team-card-link:visited,
+        .team-card-link:hover,
+        .team-card-link:active {
+            color: inherit;
+            text-decoration: none !important;
+        }
+
+        .team-card-link * {
+            text-decoration: none !important;
+        }
+
+        .team-name {
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+
+            margin-bottom: 6px;
+        }
+
+        .team-role {
+            color: #a9a9a9;
+
+            font-size: 12px;
+
+            margin: 0;
+        }
+
+        .team-manager {
+            color: #bdbdbd;
+
+            font-size: 12px;
+
+            margin-top: 5px;
+        }
+
+        .team-open {
+            width: 34px;
+            height: 34px;
+
+            border-radius: 50%;
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #2d2d2d;
+
+            border: 1px solid #444444;
+
+            color: #ffffff;
+
+            font-size: 18px;
+        }
+
+
+        /* =========================
+           TABLE CARD
+        ========================= */
+
+        .table-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            overflow: visible;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .table-header {
+            padding: 20px 24px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            gap: 20px;
+
+            border-radius: 10px 10px 0 0;
+        }
+
+        .table-title {
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+
+            margin: 0;
+        }
+
+        .table-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+
+            flex-wrap: wrap;
+        }
+
+        .table-filter {
+            min-width: 220px;
+        }
+
+
+        /* =========================
+           SELECTS
+        ========================= */
+
+        .form-select {
+            background-color: #2a2a2a;
+
+            color: #d0d0d0;
+
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+
+            font-size: 13px;
+        }
+
+        .form-select:focus {
+            background-color: #2a2a2a;
+
+            color: #ffffff;
+
+            border-color: #c62828;
+
+            box-shadow:
+                0 0 0 0.2rem rgba(198, 40, 40, 0.2);
+        }
+
+        .form-select option {
+            background: #1e1e1e;
+            color: #ffffff;
+        }
+
+
+        /* =========================
+           COLUMN BUTTON
+        ========================= */
+
+        .column-button {
+            background: #2a2a2a;
+            color: #ffffff;
+
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+
+            font-size: 13px;
+
+            padding: 7px 14px;
+        }
+
+        .column-button:hover,
+        .column-button:focus,
+        .column-button.show {
+            background: #333333;
+            color: #ffffff;
+
+            border-color: #555555;
+        }
+
+
+        /* =========================
+           COLUMN DROPDOWN
+        ========================= */
+
+        .column-menu {
+            min-width: 290px;
+            max-height: 480px;
+
+            overflow-y: auto;
+
+            background: #1d1d1d;
+
+            border: 1px solid #3a3a3a;
+            border-radius: 8px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.50);
+        }
+
+        .column-menu-title {
+            color: #ffffff;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            margin-bottom: 12px;
+        }
+
+        .column-menu label {
+            display: block;
+
+            color: #d0d0d0;
+
+            font-size: 13px;
+
+            padding: 6px 2px;
+
+            cursor: pointer;
+        }
+
+        .column-menu label:hover {
+            color: #ffffff;
+        }
+
+        .column-menu input {
+            margin-right: 9px;
+
+            accent-color: #c62828;
+        }
+
+        .column-menu-actions {
+            display: flex;
+
+            gap: 8px;
+
+            margin-bottom: 12px;
+
+            padding-bottom: 12px;
+
+            border-bottom: 1px solid #333333;
+        }
+
+        .column-action-btn {
+            background: #292929;
+
+            color: #d5d5d5;
+
+            border: 1px solid #3b3b3b;
+            border-radius: 5px;
+
+            padding: 5px 9px;
+
+            font-size: 11px;
+        }
+
+        .column-action-btn:hover {
+            background: #353535;
+            color: #ffffff;
+        }
+
+
+        /* =========================
+           TABLE
+        ========================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+
+            max-height: 650px;
+
+            border-radius: 0 0 10px 10px;
+        }
+
+        .pipeline-table {
+            margin: 0;
+
+            white-space: nowrap;
+
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .pipeline-table thead th {
+            background: #292929;
+
+            color: #e5e5e5;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+
+            padding: 15px 16px;
+
+            border-bottom: 1px solid #414141;
+
+            position: sticky;
+            top: 0;
+
+            z-index: 2;
+        }
+
+        .pipeline-table tbody td {
+            background: #171717;
+
+            color: #d5d5d5;
+
+            padding: 15px 16px;
+
+            font-size: 13px;
+
+            border-bottom: 1px solid #292929;
+
+            vertical-align: middle;
+        }
+
+        .pipeline-table tbody tr:nth-child(even) td {
+            background: #1c1c1c;
+        }
+
+        .pipeline-table tbody tr:hover td {
+            background: #252525;
+        }
+
+        .pipeline-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .account-name,
+        .account-manager {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .team-column {
+            color: #cfcfcf;
+        }
+
+        .empty-message {
+            text-align: center;
+
+            padding: 35px !important;
+
+            color: #999999 !important;
+        }
+
+
+        /* =========================
+           SORTING
+        ========================= */
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-icon {
+            display: inline-block;
+
+            width: 7px;
+            height: 7px;
+
+            margin-left: 7px;
+
+            vertical-align: 2px;
+
+            border-right: 1.5px solid #777777;
+            border-bottom: 1.5px solid #777777;
+
+            transform: rotate(45deg);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .sortable:hover .sort-icon {
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-asc .sort-icon {
+            transform: rotate(225deg);
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-desc .sort-icon {
+            transform: rotate(45deg);
+            border-color: #ffffff;
+        }
+
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 768px) {
+
+            .topbar {
+                min-height: 65px;
+
+                padding: 10px 20px;
+
+                flex-wrap: wrap;
+
+                gap: 10px;
+            }
+
+            .logo {
+                width: 100px;
+            }
+
+            .topbar-title {
+                font-size: 24px;
+            }
+
+            .dashboard-container {
+                padding: 25px 20px;
+            }
+
+            .dashboard-title {
+                font-size: 28px;
+            }
+
+            .user-info {
+                font-size: 12px;
+            }
+
+            .table-header,
+            .teams-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .table-controls,
+            .table-filter,
+            .teams-filter,
+            .form-select {
+                width: 100%;
+            }
+
+            .column-button {
+                width: 100%;
+            }
+        }
+
+    </style>
+
+</head>
+
+
+
+<body>
+
+
+<!-- =========================
+     TOP BAR
+========================= -->
+
+<div class="topbar">
+
+    <img
+        src="{{ url_for('static', filename='jazz-logo.png') }}"
+        alt="Company Logo"
+        class="logo"
+    >
+
+    <h1 class="topbar-title">
+        Sales Dashboard
+    </h1>
+
+    <div class="user-info">
+
+        Logged in as
+        <strong>{{ first_name }}</strong>
+        (Regional Head)
+
+     
+
+        <a
+            href="{{ url_for('login') }}"
+            class="btn btn-sm btn-danger"
+            style="margin-left:8px;"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================
+     MAIN DASHBOARD
+========================= -->
+
+<div class="dashboard-container">
+
+
+    <h1 class="dashboard-title">
+        Welcome, {{ first_name }}
+    </h1>
+
+    <div class="dashboard-subtitle">
+        Review performance and pipelines across all regions under your management
+    </div>
+
+
+
+    <!-- =========================
+         SUMMARY
+    ========================= -->
+
+    <div class="row g-4 mb-4">
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total MRC
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalMRC }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total OTC
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalOTC }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total Revenue
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalRevenue }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total Pipelines
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalPipelines }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- =========================
+         ANALYTICS
+    ========================= -->
+
+    <div class="row g-4 mb-4">
+
+
+        <div class="col-lg-6">
+
+            <div class="chart-card">
+
+                <div class="chart-header">
+
+                    <h2 class="chart-title">
+                        Revenue by Team
+                    </h2>
+
+                </div>
+
+                <div class="chart-body">
+
+                    <canvas id="revenueChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="col-lg-6">
+
+            <div class="chart-card">
+
+                <div class="chart-header">
+
+                    <h2 class="chart-title">
+                        Pipeline Status
+                    </h2>
+
+                </div>
+
+                <div class="chart-body">
+
+                    <canvas id="statusChart"></canvas>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+    </div>
+
+
+    <!-- =========================
+     UPCOMING DEADLINES
+========================= -->
+
+<div class="table-card mb-4">
+
+    <div class="table-header">
+
+        <h2 class="table-title">
+            Upcoming Deadlines
+        </h2>
+
+        <div style="
+            color:#9f9f9f;
+            font-size:12px;
+        ">
+            Next 30 Days
+        </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+        <table class="table pipeline-table">
+
+            <thead>
+
+                <tr>
+                    <th>Account</th>
+                    <th>Account Manager</th>
+                    <th>Closure Date</th>
+                    <th>Days Remaining</th>
+                    <th>Status</th>
+                    <th>Next Action</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for deadline in upcoming_deadlines %}
+
+                <tr>
+
+                    <td class="account-name">
+                        {{ deadline.AccountName }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.AccountManager }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.ClosureDate.strftime('%d %b %Y') }}
+                    </td>
+
+
+                    <td>
+
+                        {% if deadline.DaysRemaining == 0 %}
+
+                            <span class="deadline-badge deadline-today">
+                                Due Today
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 7 %}
+
+                            <span class="deadline-badge deadline-urgent">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 14 %}
+
+                            <span class="deadline-badge deadline-soon">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% else %}
+
+                            <span class="deadline-badge deadline-later">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ deadline.Status or '-' }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.NextAction or '-' }}
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty-message"
+                    >
+                        No upcoming deadlines in the next 30 days.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+    <!-- =========================
+         TEAMS
+    ========================= -->
+
+    <div class="teams-card mb-4">
+
+
+        <div class="teams-header">
+
+            <h2 class="teams-title">
+                Teams
+            </h2>
+
+
+            <div class="teams-filter">
+
+                <select
+                    id="managerFilter"
+                    class="form-select"
+                >
+
+                    <option value="all">
+                        All Regional Managers
+                    </option>
+
+                    {% for manager in regional_managers %}
+
+                    <option value="{{ manager.EmpID }}">
+                        {{ manager.FullName }}
+                    </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="teams-body">
+
+
+            <div
+                class="row g-3"
+                id="teamCards"
+            >
+
+
+                {% for team_lead in team_leads %}
+
+
+                <div
+                    class="col-lg-4 col-md-6 team-wrapper"
+                    data-manager-id="{{ team_lead.RegionalManagerID }}"
+                >
+
+                    <a
+                        href="{{ url_for(
+                            'regional_manager_team_dashboard',
+                            teamlead_id=team_lead.EmpID
+                        ) }}"
+                        class="team-card-link"
+                    >
+
+                        <div class="team-card">
+
+                            <div class="team-card-top">
+
+                                <div>
+
+                                    <div class="team-name">
+                                        {{ team_lead.FullName }}
+                                    </div>
+
+                                    <p class="team-role">
+                                        Team Lead · View Team Dashboard
+                                    </p>
+
+                                    <div class="team-manager">
+                                        Regional Manager:
+                                        {{ team_lead.RegionalManagerName }}
+                                    </div>
+
+                                </div>
+
+                                <div class="team-open">
+                                    ›
+                                </div>
+
+                            </div>
+
+                        </div>
+
+                    </a>
+
+                </div>
+
+
+                {% endfor %}
+
+
+            </div>
+
+
+            <div
+                id="noTeamsMessage"
+                class="text-secondary"
+                style="display:none;"
+            >
+                No teams found for this Regional Manager.
+            </div>
+
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =========================
+         PIPELINE TABLE
+    ========================= -->
+
+    <div class="table-card">
+
+
+        <div class="table-header">
+
+
+            <h2 class="table-title">
+                Pipeline Overview
+            </h2>
+
+
+
+            <div class="table-controls">
+
+
+                <!-- INDIVIDUAL FILTER -->
+
+                <div class="table-filter">
+
+                    <select
+                        id="individualFilter"
+                        class="form-select"
+                    >
+
+                        <option value="all">
+                            All Individuals
+                        </option>
+
+                        {% for user in head_users %}
+
+                        <option value="{{ user.EmpID }}">
+                            {{ user.FullName }}
+                        </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+
+
+                <!-- COLUMN SELECTOR -->
+
+                <div class="dropdown">
+
+                    <button
+                        class="btn column-button dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        data-bs-auto-close="outside"
+                    >
+                        Columns
+                    </button>
+
+
+                    <div class="dropdown-menu dropdown-menu-end column-menu p-3">
+
+
+                        <div class="column-menu-title">
+                            Show Columns
+                        </div>
+
+
+                        <div class="column-menu-actions">
+
+                            <button
+                                type="button"
+                                class="column-action-btn"
+                                id="showAllColumns"
+                            >
+                                Show All
+                            </button>
+
+                            <button
+                                type="button"
+                                class="column-action-btn"
+                                id="resetColumns"
+                            >
+                                Reset
+                            </button>
+
+                        </div>
+
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="account-manager"
+                                checked
+                            >
+                            Account Manager
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="regional-manager"
+                                
+                            >
+                            Regional Manager
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="team-lead"
+                                
+                            >
+                            Team Lead
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="vertical"
+                                checked
+                            >
+                            Vertical
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="account-name"
+                                checked
+                            >
+                            Account Name
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="product"
+                                checked
+                            >
+                            Product
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="region"
+                            >
+                            Region
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="mrc"
+                                checked
+                            >
+                            MRC
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="contract-duration"
+                                checked
+                            >
+                            Contract Duration
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="arr"
+                            >
+                            ARR
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="project-otc"
+                                checked
+                            >
+                            Project OTC
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="total-revenue"
+                                checked
+                            >
+                            Total Revenue
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="closure-date"
+                                checked
+                            >
+                            Estimated Closure Date
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="closure-month"
+                                checked
+                            >
+                            Estimated Closure Month
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="status"
+                                checked
+                            >
+                            Status
+                        </label>
+
+
+                        <label>
+                            <input
+                                type="checkbox"
+                                class="column-toggle"
+                                data-column="next-action"
+                                checked
+                            >
+                            Next Action
+                        </label>
+
+
+                    </div>
+
+                </div>
+
+
+            </div>
+
+        </div>
+
+
+
+        <!-- =========================
+             TABLE
+        ========================= -->
+
+        <div class="table-wrapper">
+
+
+            <table class="table pipeline-table">
+
+
+                <thead>
+
+                    <tr>
+
+
+                        <th
+                            data-col="account-manager"
+                        >
+                            Account Manager
+                        </th>
+
+
+                        <th
+                            data-col="regional-manager"
+                        >
+                            Regional Manager
+                        </th>
+
+
+                        <th
+                            data-col="team-lead"
+                        >
+                            Team Lead
+                        </th>
+
+
+                        <th
+                            data-col="vertical"
+                        >
+                            Vertical
+                        </th>
+
+
+                        <th
+                            data-col="account-name"
+                        >
+                            Account Name
+                        </th>
+
+
+                        <th
+                            data-col="product"
+                        >
+                            Product
+                        </th>
+
+
+                        <th
+                            data-col="region"
+                        >
+                            Region
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="mrc"
+                            data-type="number"
+                        >
+                            MRC
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="contract-duration"
+                            data-type="number"
+                        >
+                            Contract Duration
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="arr"
+                            data-type="number"
+                        >
+                            ARR
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="project-otc"
+                            data-type="number"
+                        >
+                            Project OTC
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="total-revenue"
+                            data-type="number"
+                        >
+                            Total Revenue
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="closure-date"
+                            data-type="date"
+                        >
+                            Estimated Closure Date
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            data-col="closure-month"
+                        >
+                            Estimated Closure Month
+                        </th>
+
+
+                        <th
+                            class="sortable"
+                            data-col="status"
+                            data-type="status"
+                        >
+                            Status
+                            <span class="sort-icon"></span>
+                        </th>
+
+
+                        <th
+                            data-col="next-action"
+                        >
+                            Next Action
+                        </th>
+
+
+                    </tr>
+
+                </thead>
+
+
+
+                <tbody id="pipelineBody">
+
+
+                    {% for pipeline in pipelines %}
+
+
+                    <tr
+                        data-user-id="{{ pipeline.EmpID }}"
+                    >
+
+
+                        <td
+                            data-col="account-manager"
+                            class="account-manager"
+                        >
+                            {{ pipeline.AccountManager }}
+                        </td>
+
+
+                        <td
+                            data-col="regional-manager"
+                        >
+                            {{ pipeline.RegionalManagerName or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="team-lead"
+                            class="team-column"
+                        >
+                            {{ pipeline.TeamLeadName or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="vertical"
+                        >
+                            {{ pipeline.Vertical or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="account-name"
+                            class="account-name"
+                        >
+                            {{ pipeline.AccountName or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="product"
+                        >
+                            {{ pipeline.Product or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="region"
+                        >
+                            {{ pipeline.Region or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="mrc"
+                        >
+                            {{ pipeline.MRC or 0 }}
+                        </td>
+
+
+                        <td
+                            data-col="contract-duration"
+                        >
+                            {{ pipeline.ContractDuration or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="arr"
+                        >
+                            {{ pipeline.ARR or 0 }}
+                        </td>
+
+
+                        <td
+                            data-col="project-otc"
+                        >
+                            {{ pipeline.ProjectOTC or 0 }}
+                        </td>
+
+
+                        <td
+                            data-col="total-revenue"
+                        >
+                            {{ pipeline.TotalProjectRevenue or 0 }}
+                        </td>
+
+
+                        <td
+                            data-col="closure-date"
+                        >
+                            {{ pipeline.EstimatedClosureDate or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="closure-month"
+                        >
+                            {{ pipeline.EstimatedClosureMonth or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="status"
+                        >
+                            {{ pipeline.SalesCycleStatus or '-' }}
+                        </td>
+
+
+                        <td
+                            data-col="next-action"
+                        >
+                            {{ pipeline.NextAction or '-' }}
+                        </td>
+
+
+                    </tr>
+
+
+                    {% else %}
+
+
+                    <tr>
+
+                        <td
+                            colspan="16"
+                            class="empty-message"
+                        >
+                            No pipelines found.
+                        </td>
+
+                    </tr>
+
+
+                    {% endfor %}
+
+
+                </tbody>
+
+
+            </table>
+
+
+        </div>
+
+
+    </div>
+
+
+</div>
+
+
+
+<!-- Bootstrap JS required for Columns dropdown -->
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+
+<script>
+
+
+/* =========================
+   REGIONAL MANAGER
+   TEAM FILTER
+========================= */
+
+const managerFilter =
+    document.getElementById('managerFilter');
+
+
+if (managerFilter) {
+
+    managerFilter.addEventListener(
+        'change',
+        function () {
+
+            const selectedManager =
+                this.value;
+
+            const cards =
+                document.querySelectorAll(
+                    '.team-wrapper'
+                );
+
+            let visibleCount = 0;
+
+
+            cards.forEach(card => {
+
+                const managerId =
+                    card.dataset.managerId;
+
+
+                if (
+                    selectedManager === 'all' ||
+                    managerId === selectedManager
+                ) {
+
+                    card.style.display = '';
+
+                    visibleCount++;
+
+                }
+
+                else {
+
+                    card.style.display = 'none';
+
+                }
+
+            });
+
+
+            const noTeamsMessage =
+                document.getElementById(
+                    'noTeamsMessage'
+                );
+
+
+            if (noTeamsMessage) {
+
+                noTeamsMessage.style.display =
+                    visibleCount === 0
+                        ? 'block'
+                        : 'none';
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   INDIVIDUAL FILTER
+========================= */
+
+const individualFilter =
+    document.getElementById(
+        'individualFilter'
+    );
+
+
+if (individualFilter) {
+
+    individualFilter.addEventListener(
+        'change',
+        function () {
+
+            const selectedUser =
+                this.value;
+
+
+            const rows =
+                document.querySelectorAll(
+                    '#pipelineBody tr[data-user-id]'
+                );
+
+
+            rows.forEach(row => {
+
+                const rowUserId =
+                    row.dataset.userId;
+
+
+                if (
+                    selectedUser === 'all' ||
+                    rowUserId === selectedUser
+                ) {
+
+                    row.style.display = '';
+
+                }
+
+                else {
+
+                    row.style.display = 'none';
+
+                }
+
+            });
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   COLUMN VISIBILITY
+========================= */
+
+const columnToggles =
+    document.querySelectorAll(
+        '.column-toggle'
+    );
+
+
+function setColumnVisibility(
+    columnName,
+    visible
+) {
+
+    const cells =
+        document.querySelectorAll(
+            `[data-col="${columnName}"]`
+        );
+
+
+    cells.forEach(cell => {
+
+        cell.style.display =
+            visible ? '' : 'none';
+
+    });
+
+}
+
+
+
+columnToggles.forEach(toggle => {
+
+    toggle.addEventListener(
+        'change',
+        function () {
+
+            setColumnVisibility(
+                this.dataset.column,
+                this.checked
+            );
+
+        }
+    );
+
+});
+
+
+
+/* =========================
+   APPLY DEFAULT HIDDEN
+   COLUMNS
+========================= */
+
+columnToggles.forEach(toggle => {
+
+    setColumnVisibility(
+        toggle.dataset.column,
+        toggle.checked
+    );
+
+});
+
+
+
+/* =========================
+   SHOW ALL COLUMNS
+========================= */
+
+const showAllColumns =
+    document.getElementById(
+        'showAllColumns'
+    );
+
+
+if (showAllColumns) {
+
+    showAllColumns.addEventListener(
+        'click',
+        function () {
+
+            columnToggles.forEach(
+                toggle => {
+
+                    toggle.checked = true;
+
+                    setColumnVisibility(
+                        toggle.dataset.column,
+                        true
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   RESET DEFAULT COLUMNS
+========================= */
+
+const defaultColumns = [
+
+    'account-manager',
+    'vertical',
+    'account-name',
+    'product',
+    'mrc',
+    'contract-duration',
+    'arr',
+    'project-otc',
+    'total-revenue',
+    'closure-date',
+    'estimated-closure-month',
+    'status',
+    'next-action'
+
+];
+
+
+const resetColumns =
+    document.getElementById(
+        'resetColumns'
+    );
+
+
+if (resetColumns) {
+
+    resetColumns.addEventListener(
+        'click',
+        function () {
+
+            columnToggles.forEach(
+                toggle => {
+
+                    const shouldShow =
+                        defaultColumns.includes(
+                            toggle.dataset.column
+                        );
+
+
+                    toggle.checked =
+                        shouldShow;
+
+
+                    setColumnVisibility(
+                        toggle.dataset.column,
+                        shouldShow
+                    );
+
+                }
+            );
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   TABLE SORTING
+========================= */
+
+const sortableHeaders =
+    document.querySelectorAll(
+        '.pipeline-table th.sortable'
+    );
+
+
+const statusOrder = {
+
+    "Customer Visit (20%)": 1,
+
+    "Ask for Proposal (40%)": 2,
+
+    "Negotiations (60%)": 3,
+
+    "Documentation/Acceptance/Processing (80%)": 4,
+
+    "System Entry/Revenue Locked (100%)": 5,
+
+    "Lost to Competitor": 6,
+
+    "Retired - No Decision": 7
+
+};
+
+
+
+sortableHeaders.forEach(header => {
+
+    header.addEventListener(
+        'click',
+        function () {
+
+
+            const columnName =
+                this.dataset.col;
+
+
+            const dataType =
+                this.dataset.type;
+
+
+            const currentlyAscending =
+                this.classList.contains(
+                    'sort-asc'
+                );
+
+
+            const direction =
+                currentlyAscending
+                    ? 'desc'
+                    : 'asc';
+
+
+
+            sortableHeaders.forEach(
+                otherHeader => {
+
+                    otherHeader.classList.remove(
+                        'sort-asc',
+                        'sort-desc'
+                    );
+
+                }
+            );
+
+
+            this.classList.add(
+
+                direction === 'asc'
+                    ? 'sort-asc'
+                    : 'sort-desc'
+
+            );
+
+
+
+            const tbody =
+                document.getElementById(
+                    'pipelineBody'
+                );
+
+
+            const rows =
+                Array.from(
+                    tbody.querySelectorAll(
+                        'tr[data-user-id]'
+                    )
+                );
+
+
+
+            rows.sort(
+                (rowA, rowB) => {
+
+
+                    const cellA =
+                        rowA.querySelector(
+                            `[data-col="${columnName}"]`
+                        );
+
+
+                    const cellB =
+                        rowB.querySelector(
+                            `[data-col="${columnName}"]`
+                        );
+
+
+                    const valueA =
+                        cellA
+                            ? cellA.textContent.trim()
+                            : '';
+
+
+                    const valueB =
+                        cellB
+                            ? cellB.textContent.trim()
+                            : '';
+
+
+
+                    let comparison = 0;
+
+
+
+                    if (
+                        dataType === 'number'
+                    ) {
+
+                        const numberA =
+                            parseFloat(
+                                valueA.replace(
+                                    /,/g,
+                                    ''
+                                )
+                            ) || 0;
+
+
+                        const numberB =
+                            parseFloat(
+                                valueB.replace(
+                                    /,/g,
+                                    ''
+                                )
+                            ) || 0;
+
+
+                        comparison =
+                            numberA - numberB;
+
+                    }
+
+
+
+                    else if (
+                        dataType === 'status'
+                    ) {
+
+                        const statusA =
+                            statusOrder[valueA]
+                            || 999;
+
+
+                        const statusB =
+                            statusOrder[valueB]
+                            || 999;
+
+
+                        comparison =
+                            statusA - statusB;
+
+                    }
+
+
+
+                    else if (
+                        dataType === 'date'
+                    ) {
+
+                        const dateA =
+                            Date.parse(valueA) || 0;
+
+
+                        const dateB =
+                            Date.parse(valueB) || 0;
+
+
+                        comparison =
+                            dateA - dateB;
+
+                    }
+
+
+
+                    else {
+
+                        comparison =
+                            valueA.localeCompare(
+                                valueB
+                            );
+
+                    }
+
+
+
+                    return (
+                        direction === 'asc'
+                            ? comparison
+                            : -comparison
+                    );
+
+                }
+            );
+
+
+            rows.forEach(row => {
+
+                tbody.appendChild(row);
+
+            });
+
+
+        }
+    );
+
+});
+
+
+
+/* =========================
+   REVENUE BY TEAM
+========================= */
+
+const revenueCanvas =
+    document.getElementById(
+        'revenueChart'
+    );
+
+
+if (revenueCanvas) {
+
+    const revenueCtx =
+        revenueCanvas.getContext('2d');
+
+
+    new Chart(
+        revenueCtx,
+        {
+
+            type: 'bar',
+
+
+            data: {
+
+                labels:
+                    {{ team_names | tojson }},
+
+
+                datasets: [{
+
+                    label: 'Revenue',
+
+                    data:
+                        {{ team_revenues | tojson }},
+
+                    backgroundColor:
+                        'rgba(198, 40, 40, 0.75)',
+
+                    borderColor:
+                        '#c62828',
+
+                    borderWidth: 1,
+
+                    borderRadius: 5
+
+                }]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+
+                plugins: {
+
+                    legend: {
+
+                        labels: {
+
+                            color:
+                                '#d5d5d5'
+
+                        }
+
+                    }
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        ticks: {
+
+                            color:
+                                '#d5d5d5'
+
+                        },
+
+                        grid: {
+
+                            color:
+                                'rgba(255,255,255,0.06)'
+
+                        }
+
+                    },
+
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            color:
+                                '#d5d5d5'
+
+                        },
+
+                        grid: {
+
+                            color:
+                                'rgba(255,255,255,0.06)'
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   PIPELINE STATUS
+========================= */
+
+const statusCanvas =
+    document.getElementById(
+        'statusChart'
+    );
+
+
+if (statusCanvas) {
+
+    const statusCtx =
+        statusCanvas.getContext('2d');
+
+
+    new Chart(
+        statusCtx,
+        {
+
+            type: 'doughnut',
+
+
+            data: {
+
+                labels:
+                    {{ status_labels | tojson }},
+
+
+                datasets: [{
+
+                    data:
+                        {{ status_counts | tojson }},
+
+                    backgroundColor: [
+
+                        '#c62828',
+                        '#7b1fa2',
+                        '#512da8',
+                        '#ef5350',
+                        '#9575cd',
+                        '#ab47bc',
+                        '#616161'
+
+                    ],
+
+                    borderColor:
+                        '#171717',
+
+                    borderWidth: 3
+
+                }]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+                cutout: '60%',
+
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            color:
+                                '#d5d5d5',
+
+                            padding: 18,
+
+                            usePointStyle:
+                                true
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+</script>
+
+
+</body>
+
+</html>

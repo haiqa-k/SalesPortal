@@ -49,6 +49,8 @@ def login():
                     return redirect(url_for("teamlead_dashboard"))
                 elif role == "Regional Manager":
                     return redirect(url_for("regional_manager_dashboard"))
+                elif role == "Regional Head":
+                    return redirect(url_for("regional_head_dashboard"))
                 elif role == "Head":
                     return redirect(url_for("head_dashboard"))
             else:
@@ -610,14 +612,7 @@ def teamlead_dashboard():
 
         status_counts=status_counts
     )
-@app.route("/head")
-def head_dashboard():
-    return render_template("head.html", username=session.get("username"))
 
-
-
-from flask import Flask, render_template, request, redirect, url_for
-from datetime import datetime
 
 
 
@@ -1254,41 +1249,78 @@ def regional_manager_team_dashboard(teamlead_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    if session.get("role") != "Regional Manager":
+    role = session.get("role")
+
+    if role not in ["Regional Manager", "Regional Head"]:
         return redirect(url_for("login"))
 
 
-    regional_manager_id = session["user_id"]
+    viewer_id = session["user_id"]
     viewer_first_name = session.get("first_name", "")
 
     cursor = conn.cursor()
 
 
     # ========================================================
-    # MAKE SURE THIS TEAM LEAD ACTUALLY REPORTS TO THIS RM
+    # CHECK THAT THIS USER CAN VIEW THIS TEAM
     # ========================================================
 
-    cursor.execute("""
-        SELECT
-            EmpID,
-            EmployeeName,
-            FirstName,
-            LastName
+    if role == "Regional Manager":
 
-        FROM Users
+        cursor.execute("""
+            SELECT
+                EmpID,
+                EmployeeName,
+                FirstName,
+                LastName
 
-        WHERE
-            EmpID = ?
-            AND ManagerID = ?
-            AND Role = 'Team Lead'
-            AND IsActive = 1
-    """, (teamlead_id, regional_manager_id))
+            FROM Users
+
+            WHERE
+                EmpID = ?
+                AND ManagerID = ?
+                AND Role = 'Team Lead'
+                AND IsActive = 1
+        """, (teamlead_id, viewer_id))
+
+
+    elif role == "Regional Head":
+
+        cursor.execute("""
+            SELECT
+                tl.EmpID,
+                tl.EmployeeName,
+                tl.FirstName,
+                tl.LastName
+
+            FROM Users tl
+
+            INNER JOIN Users rm
+                ON tl.ManagerID = rm.EmpID
+
+            WHERE
+                tl.EmpID = ?
+                AND tl.Role = 'Team Lead'
+                AND tl.IsActive = 1
+
+                AND rm.ManagerID = ?
+                AND rm.Role = 'Regional Manager'
+                AND rm.IsActive = 1
+        """, (teamlead_id, viewer_id))
 
 
     teamlead_row = cursor.fetchone()
 
     if not teamlead_row:
-        return redirect(url_for("regional_manager_dashboard"))
+
+        if role == "Regional Head":
+            return redirect(
+                url_for("regional_head_dashboard")
+            )
+
+        return redirect(
+            url_for("regional_manager_dashboard")
+        )
 
 
     teamlead_name = teamlead_row[1]
@@ -1296,8 +1328,6 @@ def regional_manager_team_dashboard(teamlead_id):
 
     # ========================================================
     # TEAM MEMBERS
-    #
-    # Includes the Team Lead + EDOs directly below them.
     # ========================================================
 
     cursor.execute("""
@@ -1433,8 +1463,6 @@ def regional_manager_team_dashboard(teamlead_id):
 
     # ========================================================
     # TEAM PIPELINES
-    #
-    # Member ID is passed to HTML so filtering is instant.
     # ========================================================
 
     cursor.execute("""
@@ -1481,6 +1509,8 @@ def regional_manager_team_dashboard(teamlead_id):
         "regional_manager_team.html",
 
         viewer_first_name=viewer_first_name,
+        viewer_role=role,
+
         teamlead_name=teamlead_name,
 
         team_members=team_members,
@@ -1495,6 +1525,718 @@ def regional_manager_team_dashboard(teamlead_id):
 
         pipelines=pipelines
     )
+# ============================================================
+# HEAD DASHBOARD
+# ============================================================
+
+@app.route("/regional-head")
+def regional_head_dashboard():
+
+    # -------------------------
+    # ACCESS CHECK
+    # -------------------------
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if session.get("role") != "Regional Head":
+        return redirect(url_for("login"))
+
+    regional_head_id = session["user_id"]
+    head_id = session["user_id"]
+    first_name = session.get("first_name", "")
+
+    cursor = conn.cursor()
+
+
+    # ========================================================
+    # REGIONAL MANAGERS DIRECTLY UNDER THIS HEAD
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            EmpID,
+            EmployeeName
+
+        FROM Users
+
+        WHERE
+            ManagerID = ?
+            AND Role = 'Regional Manager'
+            AND IsActive = 1
+
+        ORDER BY
+            EmployeeName
+    """, (head_id,))
+
+
+    regional_managers = [
+        {
+            "EmpID": row[0],
+            "FullName": row[1]
+        }
+
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # TEAM LEADS
+    #
+    # All Team Leads underneath Regional Managers
+    # belonging to this Head.
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            tl.EmpID,
+            tl.EmployeeName,
+
+            rm.EmpID AS RegionalManagerID,
+            rm.EmployeeName AS RegionalManagerName
+
+        FROM Users rm
+
+        INNER JOIN Users tl
+            ON tl.ManagerID = rm.EmpID
+
+        WHERE
+            rm.ManagerID = ?
+            AND rm.Role = 'Regional Manager'
+            AND rm.IsActive = 1
+
+            AND tl.Role = 'Team Lead'
+            AND tl.IsActive = 1
+
+        ORDER BY
+            rm.EmployeeName,
+            tl.EmployeeName
+    """, (head_id,))
+
+
+    team_leads = [
+        {
+            "EmpID": row[0],
+            "FullName": row[1],
+
+            "RegionalManagerID": row[2],
+            "RegionalManagerName": row[3]
+        }
+
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # ALL USERS UNDER HEAD
+    #
+    # Includes:
+    # - Head
+    # - Regional Managers
+    # - Team Leads
+    # - EDOs
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            -- Start with Head
+            SELECT
+                EmpID,
+                EmployeeName,
+                FirstName,
+                LastName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE EmpID = ?
+
+
+            UNION ALL
+
+
+            -- Everyone below the current person
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.FirstName,
+                u.LastName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            EmpID,
+            EmployeeName,
+            Role
+
+        FROM UserHierarchy
+
+        ORDER BY
+            EmployeeName
+    """, (head_id,))
+
+
+    head_users = [
+        {
+            "EmpID": row[0],
+            "FullName": row[1],
+            "Role": row[2]
+        }
+
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
+    # HEAD SUMMARY
+    #
+    # Head + RMs + TLs + EDOs
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            SELECT
+                EmpID,
+                EmployeeName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE EmpID = ?
+
+
+            UNION ALL
+
+
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            COALESCE(SUM(p.[MRC]), 0),
+            COALESCE(SUM(p.[Project OTC]), 0),
+            COALESCE(SUM(p.[Total Project Revenue]), 0),
+            COUNT(p.PipelineID)
+
+        FROM UserHierarchy uh
+
+        LEFT JOIN Pipelines p
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(uh.EmployeeName))
+
+    """, (head_id,))
+
+
+    summary_row = cursor.fetchone()
+
+    summary = {
+        "TotalMRC": summary_row[0] or 0,
+        "TotalOTC": summary_row[1] or 0,
+        "TotalRevenue": summary_row[2] or 0,
+        "TotalPipelines": summary_row[3] or 0
+    }
+
+
+    # ========================================================
+    # REVENUE BY TEAM
+    #
+    # One bar per Team Lead.
+    #
+    # Includes:
+    # - Team Lead's own pipelines
+    # - EDO pipelines underneath Team Lead
+    #
+    # Team Leads with no pipelines still appear as 0.
+    # ========================================================
+
+    cursor.execute("""
+        WITH TeamHierarchy AS (
+
+            -- Start with Team Leads under this Head's RMs
+            SELECT
+                tl.EmpID,
+                tl.EmployeeName,
+                tl.ManagerID,
+
+                tl.EmpID AS TeamLeadID,
+                tl.EmployeeName AS TeamLeadName,
+
+                rm.EmpID AS RegionalManagerID,
+                rm.EmployeeName AS RegionalManagerName
+
+            FROM Users rm
+
+            INNER JOIN Users tl
+                ON tl.ManagerID = rm.EmpID
+
+            WHERE
+                rm.ManagerID = ?
+                AND rm.Role = 'Regional Manager'
+                AND rm.IsActive = 1
+
+                AND tl.Role = 'Team Lead'
+                AND tl.IsActive = 1
+
+
+            UNION ALL
+
+
+            -- Add EDOs underneath each Team Lead
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.ManagerID,
+
+                th.TeamLeadID,
+                th.TeamLeadName,
+
+                th.RegionalManagerID,
+                th.RegionalManagerName
+
+            FROM Users u
+
+            INNER JOIN TeamHierarchy th
+                ON u.ManagerID = th.EmpID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            th.TeamLeadID,
+            th.TeamLeadName,
+            th.RegionalManagerID,
+            th.RegionalManagerName,
+
+            COALESCE(
+                SUM(p.[Total Project Revenue]),
+                0
+            ) AS TeamRevenue
+
+        FROM TeamHierarchy th
+
+        LEFT JOIN Pipelines p
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(th.EmployeeName))
+
+        GROUP BY
+            th.TeamLeadID,
+            th.TeamLeadName,
+            th.RegionalManagerID,
+            th.RegionalManagerName
+
+        ORDER BY
+            th.TeamLeadName
+
+    """, (head_id,))
+
+
+    team_names = []
+    team_revenues = []
+
+    for row in cursor.fetchall():
+
+        team_names.append(row[1])
+        team_revenues.append(row[4] or 0)
+
+
+    # ========================================================
+    # PIPELINE STATUS
+    #
+    # Entire Head hierarchy
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            SELECT
+                EmpID,
+                EmployeeName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE EmpID = ?
+
+
+            UNION ALL
+
+
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            p.[Sales Cycle Status],
+            COUNT(*)
+
+        FROM Pipelines p
+
+        INNER JOIN UserHierarchy uh
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(uh.EmployeeName))
+
+        GROUP BY
+            p.[Sales Cycle Status]
+
+    """, (head_id,))
+
+
+    status_labels = []
+    status_counts = []
+
+    for row in cursor.fetchall():
+
+        status_labels.append(row[0])
+        status_counts.append(row[1])
+
+
+    # ========================================================
+    # ALL PIPELINES
+    #
+    # Also determines which Regional Manager and Team
+    # each pipeline belongs to.
+    # ========================================================
+        cursor.execute("""
+            WITH Hierarchy AS (
+
+                -- Regional Managers
+                SELECT
+                    rm.EmpID,
+                    rm.EmployeeName,
+                    rm.Role,
+                    rm.ManagerID,
+
+                    rm.EmpID AS RegionalManagerID,
+                    rm.EmployeeName AS RegionalManagerName,
+
+                    CAST(NULL AS INT) AS TeamLeadID,
+                    CAST(NULL AS VARCHAR(255)) AS TeamLeadName
+
+                FROM Users rm
+
+                WHERE
+                    rm.ManagerID = ?
+                    AND rm.Role = 'Regional Manager'
+                    AND rm.IsActive = 1
+
+
+                UNION ALL
+
+
+                -- Everyone underneath them
+                SELECT
+                    u.EmpID,
+                    u.EmployeeName,
+                    u.Role,
+                    u.ManagerID,
+
+                    h.RegionalManagerID,
+                    h.RegionalManagerName,
+
+                    CASE
+                        WHEN u.Role = 'Team Lead'
+                            THEN u.EmpID
+                        ELSE h.TeamLeadID
+                    END AS TeamLeadID,
+
+                    CASE
+                        WHEN u.Role = 'Team Lead'
+                            THEN u.EmployeeName
+                        ELSE h.TeamLeadName
+                    END AS TeamLeadName
+
+                FROM Users u
+
+                INNER JOIN Hierarchy h
+                    ON u.ManagerID = h.EmpID
+
+                WHERE u.IsActive = 1
+            ),
+
+
+            RegionalHeadUsers AS (
+
+                -- Regional Head's own pipelines
+                SELECT
+                    u.EmpID,
+                    u.EmployeeName,
+
+                    CAST(NULL AS INT) AS RegionalManagerID,
+                    CAST(NULL AS VARCHAR(255)) AS RegionalManagerName,
+
+                    CAST(NULL AS INT) AS TeamLeadID,
+                    CAST(NULL AS VARCHAR(255)) AS TeamLeadName
+
+                FROM Users u
+
+                WHERE u.EmpID = ?
+
+
+                UNION ALL
+
+
+                -- Everyone below the Regional Head
+                SELECT
+                    h.EmpID,
+                    h.EmployeeName,
+
+                    h.RegionalManagerID,
+                    h.RegionalManagerName,
+
+                    h.TeamLeadID,
+                    h.TeamLeadName
+
+                FROM Hierarchy h
+            )
+
+
+            SELECT
+                rhu.EmpID,
+
+                p.[Account Manager],
+
+                rhu.RegionalManagerID,
+                rhu.RegionalManagerName,
+
+                rhu.TeamLeadID,
+                rhu.TeamLeadName,
+
+                p.[Vertical],
+                p.[Account Name],
+                p.[Product],
+                p.[Region],
+                p.[MRC],
+                p.[Contract Duration (Months)],
+                p.[ARR],
+                p.[Project OTC],
+                p.[Total Project Revenue],
+                p.[Estimated Closure Date],
+                p.[Estimated Closure Month],
+                p.[Sales Cycle Status],
+                p.[Next Action]
+
+            FROM Pipelines p
+
+            INNER JOIN RegionalHeadUsers rhu
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+                LTRIM(RTRIM(rhu.EmployeeName))
+
+            ORDER BY
+                p.[Account Manager],
+                p.[Account Name]
+
+        """, (
+            regional_head_id,
+            regional_head_id
+        ))
+
+        pipelines = [
+            {
+                "EmpID": row[0],
+
+                "AccountManager": row[1],
+
+                "RegionalManagerID": row[2],
+                "RegionalManagerName": row[3],
+
+                "TeamLeadID": row[4],
+                "TeamLeadName": row[5],
+
+                "Vertical": row[6],
+                "AccountName": row[7],
+                "Product": row[8],
+                "Region": row[9],
+                "MRC": row[10],
+                "ContractDuration": row[11],
+                "ARR": row[12],
+                "ProjectOTC": row[13],
+                "TotalProjectRevenue": row[14],
+                "EstimatedClosureDate": row[15],
+                "EstimatedClosureMonth": row[16],
+                "SalesCycleStatus": row[17],
+                "NextAction": row[18]
+            }
+
+            for row in cursor.fetchall()
+        ]
+
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            SELECT
+                EmpID,
+                EmployeeName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE EmpID = ?
+
+
+            UNION ALL
+
+
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+
+            WHERE u.IsActive = 1
+        ),
+
+        PipelineDates AS (
+
+            SELECT
+                p.PipelineID,
+                p.[Account Name],
+                p.[Account Manager],
+                p.[Sales Cycle Status],
+                p.[Next Action],
+
+                DATEFROMPARTS(
+                    YEAR(GETDATE()),
+
+                    CASE p.[Estimated Closure Month]
+                        WHEN 'January' THEN 1
+                        WHEN 'February' THEN 2
+                        WHEN 'March' THEN 3
+                        WHEN 'April' THEN 4
+                        WHEN 'May' THEN 5
+                        WHEN 'June' THEN 6
+                        WHEN 'July' THEN 7
+                        WHEN 'August' THEN 8
+                        WHEN 'September' THEN 9
+                        WHEN 'October' THEN 10
+                        WHEN 'November' THEN 11
+                        WHEN 'December' THEN 12
+                    END,
+
+                    TRY_CAST(
+                        p.[Estimated Closure Date]
+                        AS INT
+                    )
+                ) AS ClosureDate
+
+            FROM Pipelines p
+
+            INNER JOIN UserHierarchy uh
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+                LTRIM(RTRIM(uh.EmployeeName))
+
+            WHERE
+                p.[Estimated Closure Date] IS NOT NULL
+                AND p.[Estimated Closure Month] IS NOT NULL
+        )
+
+        SELECT
+            PipelineID,
+            [Account Name],
+            [Account Manager],
+            [Sales Cycle Status],
+            [Next Action],
+            ClosureDate,
+            DATEDIFF(
+                DAY,
+                CAST(GETDATE() AS DATE),
+                ClosureDate
+            ) AS DaysRemaining
+
+        FROM PipelineDates
+
+        WHERE
+            ClosureDate >= CAST(GETDATE() AS DATE)
+
+            AND ClosureDate <= DATEADD(
+                DAY,
+                30,
+                CAST(GETDATE() AS DATE)
+            )
+
+        ORDER BY
+            ClosureDate ASC
+
+    """, (regional_head_id,))
+
+    upcoming_deadlines = [
+        {
+            "PipelineID": row[0],
+            "AccountName": row[1],
+            "AccountManager": row[2],
+            "Status": row[3],
+            "NextAction": row[4],
+            "ClosureDate": row[5],
+            "DaysRemaining": row[6]
+        }
+
+        for row in cursor.fetchall()
+    ]
+    # ========================================================
+    # RENDER
+    # ========================================================
+
+    return render_template(
+        "regional_head.html",
+
+        first_name=first_name,
+        summary=summary,
+
+        regional_managers=regional_managers,
+        team_leads=team_leads,
+
+        head_users=head_users,
+
+        team_names=team_names,
+        team_revenues=team_revenues,
+
+        status_labels=status_labels,
+        status_counts=status_counts,
+        
+        pipelines=pipelines,
+
+        upcoming_deadlines=upcoming_deadlines
+    )
+
 
 if __name__ == "__main__":
     app.run(debug=True)
