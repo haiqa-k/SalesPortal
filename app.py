@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 import pyodbc
 import bcrypt
+from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
@@ -260,6 +261,8 @@ def edit_pipeline(pipeline_id):
         if closure_date_input:
             import datetime
             dt = datetime.datetime.strptime(closure_date_input, "%Y-%m-%d")
+            updates.append("EstimatedClosureDateFull = ?")
+            params.append(dt.date())
             updates.append("[Estimated Closure Date] = ?")
             params.append(int(dt.day))
             updates.append("[Estimated Closure Month] = ?")
@@ -704,14 +707,83 @@ def teamlead_dashboard():
     )
 
 
+
 @app.route("/add_pipeline", methods=["GET", "POST"])
 def add_pipeline():
-    if request.method == "GET":
-        # Pass logged-in user's name to template
-        edo_name = session.get("employee_name") or f"{session['first_name']} {session['last_name']}"
-        return render_template("add_pipeline.html", edo_name=edo_name)
 
-    # POST: receive form data
+    # Allowed dropdown values
+    verticals = [
+        "Commercial",
+        "FinTech",
+        "Healthcare",
+        "Manufacturing",
+        "Telecom",
+        "Others"
+    ]
+
+    products = [
+        "0-365",
+        "Boost",
+        "Business Line",
+        "Cloud",
+        "CMT",
+        "Device GSM",
+        "Device MBB",
+        "Digital Dukan",
+        "FFM",
+        "Fixed",
+        "Group Data",
+        "GSM",
+        "M2M",
+        "SaaS",
+        "SIP",
+        "Other"
+    ]
+
+    regions = [
+        "Central",
+        "CVM",
+        "North",
+        "South",
+        "Others"
+    ]
+
+    statuses = [
+        "Customer Visit (20%)",
+        "Ask for Proposal (40%)",
+        "Negotiations (60%)",
+        "Documentation/Acceptance/Processing (80%)",
+        "System Entry/Revenue Locked (100%)",
+        "Lost to Competitor",
+        "Retired - No Decision"
+    ]
+
+    # Logged-in Account Manager
+    edo_name = (
+        session.get("employee_name")
+        or f"{session['first_name']} {session['last_name']}"
+    )
+
+
+    # =========================
+    # GET
+    # =========================
+
+    if request.method == "GET":
+        return render_template(
+            "add_pipeline.html",
+            edo_name=edo_name,
+            verticals=verticals,
+            products=products,
+            regions=regions,
+            statuses=statuses
+        )
+
+
+    # =========================
+    # POST - FORM DATA
+    # =========================
+
     vertical = request.form.get("vertical")
     account_name = request.form.get("account_name")
     product = request.form.get("product")
@@ -722,30 +794,86 @@ def add_pipeline():
     arr = request.form.get("arr")
     project_otc = request.form.get("project_otc")
     total_project_revenue = request.form.get("total_project_revenue")
+
     closure_date = request.form.get("closure_date")
     sales_cycle_status = request.form.get("sales_cycle_status")
     next_action = request.form.get("next_action")
 
-    # Convert numbers
+
+    # =========================
+    # REQUIRED FIELD VALIDATION
+    # =========================
+
+    if not all([
+        vertical,
+        product,
+        sales_cycle_status,
+        account_name,
+        region,
+        closure_date
+    ]):
+        return "Please fill in all required fields.", 400
+
+
+    # =========================
+    # VALIDATE DROPDOWN VALUES
+    # =========================
+
+    if vertical not in verticals:
+        return "Invalid Vertical selected.", 400
+
+    if product not in products:
+        return "Invalid Product selected.", 400
+
+    if region not in regions:
+        return "Invalid Region selected.", 400
+
+    if sales_cycle_status not in statuses:
+        return "Invalid Sales Cycle Status selected.", 400
+
+
+    # =========================
+    # CONVERT NUMBERS
+    # =========================
+
     mrc = float(mrc) if mrc else None
     contract_duration = float(contract_duration) if contract_duration else None
     arr = float(arr) if arr else None
     project_otc = float(project_otc) if project_otc else None
-    total_project_revenue = float(total_project_revenue) if total_project_revenue else None
+    total_project_revenue = (
+        float(total_project_revenue)
+        if total_project_revenue
+        else None
+    )
 
-    # Convert closure date into day + month
-    closure_day = None
-    closure_month = None
-    if closure_date:
-        closure_date_obj = datetime.strptime(closure_date, "%Y-%m-%d")
-        closure_day = closure_date_obj.day
-        closure_month = closure_date_obj.strftime("%B")
 
-    # Auto-populate Account Manager from session
-    account_manager = session.get("employee_name") or f"{session['first_name']} {session['last_name']}"
+    # =========================
+    # CLOSURE DATE
+    # =========================
 
-    # Insert into SQL Server
+    # Keep all three date columns populated for now
+    closure_date_obj = datetime.strptime(
+        closure_date,
+        "%Y-%m-%d"
+    )
+
+    closure_day = closure_date_obj.day
+    closure_month = closure_date_obj.strftime("%B")
+
+
+    # =========================
+    # ACCOUNT MANAGER
+    # =========================
+
+    account_manager = edo_name
+
+
+    # =========================
+    # INSERT INTO SQL SERVER
+    # =========================
+
     cursor = conn.cursor()
+
     cursor.execute("""
         INSERT INTO dbo.Pipelines
         (
@@ -758,13 +886,16 @@ def add_pipeline():
             [ARR],
             [Project OTC],
             [Total Project Revenue],
+
             [Estimated Closure Date],
             [Estimated Closure Month],
+            EstimatedClosureDateFull,
+
             [Sales Cycle Status],
             [Account Manager],
             [Next Action]
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
         vertical,
         account_name,
@@ -775,20 +906,18 @@ def add_pipeline():
         arr,
         project_otc,
         total_project_revenue,
-        closure_day,       # int day only
-        closure_month,     # month name
+
+        closure_day,
+        closure_month,
+        closure_date,
+
         sales_cycle_status,
         account_manager,
         next_action
     )
+
     conn.commit()
     cursor.close()
-
-    return redirect(url_for("my_pipelines"))
-
-
-
-    # Return to dashboard
 
     return redirect(url_for("my_pipelines"))
 
@@ -962,7 +1091,21 @@ def regional_manager_dashboard():
             COALESCE(SUM(p.[MRC]), 0),
             COALESCE(SUM(p.[Project OTC]), 0),
             COALESCE(SUM(p.[Total Project Revenue]), 0),
-            COUNT(p.PipelineID)
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN p.[Sales Cycle Status] IN (
+                            'Customer Visit (20%)',
+                            'Ask for Proposal (40%)',
+                            'Negotiations (60%)',
+                            'Documentation/Acceptance/Processing (80%)'
+                        )
+                        THEN 1
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS ActivePipelines
 
         FROM UserHierarchy uh
 
@@ -1064,12 +1207,23 @@ def regional_manager_dashboard():
         team_revenues.append(
             row[2] or 0
         )
-
- 
-
     # ========================================================
-    # REGION PIPELINE STATUS
+    # REGION PIPELINE STATUS BY PERSON
+    #
+    # Filter options:
+    # - Team Leads
+    # - EDOs
+    #
+    # Used by client-side chart filter so the page does NOT
+    # reload when a person is selected.
     # ========================================================
+
+    status_users = [
+        user
+        for user in region_users
+        if user["Role"] in ["Team Lead", "EDO"]
+    ]
+
 
     cursor.execute("""
         WITH UserHierarchy AS (
@@ -1077,8 +1231,6 @@ def regional_manager_dashboard():
             SELECT
                 EmpID,
                 EmployeeName,
-                FirstName,
-                LastName,
                 Role,
                 ManagerID
 
@@ -1093,8 +1245,6 @@ def regional_manager_dashboard():
             SELECT
                 u.EmpID,
                 u.EmployeeName,
-                u.FirstName,
-                u.LastName,
                 u.Role,
                 u.ManagerID
 
@@ -1107,27 +1257,60 @@ def regional_manager_dashboard():
         )
 
         SELECT
+            uh.EmpID,
+            uh.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(*)
+            COUNT(p.PipelineID) AS StatusCount
 
-        FROM Pipelines p
+        FROM UserHierarchy uh
 
-        INNER JOIN UserHierarchy uh
+        LEFT JOIN Pipelines p
             ON LTRIM(RTRIM(p.[Account Manager])) =
                LTRIM(RTRIM(uh.EmployeeName))
 
+        WHERE
+            uh.Role IN ('Team Lead', 'EDO')
+
         GROUP BY
+            uh.EmpID,
+            uh.EmployeeName,
+            p.[Sales Cycle Status]
+
+        ORDER BY
+            uh.EmployeeName,
             p.[Sales Cycle Status]
     """, (regional_manager_id,))
 
 
-    status_labels = []
-    status_counts = []
+    status_by_user = {}
 
     for row in cursor.fetchall():
 
-        status_labels.append(row[0])
-        status_counts.append(row[1])
+        emp_id = str(row[0])
+        employee_name = row[1]
+        status = row[2]
+        count = row[3] or 0
+
+        if emp_id not in status_by_user:
+            status_by_user[emp_id] = {
+                "name": employee_name,
+                "statuses": {}
+            }
+
+        if status:
+            status_by_user[emp_id]["statuses"][status] = count
+
+
+    all_statuses = {}
+
+    for user_data in status_by_user.values():
+
+        for status, count in user_data["statuses"].items():
+
+            all_statuses[status] = (
+                all_statuses.get(status, 0)
+                + count
+            )
 
 
     # ========================================================
@@ -1231,21 +1414,21 @@ def regional_manager_dashboard():
 
         SELECT
             ru.EmpID,
-
             p.[Account Manager],
-
             ru.TeamName,
-
             ru.TeamLeadID,
-
+            p.[Vertical],
             p.[Account Name],
-
+            p.[Product],
+            p.[Region],
             p.[MRC],
-
+            p.[Contract Duration (Months)],
+            p.[ARR],
+            p.[Project OTC],
             p.[Total Project Revenue],
-
+            p.[Estimated Closure Date],
+            p.[Estimated Closure Month],
             p.[Sales Cycle Status],
-
             p.[Next Action]
 
         FROM Pipelines p
@@ -1265,34 +1448,24 @@ def regional_manager_dashboard():
 
     pipelines = [
         {
-            "EmpID":
-                row[0],
-
-            "AccountManager":
-                row[1],
-
-            "TeamName":
-                row[2],
-
-            "TeamLeadID":
-                row[3],
-
-            "AccountName":
-                row[4],
-
-            "MRC":
-                row[5],
-
-            "TotalProjectRevenue":
-                row[6],
-
-            "SalesCycleStatus":
-                row[7],
-
-            "NextAction":
-                row[8]
+            "EmpID": row[0],
+            "AccountManager": row[1],
+            "TeamName": row[2],
+            "TeamLeadID": row[3],
+            "Vertical": row[4],
+            "AccountName": row[5],
+            "Product": row[6],
+            "Region": row[7],
+            "MRC": row[8],
+            "ContractDuration": row[9],
+            "ARR": row[10],
+            "ProjectOTC": row[11],
+            "TotalProjectRevenue": row[12],
+            "EstimatedClosureDate": row[13],
+            "EstimatedClosureMonth": row[14],
+            "SalesCycleStatus": row[15],
+            "NextAction": row[16]
         }
-
         for row in cursor.fetchall()
     ]
 
@@ -1316,12 +1489,14 @@ def regional_manager_dashboard():
 
         team_names=team_names,
         team_revenues=team_revenues,
+        status_users=status_users,
 
-        status_labels=status_labels,
-        status_counts=status_counts,
+        status_by_user=status_by_user,
+        all_statuses=all_statuses,
 
         pipelines=pipelines
     )
+
 
 # ============================================================
 # REGIONAL MANAGER -> TEAM DRILL-DOWN
@@ -1416,6 +1591,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
     # ========================================================
     # TEAM MEMBERS
+    # Team Lead + assigned EDOs
     # ========================================================
 
     cursor.execute("""
@@ -1423,7 +1599,8 @@ def regional_manager_team_dashboard(teamlead_id):
             EmpID,
             EmployeeName,
             FirstName,
-            LastName
+            LastName,
+            Role
 
         FROM Users
 
@@ -1442,7 +1619,8 @@ def regional_manager_team_dashboard(teamlead_id):
     team_members = [
         {
             "EmpID": row[0],
-            "FullName": row[1]
+            "FullName": row[1],
+            "Role": row[4]
         }
         for row in cursor.fetchall()
     ]
@@ -1457,7 +1635,21 @@ def regional_manager_team_dashboard(teamlead_id):
             COALESCE(SUM(p.[MRC]), 0),
             COALESCE(SUM(p.[Project OTC]), 0),
             COALESCE(SUM(p.[Total Project Revenue]), 0),
-            COUNT(p.PipelineID)
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN p.[Sales Cycle Status] IN (
+                            'Customer Visit (20%)',
+                            'Ask for Proposal (40%)',
+                            'Negotiations (60%)',
+                            'Documentation/Acceptance/Processing (80%)'
+                        )
+                        THEN 1
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS ActivePipelines
 
         FROM Users u
 
@@ -1518,35 +1710,71 @@ def regional_manager_team_dashboard(teamlead_id):
 
 
     # ========================================================
-    # TEAM PIPELINE STATUS
+    # TEAM PIPELINE STATUS BY PERSON
+    # Team Lead + assigned EDOs
+    # Used by client-side chart filter
     # ========================================================
 
     cursor.execute("""
         SELECT
+            u.EmpID,
+            u.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(*)
+            COUNT(p.PipelineID) AS StatusCount
 
-        FROM Pipelines p
+        FROM Users u
 
-        INNER JOIN Users u
+        LEFT JOIN Pipelines p
             ON LTRIM(RTRIM(p.[Account Manager])) =
                LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.EmpID = ?
-            OR u.ManagerID = ?
+            (
+                u.EmpID = ?
+                OR u.ManagerID = ?
+            )
+            AND u.IsActive = 1
 
         GROUP BY
+            u.EmpID,
+            u.EmployeeName,
+            p.[Sales Cycle Status]
+
+        ORDER BY
+            u.EmployeeName,
             p.[Sales Cycle Status]
     """, (teamlead_id, teamlead_id))
 
 
-    status_labels = []
-    status_counts = []
+    status_by_user = {}
 
     for row in cursor.fetchall():
-        status_labels.append(row[0])
-        status_counts.append(row[1])
+
+        emp_id = str(row[0])
+        employee_name = row[1]
+        status = row[2]
+        count = row[3] or 0
+
+        if emp_id not in status_by_user:
+            status_by_user[emp_id] = {
+                "name": employee_name,
+                "statuses": {}
+            }
+
+        if status:
+            status_by_user[emp_id]["statuses"][status] = count
+
+
+    all_statuses = {}
+
+    for user_data in status_by_user.values():
+
+        for status, count in user_data["statuses"].items():
+
+            all_statuses[status] = (
+                all_statuses.get(status, 0)
+                + count
+            )
 
 
     # ========================================================
@@ -1575,7 +1803,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
         INNER JOIN Users u
             ON LTRIM(RTRIM(p.[Account Manager])) =
-            LTRIM(RTRIM(u.EmployeeName))
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
             u.EmpID = ?
@@ -1624,11 +1852,16 @@ def regional_manager_team_dashboard(teamlead_id):
         member_names=member_names,
         member_revenues=member_revenues,
 
-        status_labels=status_labels,
-        status_counts=status_counts,
+        status_by_user=status_by_user,
+        all_statuses=all_statuses,
 
         pipelines=pipelines
     )
+
+
+
+
+
 # ============================================================
 # HEAD DASHBOARD
 # ============================================================
@@ -1842,7 +2075,21 @@ def regional_head_dashboard():
             COALESCE(SUM(p.[MRC]), 0),
             COALESCE(SUM(p.[Project OTC]), 0),
             COALESCE(SUM(p.[Total Project Revenue]), 0),
-            COUNT(p.PipelineID)
+            COALESCE(
+                SUM(
+                    CASE
+                        WHEN p.[Sales Cycle Status] IN (
+                            'Customer Visit (20%)',
+                            'Ask for Proposal (40%)',
+                            'Negotiations (60%)',
+                            'Documentation/Acceptance/Processing (80%)'
+                        )
+                        THEN 1
+                        ELSE 0
+                    END
+                ),
+                0
+            ) AS ActivePipelines
 
         FROM UserHierarchy uh
 
@@ -1859,7 +2106,7 @@ def regional_head_dashboard():
         "TotalMRC": summary_row[0] or 0,
         "TotalOTC": summary_row[1] or 0,
         "TotalRevenue": summary_row[2] or 0,
-        "TotalPipelines": summary_row[3] or 0
+        "ActivePipelines": summary_row[3] or 0
     }
 
 
@@ -1963,13 +2210,23 @@ def regional_head_dashboard():
 
         team_names.append(row[1])
         team_revenues.append(row[4] or 0)
-
-
     # ========================================================
-    # PIPELINE STATUS
+    # PIPELINE STATUS BY PERSON
     #
-    # Entire Head hierarchy
+    # Regional Head view:
+    # - All Team Leads
+    # - All EDOs
+    #
+    # Used by client-side chart filter so selecting a person
+    # updates only the pie chart and does not reload the page.
     # ========================================================
+
+    status_users = [
+        user
+        for user in head_users
+        if user["Role"] in ["Team Lead", "EDO"]
+    ]
+
 
     cursor.execute("""
         WITH UserHierarchy AS (
@@ -2003,28 +2260,60 @@ def regional_head_dashboard():
         )
 
         SELECT
+            uh.EmpID,
+            uh.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(*)
+            COUNT(p.PipelineID) AS StatusCount
 
-        FROM Pipelines p
+        FROM UserHierarchy uh
 
-        INNER JOIN UserHierarchy uh
+        LEFT JOIN Pipelines p
             ON LTRIM(RTRIM(p.[Account Manager])) =
                LTRIM(RTRIM(uh.EmployeeName))
 
+        WHERE
+            uh.Role IN ('Team Lead', 'EDO')
+
         GROUP BY
+            uh.EmpID,
+            uh.EmployeeName,
             p.[Sales Cycle Status]
 
+        ORDER BY
+            uh.EmployeeName,
+            p.[Sales Cycle Status]
     """, (head_id,))
 
 
-    status_labels = []
-    status_counts = []
+    status_by_user = {}
 
     for row in cursor.fetchall():
 
-        status_labels.append(row[0])
-        status_counts.append(row[1])
+        emp_id = str(row[0])
+        employee_name = row[1]
+        status = row[2]
+        count = row[3] or 0
+
+        if emp_id not in status_by_user:
+            status_by_user[emp_id] = {
+                "name": employee_name,
+                "statuses": {}
+            }
+
+        if status:
+            status_by_user[emp_id]["statuses"][status] = count
+
+
+    all_statuses = {}
+
+    for user_data in status_by_user.values():
+
+        for status, count in user_data["statuses"].items():
+
+            all_statuses[status] = (
+                all_statuses.get(status, 0)
+                + count
+            )
 
 
     # ========================================================
@@ -2332,9 +2621,10 @@ def regional_head_dashboard():
 
         team_names=team_names,
         team_revenues=team_revenues,
+        status_users=status_users,
 
-        status_labels=status_labels,
-        status_counts=status_counts,
+        status_by_user=status_by_user,
+        all_statuses=all_statuses,
         
         pipelines=pipelines,
 

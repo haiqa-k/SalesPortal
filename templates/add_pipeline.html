@@ -317,38 +317,24 @@
                 <div class="form-group">
 
                     <label for="vertical">
-                        Vertical
+                        Vertical *
                     </label>
 
-                    <select id="vertical" name="vertical" required>
+                    <select
+                        id="vertical"
+                        name="vertical"
+                        required
+                    >
 
                         <option value="" disabled selected>
                             Select Vertical
                         </option>
 
-                        <option value="Commercial">
-                            Commercial
-                        </option>
-
-                        <option value="FinTech">
-                            FinTech
-                        </option>
-
-                        <option value="Healthcare">
-                            Healthcare
-                        </option>
-
-                        <option value="Manufacturing">
-                            Manufacturing
-                        </option>
-
-                        <option value="Telecom">
-                            Telecom
-                        </option>
-
-                        <option value="Others">
-                            Others
-                        </option>
+                        {% for vertical in verticals %}
+                            <option value="{{ vertical }}">
+                                {{ vertical }}
+                            </option>
+                        {% endfor %}
 
                     </select>
 
@@ -360,7 +346,7 @@
                 <div class="form-group">
 
                     <label for="account_name">
-                        Account Name
+                        Account Name *
                     </label>
 
                     <input
@@ -378,15 +364,26 @@
                 <div class="form-group">
 
                     <label for="product">
-                        Product
+                        Product *
                     </label>
 
-                    <input
-                        type="text"
+                    <select
                         id="product"
                         name="product"
                         required
                     >
+
+                        <option value="" disabled selected>
+                            Select Product
+                        </option>
+
+                        {% for product in products %}
+                            <option value="{{ product }}">
+                                {{ product }}
+                            </option>
+                        {% endfor %}
+
+                    </select>
 
                 </div>
 
@@ -396,34 +393,24 @@
                 <div class="form-group">
 
                     <label for="region">
-                        Region
+                        Region *
                     </label>
 
-                    <select id="region" name="region" required>
+                    <select
+                        id="region"
+                        name="region"
+                        required
+                    >
 
                         <option value="" disabled selected>
                             Select Region
                         </option>
 
-                        <option value="Central">
-                            Central
-                        </option>
-
-                        <option value="CVM">
-                            CVM
-                        </option>
-
-                        <option value="North">
-                            North
-                        </option>
-
-                        <option value="South">
-                            South
-                        </option>
-
-                        <option value="Others">
-                            Others
-                        </option>
+                        {% for region in regions %}
+                            <option value="{{ region }}">
+                                {{ region }}
+                            </option>
+                        {% endfor %}
 
                     </select>
 
@@ -530,7 +517,7 @@
                 <div class="form-group">
 
                     <label for="closure_date">
-                        Estimated Closure Date
+                        Estimated Closure Date *
                     </label>
 
                     <input
@@ -548,7 +535,7 @@
                 <div class="form-group">
 
                     <label for="sales_cycle_status">
-                        Sales Cycle Status
+                        Sales Cycle Status *
                     </label>
 
                     <select
@@ -561,32 +548,11 @@
                             Select Status
                         </option>
 
-                        <option value="Customer Visit (20%)">
-                            Customer Visit (20%)
-                        </option>
-
-                        <option value="Ask for Proposal (40%)">
-                            Ask for Proposal (40%)
-                        </option>
-
-                        <option value="Negotiations (60%)">
-                            Negotiations (60%)
-                        </option>
-
-                        <option value="Documentation/Acceptance/Processing (80%)">
-                            Documentation/Acceptance/Processing (80%)
-                        </option>
-
-                        <option value="System Entry/Revenue Locked (100%)">
-                            System Entry/Revenue Locked (100%)
-                        </option>
-                        <option value="Lost to Competitor">
-                            Lost to Competitor
-                        </option>
-
-                        <option value="Retired - No Decision">
-                            Retired - No Decision
-                        </option>
+                        {% for status in statuses %}
+                            <option value="{{ status }}">
+                                {{ status }}
+                            </option>
+                        {% endfor %}
 
                     </select>
 
@@ -596,11 +562,21 @@
                 <!-- ACCOUNT MANAGER -->
 
                 <div class="form-group">
-                    <label for="account_manager">Account Manager</label>
-                    <input type="text" id="account_manager" name="account_manager"
-                            value="{{ edo_name }}" readonly class="form-control">
-                </div>
 
+                    <label for="account_manager">
+                        Account Manager
+                    </label>
+
+                    <input
+                        type="text"
+                        id="account_manager"
+                        name="account_manager"
+                        value="{{ edo_name }}"
+                        readonly
+                        class="form-control"
+                    >
+
+                </div>
 
 
                 <!-- NEXT ACTION -->

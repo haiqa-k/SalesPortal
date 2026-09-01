@@ -242,6 +242,23 @@
             font-weight: 600;
         }
 
+        .status-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .status-filter {
+            margin: 0;
+        }
+
+        .status-filter .form-select {
+            width: 210px;
+            height: 38px;
+        }
+
+
         .chart-body {
             padding: 25px;
 
@@ -919,11 +936,11 @@
                 <div class="card-body">
 
                     <div class="summary-label">
-                        Total Pipelines
+                        Active Pipelines
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalPipelines }}
+                        {{ summary.ActivePipelines }}
                     </p>
 
                 </div>
@@ -972,11 +989,34 @@
 
             <div class="chart-card">
 
-                <div class="chart-header">
+                <div class="chart-header status-chart-header">
 
                     <h2 class="chart-title">
                         Pipeline Status
                     </h2>
+
+                    <div class="status-filter">
+
+                        <select
+                            id="statusUserFilter"
+                            class="form-select"
+                        >
+
+                            <option value="all">
+                                All
+                            </option>
+
+                            {% for user in status_users %}
+
+                                <option value="{{ user.EmpID }}">
+                                    {{ user.FullName }} ({{ user.Role }})
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
 
                 </div>
 
@@ -2504,90 +2544,121 @@ if (revenueCanvas) {
    PIPELINE STATUS
 ========================= */
 
-const statusCanvas =
-    document.getElementById(
-        'statusChart'
-    );
+const statusCtx =
+    document
+        .getElementById('statusChart')
+        .getContext('2d');
 
 
-if (statusCanvas) {
+const statusByUser =
+    {{ status_by_user | tojson }};
 
-    const statusCtx =
-        statusCanvas.getContext('2d');
-
-
-    new Chart(
-        statusCtx,
-        {
-
-            type: 'doughnut',
+const allStatuses =
+    {{ all_statuses | tojson }};
 
 
-            data: {
+const statusChart = new Chart(statusCtx, {
 
-                labels:
-                    {{ status_labels | tojson }},
+    type: 'doughnut',
 
+    data: {
 
-                datasets: [{
+        labels: Object.keys(allStatuses),
 
-                    data:
-                        {{ status_counts | tojson }},
+        datasets: [{
 
-                    backgroundColor: [
+            data: Object.values(allStatuses),
 
-                        '#c62828',
-                        '#7b1fa2',
-                        '#512da8',
-                        '#ef5350',
-                        '#9575cd',
-                        '#ab47bc',
-                        '#616161'
+            backgroundColor: [
+                '#c62828',
+                '#7b1fa2',
+                '#512da8',
+                '#ef5350',
+                '#9575cd',
+                '#ab47bc',
+                '#616161'
+            ],
 
-                    ],
+            borderColor: '#171717',
 
-                    borderColor:
-                        '#171717',
+            borderWidth: 3
 
-                    borderWidth: 3
+        }]
 
-                }]
+    },
 
-            },
+    options: {
 
+        responsive: true,
 
-            options: {
+        maintainAspectRatio: false,
 
-                responsive: true,
+        cutout: '60%',
 
-                maintainAspectRatio: false,
+        plugins: {
 
-                cutout: '60%',
+            legend: {
 
+                position: 'bottom',
 
-                plugins: {
+                labels: {
 
-                    legend: {
+                    color: '#d5d5d5',
 
-                        position: 'bottom',
+                    padding: 18,
 
-                        labels: {
-
-                            color:
-                                '#d5d5d5',
-
-                            padding: 18,
-
-                            usePointStyle:
-                                true
-
-                        }
-
-                    }
+                    usePointStyle: true
 
                 }
 
             }
+
+        }
+
+    }
+
+});
+
+
+const statusUserFilter =
+    document.getElementById('statusUserFilter');
+
+
+if (statusUserFilter) {
+
+    statusUserFilter.addEventListener(
+        'change',
+        function () {
+
+            const selectedUser =
+                this.value;
+
+            let statuses;
+
+
+            if (selectedUser === 'all') {
+
+                statuses =
+                    allStatuses;
+
+            }
+
+            else {
+
+                statuses =
+                    statusByUser[selectedUser]
+                        ?.statuses || {};
+
+            }
+
+
+            statusChart.data.labels =
+                Object.keys(statuses);
+
+            statusChart.data.datasets[0].data =
+                Object.values(statuses);
+
+            statusChart.update();
 
         }
     );

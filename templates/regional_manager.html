@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 
+{% from "components/column_selector.html" import column_selector %}
+
 <head>
 
     <title>Regional Manager Dashboard</title>
@@ -9,6 +11,11 @@
 
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -184,6 +191,23 @@
 
             font-size: 16px;
             font-weight: 600;
+        }
+
+
+        .status-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .status-filter {
+            margin: 0;
+        }
+
+        .status-filter .form-select {
+            width: 190px;
+            height: 38px;
         }
 
         .chart-body {
@@ -362,6 +386,44 @@
 
         .table-filter {
             min-width: 240px;
+        }
+
+
+        .table-header-controls {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .table-header-controls .table-filter {
+            margin: 0;
+            display: flex;
+            align-items: stretch;
+            min-width: 220px;
+        }
+
+        .table-header-controls .form-select,
+        .table-header-controls .column-selector .dropdown-toggle {
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            box-sizing: border-box;
+        }
+
+        .table-header-controls .column-selector {
+            margin: 0;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .table-header-controls .column-selector .dropdown-toggle {
+            min-width: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .form-select {
@@ -704,7 +766,7 @@
                 <div class="card-body">
 
                     <div class="summary-label">
-                        Total Pipelines
+                        Active Pipelines
                     </div>
 
                     <p class="summary-value">
@@ -752,11 +814,34 @@
 
             <div class="chart-card">
 
-                <div class="chart-header">
+                <div class="chart-header status-chart-header">
 
                     <h2 class="chart-title">
                         Region Pipeline Status
                     </h2>
+
+                    <div class="status-filter">
+
+                        <select
+                            id="statusUserFilter"
+                            class="form-select"
+                        >
+
+                            <option value="all">
+                                All
+                            </option>
+
+                            {% for user in status_users %}
+
+                                <option value="{{ user.EmpID }}">
+                                    {{ user.FullName }} ({{ user.Role }})
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
 
                 </div>
 
@@ -862,31 +947,64 @@
             </h2>
 
 
-            <div class="table-filter">
+            <div class="table-header-controls">
 
-                <select
-                    id="individualFilter"
-                    class="form-select"
-                >
+                <div class="table-filter">
 
-                    <option value="all">
-                        All Individuals
-                    </option>
+                    <select
+                        id="individualFilter"
+                        class="form-select"
+                    >
 
-                    {% for user in region_users %}
+                        <option value="all">
+                            All Individuals
+                        </option>
 
-                    <option value="{{ user.EmpID }}">
-                        {{ user.FullName }}
-                    </option>
+                        {% for user in region_users %}
 
-                    {% endfor %}
+                            <option value="{{ user.EmpID }}">
+                                {{ user.FullName }}
+                            </option>
 
-                </select>
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+                {{ column_selector(
+                    [
+                        ('account-manager', 'Account Manager'),
+                        ('team-lead', 'Team Lead'),
+                        ('vertical', 'Vertical'),
+                        ('account-name', 'Account Name'),
+                        ('product', 'Product'),
+                        ('region', 'Region'),
+                        ('mrc', 'MRC'),
+                        ('contract-duration', 'Contract Duration'),
+                        ('arr', 'ARR'),
+                        ('project-otc', 'Project OTC'),
+                        ('total-revenue', 'Total Revenue'),
+                        ('closure-date', 'Closure Date'),
+                        ('closure-month', 'Closure Month'),
+                        ('status', 'Status'),
+                        ('next-action', 'Next Action')
+                    ],
+                    [
+                        'account-manager',
+                        'team-lead',
+                        'account-name',
+                        'product',
+                        'mrc',
+                        'total-revenue',
+                        'closure-date',
+                        'status'
+                    ]
+                ) }}
 
             </div>
 
         </div>
-
 
 
         <div class="table-wrapper">
@@ -897,43 +1015,99 @@
 
                     <tr>
 
-                        <th>Account Manager</th>
-                        <th>Team</th>
-                        <th>Account Name</th>
+                        <th data-col="account-manager">
+                            Account Manager
+                        </th>
+
+                        <th data-col="team-lead">
+                            Team Lead
+                        </th>
+
+                        <th data-col="vertical">
+                            Vertical
+                        </th>
+
+                        <th data-col="account-name">
+                            Account Name
+                        </th>
+
+                        <th data-col="product">
+                            Product
+                        </th>
+
+                        <th data-col="region">
+                            Region
+                        </th>
 
                         <th
                             class="sortable"
-                            data-column="3"
+                            data-column="6"
                             data-type="number"
+                            data-col="mrc"
                         >
                             MRC
                             <span class="sort-icon"></span>
                         </th>
 
+                        <th data-col="contract-duration">
+                            Contract Duration
+                        </th>
+
                         <th
                             class="sortable"
-                            data-column="4"
+                            data-column="8"
                             data-type="number"
+                            data-col="arr"
+                        >
+                            ARR
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="9"
+                            data-type="number"
+                            data-col="project-otc"
+                        >
+                            Project OTC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="10"
+                            data-type="number"
+                            data-col="total-revenue"
                         >
                             Total Revenue
                             <span class="sort-icon"></span>
                         </th>
 
+                        <th data-col="closure-date">
+                            Closure Date
+                        </th>
+
+                        <th data-col="closure-month">
+                            Closure Month
+                        </th>
+
                         <th
                             class="sortable"
-                            data-column="5"
+                            data-column="13"
                             data-type="status"
+                            data-col="status"
                         >
                             Status
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th>Next Action</th>
+                        <th data-col="next-action">
+                            Next Action
+                        </th>
 
                     </tr>
 
                 </thead>
-
 
                 <tbody id="pipelineBody">
 
@@ -941,32 +1115,73 @@
 
                     <tr data-user-id="{{ pipeline.EmpID }}">
 
-                        <td class="account-manager">
+                        <td
+                            class="account-manager"
+                            data-col="account-manager"
+                        >
                             {{ pipeline.AccountManager }}
                         </td>
 
-                        <td class="team-column">
-                            {{ pipeline.TeamName }}
+                        <td
+                            class="team-column"
+                            data-col="team-lead"
+                        >
+                            {{ pipeline.TeamName or '-' }}
                         </td>
 
-                        <td class="account-name">
+                        <td data-col="vertical">
+                            {{ pipeline.Vertical or '-' }}
+                        </td>
+
+                        <td
+                            class="account-name"
+                            data-col="account-name"
+                        >
                             {{ pipeline.AccountName }}
                         </td>
 
-                        <td>
-                            {{ pipeline.MRC }}
+                        <td data-col="product">
+                            {{ pipeline.Product or '-' }}
                         </td>
 
-                        <td>
-                            {{ pipeline.TotalProjectRevenue }}
+                        <td data-col="region">
+                            {{ pipeline.Region or '-' }}
                         </td>
 
-                        <td>
-                            {{ pipeline.SalesCycleStatus }}
+                        <td data-col="mrc">
+                            {{ pipeline.MRC or 0 }}
                         </td>
 
-                        <td>
-                            {{ pipeline.NextAction }}
+                        <td data-col="contract-duration">
+                            {{ pipeline.ContractDuration or '-' }}
+                        </td>
+
+                        <td data-col="arr">
+                            {{ pipeline.ARR or 0 }}
+                        </td>
+
+                        <td data-col="project-otc">
+                            {{ pipeline.ProjectOTC or 0 }}
+                        </td>
+
+                        <td data-col="total-revenue">
+                            {{ pipeline.TotalProjectRevenue or 0 }}
+                        </td>
+
+                        <td data-col="closure-date">
+                            {{ pipeline.EstimatedClosureDate or '-' }}
+                        </td>
+
+                        <td data-col="closure-month">
+                            {{ pipeline.EstimatedClosureMonth or '-' }}
+                        </td>
+
+                        <td data-col="status">
+                            {{ pipeline.SalesCycleStatus or '-' }}
+                        </td>
+
+                        <td data-col="next-action">
+                            {{ pipeline.NextAction or '-' }}
                         </td>
 
                     </tr>
@@ -976,7 +1191,7 @@
                     <tr>
 
                         <td
-                            colspan="7"
+                            colspan="15"
                             class="empty-message"
                         >
                             No pipelines found.
@@ -997,6 +1212,14 @@
 </div>
 
 
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script
+    src="{{ url_for('static', filename='js/pipeline_columns.js') }}">
+</script>
 
 <script>
 /* =========================
@@ -1023,7 +1246,7 @@ if (individualFilter) {
 
             if (
                 selectedUser === 'all' ||
-                row.dataset.EmpID === selectedUser
+                row.dataset.userId === selectedUser
             ) {
                 row.style.display = '';
             }
@@ -1102,7 +1325,7 @@ if (individualFilter) {
 
             const rows = Array.from(
                 tbody.querySelectorAll(
-                    'tr[data-team-id]'
+                    'tr[data-user-id]'
                 )
             );
 
@@ -1262,9 +1485,6 @@ if (individualFilter) {
         }
 
     });
-
-
-
     /* =========================
        REGION STATUS
     ========================= */
@@ -1275,17 +1495,24 @@ if (individualFilter) {
             .getContext('2d');
 
 
-    new Chart(statusCtx, {
+    const statusByUser =
+        {{ status_by_user | tojson }};
+
+    const allStatuses =
+        {{ all_statuses | tojson }};
+
+
+    const statusChart = new Chart(statusCtx, {
 
         type: 'doughnut',
 
         data: {
 
-            labels: {{ status_labels | tojson }},
+            labels: Object.keys(allStatuses),
 
             datasets: [{
 
-                data: {{ status_counts | tojson }},
+                data: Object.values(allStatuses),
 
                 backgroundColor: [
                     '#c62828',
@@ -1335,6 +1562,52 @@ if (individualFilter) {
         }
 
     });
+
+
+    const statusUserFilter =
+        document.getElementById('statusUserFilter');
+
+
+    if (statusUserFilter) {
+
+        statusUserFilter.addEventListener(
+            'change',
+            function () {
+
+                const selectedUser =
+                    this.value;
+
+                let statuses;
+
+
+                if (selectedUser === 'all') {
+
+                    statuses =
+                        allStatuses;
+
+                }
+
+                else {
+
+                    statuses =
+                        statusByUser[selectedUser]
+                            ?.statuses || {};
+
+                }
+
+
+                statusChart.data.labels =
+                    Object.keys(statuses);
+
+                statusChart.data.datasets[0].data =
+                    Object.values(statuses);
+
+                statusChart.update();
+
+            }
+        );
+
+    }
 
 </script>
 

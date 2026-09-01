@@ -198,6 +198,23 @@
             font-weight: 600;
         }
 
+        .status-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .status-filter {
+            margin: 0;
+        }
+
+        .status-filter .form-select {
+            width: 190px;
+            height: 38px;
+        }
+
+
         .chart-body {
             padding: 25px;
 
@@ -667,11 +684,34 @@
 
             <div class="chart-card">
 
-                <div class="chart-header">
+                <div class="chart-header status-chart-header">
 
                     <h2 class="chart-title">
                         Pipeline Status
                     </h2>
+
+                    <div class="status-filter">
+
+                        <select
+                            id="statusUserFilter"
+                            class="form-select"
+                        >
+
+                            <option value="all">
+                                All
+                            </option>
+
+                            {% for member in team_members %}
+
+                                <option value="{{ member.EmpID }}">
+                                    {{ member.FullName }} ({{ member.Role }})
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
 
                 </div>
 
@@ -1229,9 +1269,6 @@
         }
 
     });
-
-
-
     /* =========================
        STATUS CHART
     ========================= */
@@ -1242,17 +1279,24 @@
             .getContext('2d');
 
 
-    new Chart(statusCtx, {
+    const statusByUser =
+        {{ status_by_user | tojson }};
+
+    const allStatuses =
+        {{ all_statuses | tojson }};
+
+
+    const statusChart = new Chart(statusCtx, {
 
         type: 'doughnut',
 
         data: {
 
-            labels: {{ status_labels | tojson }},
+            labels: Object.keys(allStatuses),
 
             datasets: [{
 
-                data: {{ status_counts | tojson }},
+                data: Object.values(allStatuses),
 
                 backgroundColor: [
                     '#c62828',
@@ -1302,6 +1346,51 @@
         }
 
     });
+
+
+    const statusUserFilter =
+        document.getElementById('statusUserFilter');
+
+
+    if (statusUserFilter) {
+
+        statusUserFilter.addEventListener(
+            'change',
+            function () {
+
+                const selectedUser =
+                    this.value;
+
+                let statuses;
+
+
+                if (selectedUser === 'all') {
+
+                    statuses = allStatuses;
+
+                }
+
+                else {
+
+                    statuses =
+                        statusByUser[selectedUser]
+                            ?.statuses || {};
+
+                }
+
+
+                statusChart.data.labels =
+                    Object.keys(statuses);
+
+                statusChart.data.datasets[0].data =
+                    Object.values(statuses);
+
+                statusChart.update();
+
+            }
+        );
+
+    }
 
 </script>
 
