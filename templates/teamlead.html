@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 
+{% from "components/column_selector.html" import column_selector %}
+
 <head>
     <title>Team Lead Dashboard</title>
 
@@ -8,6 +10,11 @@
 
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -31,6 +38,21 @@
             font-family: Arial, sans-serif;
         }
 
+        .status-chart-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+        }
+
+        .status-filter {
+            margin: 0;
+        }
+
+        .status-filter .form-select {
+            width: 180px;
+            height: 38px;
+        }
 
         /* =========================
            TOP BAR
@@ -88,12 +110,14 @@
             font-size: 40px;
             font-weight: 600;
             margin-bottom: 5px;
+            text-align: left;
         }
 
         .dashboard-subtitle {
             color: rgba(255, 255, 255, 0.75);
             font-size: 14px;
             margin-bottom: 30px;
+            text-align: left;
         }
 
 
@@ -406,6 +430,49 @@
         }
 
 
+
+        /* =========================
+           TABLE HEADER CONTROLS
+        ========================= */
+
+        .table-header-controls {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .table-header-controls .table-filter {
+            margin: 0;
+            display: flex;
+            align-items: stretch;
+            min-width: 220px;
+        }
+
+        .table-header-controls .form-select,
+        .table-header-controls .column-selector .dropdown-toggle {
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            box-sizing: border-box;
+        }
+
+        .table-header-controls .column-selector {
+            margin: 0;
+            display: flex;
+            align-items: stretch;
+        }
+
+        .table-header-controls .column-selector .dropdown-toggle {
+            min-width: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+
         /* =========================
            RESPONSIVE
         ========================= */
@@ -645,11 +712,33 @@
 
             <div class="chart-card">
 
-                <div class="chart-header">
+                <div class="chart-header status-chart-header">
 
                     <h2 class="chart-title">
                         Pipeline Status
                     </h2>
+                    <div class="status-filter">
+
+                        <select
+                            id="statusEdoFilter"
+                            class="form-select"
+                        >
+
+                            <option value="all">
+                                All
+                            </option>
+
+                            {% for edo in edos %}
+
+                                <option value="{{ edo.EmpID }}">
+                                    {{ edo.FullName }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
 
                 </div>
 
@@ -680,40 +769,73 @@
             </h2>
 
 
-            <form
-                method="GET"
-                action="{{ url_for('teamlead_dashboard') }}"
-                class="table-filter"
-            >
+            <div class="table-header-controls">
 
-                <select
-                    name="edo_id"
-                    class="form-select"
-                    onchange="this.form.submit()"
+                <form
+                    method="GET"
+                    action="{{ url_for('teamlead_dashboard') }}"
+                    class="table-filter"
                 >
 
-                    <option
-                        value="all"
-                        {% if selected_edo == "all" %}selected{% endif %}
+                    <select
+                        name="edo_id"
+                        class="form-select"
+                        onchange="this.form.submit()"
                     >
-                        All
-                    </option>
-
-
-                    {% for edo in edos %}
 
                         <option
-                            value="{{ edo.EmpID }}"
-                            {% if edo.EmpID == selected_edo %}selected{% endif %}
+                            value="all"
+                            {% if selected_edo == "all" %}selected{% endif %}
                         >
-                            {{ edo.FullName }}
+                            All
                         </option>
 
-                    {% endfor %}
 
-                </select>
+                        {% for edo in edos %}
 
-            </form>
+                            <option
+                                value="{{ edo.EmpID }}"
+                                {% if edo.EmpID == selected_edo %}selected{% endif %}
+                            >
+                                {{ edo.FullName }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </form>
+
+
+                {{ column_selector(
+                    [
+                        ('account-manager', 'Account Manager'),
+                        ('vertical', 'Vertical'),
+                        ('account-name', 'Account Name'),
+                        ('product', 'Product'),
+                        ('region', 'Region'),
+                        ('mrc', 'MRC'),
+                        ('contract-duration', 'Contract Duration'),
+                        ('arr', 'ARR'),
+                        ('project-otc', 'Project OTC'),
+                        ('total-revenue', 'Total Revenue'),
+                        ('closure-date', 'Closure Date'),
+                        ('closure-month', 'Closure Month'),
+                        ('status', 'Status'),
+                        ('next-action', 'Next Action')
+                    ],
+                    [
+                        'account-manager',
+                        'account-name',
+                        'product',
+                        'mrc',
+                        'total-revenue',
+                        'closure-date',
+                        'status'
+                    ]
+                ) }}
+
+            </div>
 
         </div>
 
@@ -727,25 +849,91 @@
 
                     <tr>
 
-                        <th>Account Manager</th>
-                        <th>Account Name</th>
+                        <th data-col="account-manager">
+                            Account Manager
+                        </th>
 
-                        <th class="sortable" data-column="2" data-type="number">
+                        <th data-col="vertical">
+                            Vertical
+                        </th>
+
+                        <th data-col="account-name">
+                            Account Name
+                        </th>
+
+                        <th data-col="product">
+                            Product
+                        </th>
+
+                        <th data-col="region">
+                            Region
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="5"
+                            data-type="number"
+                            data-col="mrc"
+                        >
                             MRC
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th class="sortable" data-column="3" data-type="number">
+                        <th data-col="contract-duration">
+                            Contract Duration
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="7"
+                            data-type="number"
+                            data-col="arr"
+                        >
+                            ARR
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="8"
+                            data-type="number"
+                            data-col="project-otc"
+                        >
+                            Project OTC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="9"
+                            data-type="number"
+                            data-col="total-revenue"
+                        >
                             Total Revenue
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th class="sortable" data-column="4" data-type="status">
+                        <th data-col="closure-date">
+                            Closure Date
+                        </th>
+
+                        <th data-col="closure-month">
+                            Closure Month
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="12"
+                            data-type="status"
+                            data-col="status"
+                        >
                             Status
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th>Next Action</th>
+                        <th data-col="next-action">
+                            Next Action
+                        </th>
 
                     </tr>
 
@@ -756,30 +944,68 @@
 
                     {% for pipeline in pipelines %}
 
-                    <tr>
+                    <tr data-user-id="{{ pipeline.EmpID }}">
 
-                        <td class="account-manager">
+                        <td
+                            class="account-manager"
+                            data-col="account-manager"
+                        >
                             {{ pipeline.AccountManager }}
                         </td>
 
-                        <td class="account-name">
+                        <td data-col="vertical">
+                            {{ pipeline.Vertical or '-' }}
+                        </td>
+
+                        <td
+                            class="account-name"
+                            data-col="account-name"
+                        >
                             {{ pipeline.AccountName }}
                         </td>
 
-                        <td>
-                            {{ pipeline.MRC }}
+                        <td data-col="product">
+                            {{ pipeline.Product or '-' }}
                         </td>
 
-                        <td>
-                            {{ pipeline.TotalProjectRevenue }}
+                        <td data-col="region">
+                            {{ pipeline.Region or '-' }}
                         </td>
 
-                        <td>
-                            {{ pipeline.SalesCycleStatus }}
+                        <td data-col="mrc">
+                            {{ pipeline.MRC or 0 }}
                         </td>
 
-                        <td>
-                            {{ pipeline.NextAction }}
+                        <td data-col="contract-duration">
+                            {{ pipeline.ContractDuration or '-' }}
+                        </td>
+
+                        <td data-col="arr">
+                            {{ pipeline.ARR or 0 }}
+                        </td>
+
+                        <td data-col="project-otc">
+                            {{ pipeline.ProjectOTC or 0 }}
+                        </td>
+
+                        <td data-col="total-revenue">
+                            {{ pipeline.TotalProjectRevenue or 0 }}
+                        </td>
+
+                        <td data-col="closure-date">
+                            {{ pipeline.EstimatedClosureDate or '-' }}
+                        </td>
+
+                        <td data-col="closure-month">
+                            {{ pipeline.EstimatedClosureMonth or '-' }}
+                        </td>
+
+                        <td data-col="status">
+                            {{ pipeline.SalesCycleStatus or '-' }}
+                        </td>
+
+                        <td data-col="next-action">
+                            {{ pipeline.NextAction or '-' }}
                         </td>
 
                     </tr>
@@ -789,7 +1015,7 @@
                     <tr>
 
                         <td
-                            colspan="6"
+                            colspan="14"
                             class="empty-message"
                         >
                             No pipelines found.
@@ -1028,26 +1254,30 @@
         }
 
     });
-
-
-
     const statusCtx =
         document
             .getElementById('statusChart')
             .getContext('2d');
 
 
-    new Chart(statusCtx, {
+    const statusByEdo =
+        {{ status_by_edo | tojson }};
+
+    const allStatuses =
+        {{ all_statuses | tojson }};
+
+
+    const statusChart = new Chart(statusCtx, {
 
         type: 'doughnut',
 
         data: {
 
-            labels: {{ status_labels | safe }},
+            labels: Object.keys(allStatuses),
 
             datasets: [{
 
-                data: {{ status_counts | safe }},
+                data: Object.values(allStatuses),
 
                 backgroundColor: [
                     '#c62828',
@@ -1055,7 +1285,8 @@
                     '#512da8',
                     '#ef5350',
                     '#9575cd',
-                    '#ab47bc'
+                    '#ab47bc',
+                    '#42a5f5'
                 ],
 
                 borderColor: '#171717',
@@ -1098,8 +1329,50 @@
 
     });
 
+
+    document
+        .getElementById('statusEdoFilter')
+        .addEventListener('change', function () {
+
+            const selectedEdo = this.value;
+
+            let statuses;
+
+
+            if (selectedEdo === 'all') {
+
+                statuses = allStatuses;
+
+            }
+
+            else {
+
+                statuses =
+                    statusByEdo[selectedEdo]
+                        ?.statuses || {};
+
+            }
+
+
+            statusChart.data.labels =
+                Object.keys(statuses);
+
+            statusChart.data.datasets[0].data =
+                Object.values(statuses);
+
+            statusChart.update();
+
+        });
 </script>
 
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+<script
+    src="{{ url_for('static', filename='js/pipeline_columns.js') }}">
+</script>
 
 </body>
 </html>

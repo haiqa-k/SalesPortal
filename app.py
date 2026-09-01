@@ -306,6 +306,7 @@ def edit_pipeline(pipeline_id):
 
     return render_template("edit_pipeline.html", pipeline=pipeline, statuses=statuses)
 
+
 @app.route("/teamlead", methods=["GET"])
 def teamlead_dashboard():
 
@@ -314,7 +315,6 @@ def teamlead_dashboard():
 
     # Default view = all team pipelines
     selected_edo = request.args.get("edo_id", "all")
-
     cursor = conn.cursor()
 
 
@@ -369,8 +369,11 @@ def teamlead_dashboard():
         FROM Users
 
         WHERE
-            EmpID = ?
-            OR ManagerID = ?
+            (
+                EmpID = ?
+                OR ManagerID = ?
+            )
+            AND IsActive = 1
 
         ORDER BY
             EmployeeName
@@ -391,11 +394,6 @@ def teamlead_dashboard():
     # =========================
     # REVENUE PER PERSON
     # Team Lead + assigned EDOs
-    # =========================
-
-    # =========================
-    # REVENUE PER PERSON
-    # Team Lead + assigned EDOs
     # Includes members with no pipelines
     # =========================
 
@@ -408,7 +406,7 @@ def teamlead_dashboard():
 
         LEFT JOIN Pipelines p
             ON LTRIM(RTRIM(p.[Account Manager])) =
-            LTRIM(RTRIM(u.EmployeeName))
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
             (
@@ -432,43 +430,72 @@ def teamlead_dashboard():
     for row in cursor.fetchall():
         edo_names.append(row[0])
         edo_revenues.append(row[1] or 0)
-
-
-
     # =========================
-    # PIPELINE STATUS
+    # PIPELINE STATUS BY PERSON
     # Team Lead + assigned EDOs
+    # Used by client-side chart filter
     # =========================
 
     cursor.execute("""
         SELECT
+            u.EmpID,
+            u.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(*)
+            COUNT(p.PipelineID) AS StatusCount
 
-        FROM Pipelines p
+        FROM Users u
 
-        JOIN Users u
+        LEFT JOIN Pipelines p
             ON LTRIM(RTRIM(p.[Account Manager])) =
                LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.EmpID = ?
-            OR u.ManagerID = ?
+            (
+                u.EmpID = ?
+                OR u.ManagerID = ?
+            )
+            AND u.IsActive = 1
 
         GROUP BY
+            u.EmpID,
+            u.EmployeeName,
+            p.[Sales Cycle Status]
+
+        ORDER BY
+            u.EmployeeName,
             p.[Sales Cycle Status]
     """, (teamlead_id, teamlead_id))
 
 
-    status_labels = []
-    status_counts = []
-
+    status_by_edo = {}
 
     for row in cursor.fetchall():
 
-        status_labels.append(row[0])
-        status_counts.append(row[1])
+        emp_id = str(row[0])
+        employee_name = row[1]
+        status = row[2]
+        count = row[3] or 0
 
+        if emp_id not in status_by_edo:
+            status_by_edo[emp_id] = {
+                "name": employee_name,
+                "statuses": {}
+            }
+
+        if status:
+            status_by_edo[emp_id]["statuses"][status] = count
+
+
+    all_statuses = {}
+
+    for edo_data in status_by_edo.values():
+
+        for status, count in edo_data["statuses"].items():
+
+            all_statuses[status] = (
+                all_statuses.get(status, 0)
+                + count
+            )
 
 
     # =========================
@@ -487,10 +514,19 @@ def teamlead_dashboard():
 
         cursor.execute("""
             SELECT
+                u.EmpID,
                 p.[Account Manager],
+                p.[Vertical],
                 p.[Account Name],
+                p.[Product],
+                p.[Region],
                 p.[MRC],
+                p.[Contract Duration (Months)],
+                p.[ARR],
+                p.[Project OTC],
                 p.[Total Project Revenue],
+                p.[Estimated Closure Date],
+                p.[Estimated Closure Month],
                 p.[Sales Cycle Status],
                 p.[Next Action]
 
@@ -498,11 +534,14 @@ def teamlead_dashboard():
 
             JOIN Users u
                 ON LTRIM(RTRIM(p.[Account Manager])) =
-               LTRIM(RTRIM(u.EmployeeName))
+                   LTRIM(RTRIM(u.EmployeeName))
 
             WHERE
-                u.EmpID = ?
-                OR u.ManagerID = ?
+                (
+                    u.EmpID = ?
+                    OR u.ManagerID = ?
+                )
+                AND u.IsActive = 1
 
             ORDER BY
                 p.[Account Manager],
@@ -512,12 +551,21 @@ def teamlead_dashboard():
 
         pipelines = [
             {
-                "AccountManager": row[0],
-                "AccountName": row[1],
-                "MRC": row[2],
-                "TotalProjectRevenue": row[3],
-                "SalesCycleStatus": row[4],
-                "NextAction": row[5]
+                "EmpID": row[0],
+                "AccountManager": row[1],
+                "Vertical": row[2],
+                "AccountName": row[3],
+                "Product": row[4],
+                "Region": row[5],
+                "MRC": row[6],
+                "ContractDuration": row[7],
+                "ARR": row[8],
+                "ProjectOTC": row[9],
+                "TotalProjectRevenue": row[10],
+                "EstimatedClosureDate": row[11],
+                "EstimatedClosureMonth": row[12],
+                "SalesCycleStatus": row[13],
+                "NextAction": row[14]
             }
 
             for row in cursor.fetchall()
@@ -555,31 +603,62 @@ def teamlead_dashboard():
 
                 cursor.execute("""
                     SELECT
+                        u.EmpID,
                         p.[Account Manager],
+                        p.[Vertical],
                         p.[Account Name],
+                        p.[Product],
+                        p.[Region],
                         p.[MRC],
+                        p.[Contract Duration (Months)],
+                        p.[ARR],
+                        p.[Project OTC],
                         p.[Total Project Revenue],
+                        p.[Estimated Closure Date],
+                        p.[Estimated Closure Month],
                         p.[Sales Cycle Status],
                         p.[Next Action]
 
                     FROM Pipelines p
 
+                    JOIN Users u
+                        ON LTRIM(RTRIM(p.[Account Manager])) =
+                           LTRIM(RTRIM(u.EmployeeName))
+
                     WHERE
-                        p.[Account Manager] = ?
+                        u.EmpID = ?
+                        AND (
+                            u.EmpID = ?
+                            OR u.ManagerID = ?
+                        )
+                        AND u.IsActive = 1
 
                     ORDER BY
                         p.[Account Name]
-                """, (selected_edo_name,))
+                """, (
+                    selected_edo,
+                    teamlead_id,
+                    teamlead_id
+                ))
 
 
                 pipelines = [
                     {
-                        "AccountManager": row[0],
-                        "AccountName": row[1],
-                        "MRC": row[2],
-                        "TotalProjectRevenue": row[3],
-                        "SalesCycleStatus": row[4],
-                        "NextAction": row[5]
+                        "EmpID": row[0],
+                        "AccountManager": row[1],
+                        "Vertical": row[2],
+                        "AccountName": row[3],
+                        "Product": row[4],
+                        "Region": row[5],
+                        "MRC": row[6],
+                        "ContractDuration": row[7],
+                        "ARR": row[8],
+                        "ProjectOTC": row[9],
+                        "TotalProjectRevenue": row[10],
+                        "EstimatedClosureDate": row[11],
+                        "EstimatedClosureMonth": row[12],
+                        "SalesCycleStatus": row[13],
+                        "NextAction": row[14]
                     }
 
                     for row in cursor.fetchall()
@@ -608,12 +687,10 @@ def teamlead_dashboard():
 
         edo_revenues=edo_revenues,
 
-        status_labels=status_labels,
+        status_by_edo=status_by_edo,
 
-        status_counts=status_counts
+        all_statuses=all_statuses
     )
-
-
 
 
 @app.route("/add_pipeline", methods=["GET", "POST"])
@@ -1469,9 +1546,17 @@ def regional_manager_team_dashboard(teamlead_id):
         SELECT
             u.EmpID,
             p.[Account Manager],
+            p.[Vertical],
             p.[Account Name],
+            p.[Product],
+            p.[Region],
             p.[MRC],
+            p.[Contract Duration (Months)],
+            p.[ARR],
+            p.[Project OTC],
             p.[Total Project Revenue],
+            p.[Estimated Closure Date],
+            p.[Estimated Closure Month],
             p.[Sales Cycle Status],
             p.[Next Action]
 
@@ -1479,7 +1564,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
         INNER JOIN Users u
             ON LTRIM(RTRIM(p.[Account Manager])) =
-               LTRIM(RTRIM(u.EmployeeName))
+            LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
             u.EmpID = ?
@@ -1495,11 +1580,19 @@ def regional_manager_team_dashboard(teamlead_id):
         {
             "EmpID": row[0],
             "AccountManager": row[1],
-            "AccountName": row[2],
-            "MRC": row[3],
-            "TotalProjectRevenue": row[4],
-            "SalesCycleStatus": row[5],
-            "NextAction": row[6]
+            "Vertical": row[2],
+            "AccountName": row[3],
+            "Product": row[4],
+            "Region": row[5],
+            "MRC": row[6],
+            "ContractDuration": row[7],
+            "ARR": row[8],
+            "ProjectOTC": row[9],
+            "TotalProjectRevenue": row[10],
+            "EstimatedClosureDate": row[11],
+            "EstimatedClosureMonth": row[12],
+            "SalesCycleStatus": row[13],
+            "NextAction": row[14]
         }
         for row in cursor.fetchall()
     ]

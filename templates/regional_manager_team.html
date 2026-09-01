@@ -11,7 +11,7 @@
 
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
-    
+
     <link
         rel="stylesheet"
         href="{{ url_for('static', filename='style.css') }}"
@@ -399,6 +399,37 @@
         }
 
 
+        /* =========================
+           TABLE HEADER CONTROLS
+        ========================= */
+
+        .table-header-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .table-header-controls .table-filter,
+        .table-header-controls .column-selector {
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+        }
+
+        .table-header-controls .form-select,
+        .table-header-controls .column-selector .dropdown-toggle {
+            height: 40px !important;
+            min-height: 40px !important;
+            box-sizing: border-box;
+            margin: 0 !important;
+        }
+
+        .table-header-controls .form-select {
+            min-width: 220px;
+        }
+
+
         @media (max-width: 768px) {
 
             .topbar {
@@ -693,9 +724,17 @@
                 {{ column_selector(
                     [
                         ('account-manager', 'Account Manager'),
+                        ('vertical', 'Vertical'),
                         ('account-name', 'Account Name'),
+                        ('product', 'Product'),
+                        ('region', 'Region'),
                         ('mrc', 'MRC'),
+                        ('contract-duration', 'Contract Duration'),
+                        ('arr', 'ARR'),
+                        ('project-otc', 'Project OTC'),
                         ('total-revenue', 'Total Revenue'),
+                        ('closure-date', 'Closure Date'),
+                        ('closure-month', 'Closure Month'),
                         ('status', 'Status'),
                         ('next-action', 'Next Action')
                     ],
@@ -703,10 +742,11 @@
                     [
                         'account-manager',
                         'account-name',
+                        'product',
                         'mrc',
                         'total-revenue',
-                        'status',
-                        'next-action'
+                        'closure-date',
+                        'status'
                     ]
                 ) }}
 
@@ -728,13 +768,25 @@
                             Account Manager
                         </th>
 
+                        <th data-col="vertical">
+                            Vertical
+                        </th>
+
                         <th data-col="account-name">
                             Account Name
                         </th>
 
+                        <th data-col="product">
+                            Product
+                        </th>
+
+                        <th data-col="region">
+                            Region
+                        </th>
+
                         <th
                             class="sortable"
-                            data-column="2"
+                            data-column="5"
                             data-type="number"
                             data-col="mrc"
                         >
@@ -742,9 +794,33 @@
                             <span class="sort-icon"></span>
                         </th>
 
+                        <th data-col="contract-duration">
+                            Contract Duration
+                        </th>
+
                         <th
                             class="sortable"
-                            data-column="3"
+                            data-column="7"
+                            data-type="number"
+                            data-col="arr"
+                        >
+                            ARR
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="8"
+                            data-type="number"
+                            data-col="project-otc"
+                        >
+                            Project OTC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="9"
                             data-type="number"
                             data-col="total-revenue"
                         >
@@ -752,9 +828,17 @@
                             <span class="sort-icon"></span>
                         </th>
 
+                        <th data-col="closure-date">
+                            Closure Date
+                        </th>
+
+                        <th data-col="closure-month">
+                            Closure Month
+                        </th>
+
                         <th
                             class="sortable"
-                            data-column="4"
+                            data-column="12"
                             data-type="status"
                             data-col="status"
                         >
@@ -770,7 +854,6 @@
 
                 </thead>
 
-
                 <tbody id="pipelineBody">
 
                     {% for pipeline in pipelines %}
@@ -784,6 +867,10 @@
                             {{ pipeline.AccountManager }}
                         </td>
 
+                        <td data-col="vertical">
+                            {{ pipeline.Vertical or '-' }}
+                        </td>
+
                         <td
                             class="account-name"
                             data-col="account-name"
@@ -791,20 +878,48 @@
                             {{ pipeline.AccountName }}
                         </td>
 
+                        <td data-col="product">
+                            {{ pipeline.Product or '-' }}
+                        </td>
+
+                        <td data-col="region">
+                            {{ pipeline.Region or '-' }}
+                        </td>
+
                         <td data-col="mrc">
-                            {{ pipeline.MRC }}
+                            {{ pipeline.MRC or 0 }}
+                        </td>
+
+                        <td data-col="contract-duration">
+                            {{ pipeline.ContractDuration or '-' }}
+                        </td>
+
+                        <td data-col="arr">
+                            {{ pipeline.ARR or 0 }}
+                        </td>
+
+                        <td data-col="project-otc">
+                            {{ pipeline.ProjectOTC or 0 }}
                         </td>
 
                         <td data-col="total-revenue">
-                            {{ pipeline.TotalProjectRevenue }}
+                            {{ pipeline.TotalProjectRevenue or 0 }}
+                        </td>
+
+                        <td data-col="closure-date">
+                            {{ pipeline.EstimatedClosureDate or '-' }}
+                        </td>
+
+                        <td data-col="closure-month">
+                            {{ pipeline.EstimatedClosureMonth or '-' }}
                         </td>
 
                         <td data-col="status">
-                            {{ pipeline.SalesCycleStatus }}
+                            {{ pipeline.SalesCycleStatus or '-' }}
                         </td>
 
                         <td data-col="next-action">
-                            {{ pipeline.NextAction }}
+                            {{ pipeline.NextAction or '-' }}
                         </td>
 
                     </tr>
@@ -814,7 +929,7 @@
                     <tr>
 
                         <td
-                            colspan="6"
+                            colspan="14"
                             class="empty-message"
                         >
                             No pipelines found.
