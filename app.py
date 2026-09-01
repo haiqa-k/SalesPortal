@@ -328,7 +328,18 @@ def teamlead_dashboard():
             SUM(p.[MRC]) AS TotalMRC,
             SUM(p.[Project OTC]) AS TotalOTC,
             SUM(p.[Total Project Revenue]) AS TotalRevenue,
-            COUNT(*) AS ActivePipelines
+            SUM(
+                CASE
+                    WHEN p.[Sales Cycle Status] IN (
+                        'Customer Visit (20%)',
+                        'Ask for Proposal (40%)',
+                        'Negotiations (60%)',
+                        'Documentation/Acceptance/Processing (80%)'
+                    )
+                    THEN 1
+                    ELSE 0
+                END
+            ) AS ActivePipelines
 
         FROM Pipelines p
 
