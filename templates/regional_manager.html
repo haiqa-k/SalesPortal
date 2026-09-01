@@ -805,7 +805,7 @@
                     <a
                         href="{{ url_for(
                             'regional_manager_team_dashboard',
-                            teamlead_id=team_lead.UserID
+                            teamlead_id=team_lead.EmpID
                         ) }}"
                         class="team-card-link"
                     >
@@ -882,7 +882,7 @@
 
                     {% for user in region_users %}
 
-                    <option value="{{ user.UserID }}">
+                    <option value="{{ user.EmpID }}">
                         {{ user.FullName }}
                     </option>
 
@@ -946,7 +946,7 @@
 
                     {% for pipeline in pipelines %}
 
-                    <tr data-user-id="{{ pipeline.UserID }}">
+                    <tr data-user-id="{{ pipeline.EmpID }}">
 
                         <td class="account-manager">
                             {{ pipeline.AccountManager }}
@@ -1030,7 +1030,7 @@ if (individualFilter) {
 
             if (
                 selectedUser === 'all' ||
-                row.dataset.userId === selectedUser
+                row.dataset.EmpID === selectedUser
             ) {
                 row.style.display = '';
             }

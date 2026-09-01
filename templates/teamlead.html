@@ -703,8 +703,8 @@
                     {% for edo in edos %}
 
                         <option
-                            value="{{ edo.UserID }}"
-                            {% if edo.UserID == selected_edo %}selected{% endif %}
+                            value="{{ edo.EmpID }}"
+                            {% if edo.EmpID == selected_edo %}selected{% endif %}
                         >
                             {{ edo.FullName }}
                         </option>

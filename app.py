@@ -24,7 +24,7 @@ def login():
 
         cursor = conn.cursor()
         cursor.execute("""
-            SELECT UserID, FirstName, LastName, PasswordHash, Role
+            SELECT EmpID, EmployeeName, FirstName, LastName, PasswordHash, Role
             FROM Users
             WHERE Username=? AND IsActive=1
         """, (username,))
@@ -32,12 +32,13 @@ def login():
 
         if row:
             # Unpack all values properly
-            user_id, first_name, last_name, stored_hash, role = row
+            user_id, employee_name, first_name, last_name, stored_hash, role = row
 
             if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
                 # Store both names in session
                 session["user_id"] = user_id
                 session["username"] = username
+                session["employee_name"] = employee_name
                 session["first_name"] = first_name
                 session["last_name"] = last_name
                 session["role"] = role
@@ -116,7 +117,7 @@ def change_password():
 
         cursor.execute("""
             SELECT
-                UserID,
+                EmpID,
                 PasswordHash
 
             FROM Users
@@ -201,7 +202,7 @@ def change_password():
 
             SET PasswordHash = ?
 
-            WHERE UserID = ?
+            WHERE EmpID = ?
         """, (
             new_hash,
             user_id
@@ -225,7 +226,7 @@ def change_password():
 def my_pipelines():
     if "user_id" not in session:
         return redirect(url_for("login"))
-    edo_name = f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
+    edo_name = session.get("employee_name") or f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
     role = session.get("role")
     cursor = conn.cursor()
     cursor.execute("""
@@ -330,11 +331,11 @@ def teamlead_dashboard():
         FROM Pipelines p
 
         JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
     """, (teamlead_id, teamlead_id))
 
@@ -358,26 +359,26 @@ def teamlead_dashboard():
 
     cursor.execute("""
         SELECT
-            UserID,
+            EmpID,
+            EmployeeName,
             FirstName,
             LastName
 
         FROM Users
 
         WHERE
-            UserID = ?
+            EmpID = ?
             OR ManagerID = ?
 
         ORDER BY
-            FirstName,
-            LastName
+            EmployeeName
     """, (teamlead_id, teamlead_id))
 
 
     edos = [
         {
-            "UserID": row[0],
-            "FullName": f"{row[1]} {row[2]}"
+            "EmpID": row[0],
+            "FullName": row[1]
         }
 
         for row in cursor.fetchall()
@@ -390,33 +391,43 @@ def teamlead_dashboard():
     # Team Lead + assigned EDOs
     # =========================
 
+    # =========================
+    # REVENUE PER PERSON
+    # Team Lead + assigned EDOs
+    # Includes members with no pipelines
+    # =========================
+
     cursor.execute("""
         SELECT
-            (u.FirstName + ' ' + u.LastName) AS FullName,
+            u.FirstName AS FullName,
+            COALESCE(SUM(p.[Total Project Revenue]), 0) AS Revenue
 
-            SUM(p.[Total Project Revenue])
+        FROM Users u
 
-        FROM Pipelines p
-
-        JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+        LEFT JOIN Pipelines p
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+            LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
-            OR u.ManagerID = ?
+            (
+                u.EmpID = ?
+                OR u.ManagerID = ?
+            )
+            AND u.IsActive = 1
 
         GROUP BY
-            (u.FirstName + ' ' + u.LastName)
+            u.EmpID,
+            u.FirstName
+
+        ORDER BY
+            u.FirstName
     """, (teamlead_id, teamlead_id))
 
 
     edo_names = []
     edo_revenues = []
 
-
     for row in cursor.fetchall():
-
         edo_names.append(row[0])
         edo_revenues.append(row[1] or 0)
 
@@ -435,11 +446,11 @@ def teamlead_dashboard():
         FROM Pipelines p
 
         JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
 
         GROUP BY
@@ -484,11 +495,11 @@ def teamlead_dashboard():
             FROM Pipelines p
 
             JOIN Users u
-                ON p.[Account Manager] =
-                   (u.FirstName + ' ' + u.LastName)
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
             WHERE
-                u.UserID = ?
+                u.EmpID = ?
                 OR u.ManagerID = ?
 
             ORDER BY
@@ -532,7 +543,7 @@ def teamlead_dashboard():
 
                     for edo in edos
 
-                    if edo["UserID"] == selected_edo
+                    if edo["EmpID"] == selected_edo
                 ),
                 None
             )
@@ -614,7 +625,7 @@ from datetime import datetime
 def add_pipeline():
     if request.method == "GET":
         # Pass logged-in user's name to template
-        edo_name = f"{session['first_name']} {session['last_name']}"
+        edo_name = session.get("employee_name") or f"{session['first_name']} {session['last_name']}"
         return render_template("add_pipeline.html", edo_name=edo_name)
 
     # POST: receive form data
@@ -648,7 +659,7 @@ def add_pipeline():
         closure_month = closure_date_obj.strftime("%B")
 
     # Auto-populate Account Manager from session
-    account_manager = f"{session['first_name']} {session['last_name']}"
+    account_manager = session.get("employee_name") or f"{session['first_name']} {session['last_name']}"
 
     # Insert into SQL Server
     cursor = conn.cursor()
@@ -726,7 +737,8 @@ def regional_manager_dashboard():
 
     cursor.execute("""
         SELECT
-            UserID,
+            EmpID,
+            EmployeeName,
             FirstName,
             LastName
 
@@ -738,15 +750,14 @@ def regional_manager_dashboard():
             AND IsActive = 1
 
         ORDER BY
-            FirstName,
-            LastName
+            EmployeeName
     """, (regional_manager_id,))
 
 
     team_leads = [
         {
-            "UserID": row[0],
-            "FullName": f"{row[1]} {row[2]}"
+            "EmpID": row[0],
+            "FullName": row[1]
         }
         for row in cursor.fetchall()
     ]
@@ -766,7 +777,8 @@ def regional_manager_dashboard():
 
             -- Start with the Regional Manager
             SELECT
-                UserID,
+                EmpID,
+                EmployeeName,
                 FirstName,
                 LastName,
                 Role,
@@ -774,7 +786,7 @@ def regional_manager_dashboard():
 
             FROM Users
 
-            WHERE UserID = ?
+            WHERE EmpID = ?
 
 
             UNION ALL
@@ -782,7 +794,8 @@ def regional_manager_dashboard():
 
             -- Add everyone underneath them
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.Role,
@@ -791,13 +804,14 @@ def regional_manager_dashboard():
             FROM Users u
 
             INNER JOIN UserHierarchy h
-                ON u.ManagerID = h.UserID
+                ON u.ManagerID = h.EmpID
 
             WHERE u.IsActive = 1
         )
 
         SELECT
-            UserID,
+            EmpID,
+            EmployeeName,
             FirstName,
             LastName,
             Role
@@ -812,9 +826,9 @@ def regional_manager_dashboard():
 
     region_users = [
         {
-            "UserID": row[0],
-            "FullName": f"{row[1]} {row[2]}",
-            "Role": row[3]
+            "EmpID": row[0],
+            "FullName": row[1],
+            "Role": row[4]
         }
         for row in cursor.fetchall()
     ]
@@ -830,7 +844,8 @@ def regional_manager_dashboard():
         WITH UserHierarchy AS (
 
             SELECT
-                UserID,
+                EmpID,
+                EmployeeName,
                 FirstName,
                 LastName,
                 Role,
@@ -838,14 +853,15 @@ def regional_manager_dashboard():
 
             FROM Users
 
-            WHERE UserID = ?
+            WHERE EmpID = ?
 
 
             UNION ALL
 
 
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.Role,
@@ -854,7 +870,7 @@ def regional_manager_dashboard():
             FROM Users u
 
             INNER JOIN UserHierarchy h
-                ON u.ManagerID = h.UserID
+                ON u.ManagerID = h.EmpID
 
             WHERE u.IsActive = 1
         )
@@ -868,8 +884,8 @@ def regional_manager_dashboard():
         FROM UserHierarchy uh
 
         LEFT JOIN Pipelines p
-            ON p.[Account Manager] =
-               (uh.FirstName + ' ' + uh.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(uh.EmployeeName))
     """, (regional_manager_id,))
 
 
@@ -896,12 +912,13 @@ def regional_manager_dashboard():
 
             -- Start from Team Leads under the RM
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.ManagerID,
-                u.UserID AS TeamLeadID,
-                (u.FirstName + ' ' + u.LastName) AS TeamLeadName
+                u.EmpID AS TeamLeadID,
+                u.EmployeeName AS TeamLeadName
 
             FROM Users u
 
@@ -916,7 +933,8 @@ def regional_manager_dashboard():
 
             -- Add users beneath those Team Leads
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.ManagerID,
@@ -926,7 +944,7 @@ def regional_manager_dashboard():
             FROM Users u
 
             INNER JOIN TeamHierarchy th
-                ON u.ManagerID = th.UserID
+                ON u.ManagerID = th.EmpID
 
             WHERE u.IsActive = 1
         )
@@ -940,8 +958,8 @@ def regional_manager_dashboard():
         FROM TeamHierarchy th
 
         LEFT JOIN Pipelines p
-            ON p.[Account Manager] =
-            (th.FirstName + ' ' + th.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(th.EmployeeName))
 
         GROUP BY
             th.TeamLeadID,
@@ -974,7 +992,8 @@ def regional_manager_dashboard():
         WITH UserHierarchy AS (
 
             SELECT
-                UserID,
+                EmpID,
+                EmployeeName,
                 FirstName,
                 LastName,
                 Role,
@@ -982,14 +1001,15 @@ def regional_manager_dashboard():
 
             FROM Users
 
-            WHERE UserID = ?
+            WHERE EmpID = ?
 
 
             UNION ALL
 
 
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.Role,
@@ -998,7 +1018,7 @@ def regional_manager_dashboard():
             FROM Users u
 
             INNER JOIN UserHierarchy h
-                ON u.ManagerID = h.UserID
+                ON u.ManagerID = h.EmpID
 
             WHERE u.IsActive = 1
         )
@@ -1010,8 +1030,8 @@ def regional_manager_dashboard():
         FROM Pipelines p
 
         INNER JOIN UserHierarchy uh
-            ON p.[Account Manager] =
-               (uh.FirstName + ' ' + uh.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(uh.EmployeeName))
 
         GROUP BY
             p.[Sales Cycle Status]
@@ -1036,7 +1056,7 @@ def regional_manager_dashboard():
     # - EDOs
     #
     # IMPORTANT:
-    # UserID is now included so HTML can filter by individual.
+    # EmpID is now included so HTML can filter by individual.
     # ========================================================
 
     cursor.execute("""
@@ -1044,15 +1064,16 @@ def regional_manager_dashboard():
 
             -- Team Leads directly under RM
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.Role,
                 u.ManagerID,
 
-                u.UserID AS TeamLeadID,
+                u.EmpID AS TeamLeadID,
 
-                (u.FirstName + ' ' + u.LastName)
+                u.EmployeeName
                     AS TeamLeadName
 
             FROM Users u
@@ -1068,7 +1089,8 @@ def regional_manager_dashboard():
 
             -- Everyone underneath each Team Lead
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
                 u.Role,
@@ -1080,7 +1102,7 @@ def regional_manager_dashboard():
             FROM Users u
 
             INNER JOIN TeamHierarchy th
-                ON u.ManagerID = th.UserID
+                ON u.ManagerID = th.EmpID
 
             WHERE u.IsActive = 1
         ),
@@ -1090,7 +1112,8 @@ def regional_manager_dashboard():
 
             -- Regional Manager
             SELECT
-                u.UserID,
+                u.EmpID,
+                u.EmployeeName,
                 u.FirstName,
                 u.LastName,
 
@@ -1101,7 +1124,7 @@ def regional_manager_dashboard():
 
             FROM Users u
 
-            WHERE u.UserID = ?
+            WHERE u.EmpID = ?
 
 
             UNION ALL
@@ -1109,7 +1132,8 @@ def regional_manager_dashboard():
 
             -- Team Leads + EDOs
             SELECT
-                th.UserID,
+                th.EmpID,
+                th.EmployeeName,
                 th.FirstName,
                 th.LastName,
 
@@ -1123,7 +1147,7 @@ def regional_manager_dashboard():
 
 
         SELECT
-            ru.UserID,
+            ru.EmpID,
 
             p.[Account Manager],
 
@@ -1144,8 +1168,8 @@ def regional_manager_dashboard():
         FROM Pipelines p
 
         INNER JOIN RegionUsers ru
-            ON p.[Account Manager] =
-               (ru.FirstName + ' ' + ru.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(ru.EmployeeName))
 
         ORDER BY
             p.[Account Manager],
@@ -1158,7 +1182,7 @@ def regional_manager_dashboard():
 
     pipelines = [
         {
-            "UserID":
+            "EmpID":
                 row[0],
 
             "AccountManager":
@@ -1246,14 +1270,15 @@ def regional_manager_team_dashboard(teamlead_id):
 
     cursor.execute("""
         SELECT
-            UserID,
+            EmpID,
+            EmployeeName,
             FirstName,
             LastName
 
         FROM Users
 
         WHERE
-            UserID = ?
+            EmpID = ?
             AND ManagerID = ?
             AND Role = 'Team Lead'
             AND IsActive = 1
@@ -1266,7 +1291,7 @@ def regional_manager_team_dashboard(teamlead_id):
         return redirect(url_for("regional_manager_dashboard"))
 
 
-    teamlead_name = f"{teamlead_row[1]} {teamlead_row[2]}"
+    teamlead_name = teamlead_row[1]
 
 
     # ========================================================
@@ -1277,7 +1302,8 @@ def regional_manager_team_dashboard(teamlead_id):
 
     cursor.execute("""
         SELECT
-            UserID,
+            EmpID,
+            EmployeeName,
             FirstName,
             LastName
 
@@ -1285,21 +1311,20 @@ def regional_manager_team_dashboard(teamlead_id):
 
         WHERE
             (
-                UserID = ?
+                EmpID = ?
                 OR ManagerID = ?
             )
             AND IsActive = 1
 
         ORDER BY
-            FirstName,
-            LastName
+            EmployeeName
     """, (teamlead_id, teamlead_id))
 
 
     team_members = [
         {
-            "UserID": row[0],
-            "FullName": f"{row[1]} {row[2]}"
+            "EmpID": row[0],
+            "FullName": row[1]
         }
         for row in cursor.fetchall()
     ]
@@ -1319,11 +1344,11 @@ def regional_manager_team_dashboard(teamlead_id):
         FROM Users u
 
         LEFT JOIN Pipelines p
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
     """, (teamlead_id, teamlead_id))
 
@@ -1344,27 +1369,25 @@ def regional_manager_team_dashboard(teamlead_id):
 
     cursor.execute("""
         SELECT
-            (u.FirstName + ' ' + u.LastName) AS FullName,
+            u.FirstName AS FullName,
             COALESCE(SUM(p.[Total Project Revenue]), 0)
 
         FROM Users u
 
         LEFT JOIN Pipelines p
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
 
         GROUP BY
-            u.UserID,
-            u.FirstName,
-            u.LastName
+            u.EmpID,
+            u.FirstName
 
         ORDER BY
-            u.FirstName,
-            u.LastName
+            u.FirstName
     """, (teamlead_id, teamlead_id))
 
 
@@ -1388,11 +1411,11 @@ def regional_manager_team_dashboard(teamlead_id):
         FROM Pipelines p
 
         INNER JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
 
         GROUP BY
@@ -1416,7 +1439,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
     cursor.execute("""
         SELECT
-            u.UserID,
+            u.EmpID,
             p.[Account Manager],
             p.[Account Name],
             p.[MRC],
@@ -1427,11 +1450,11 @@ def regional_manager_team_dashboard(teamlead_id):
         FROM Pipelines p
 
         INNER JOIN Users u
-            ON p.[Account Manager] =
-               (u.FirstName + ' ' + u.LastName)
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
 
         WHERE
-            u.UserID = ?
+            u.EmpID = ?
             OR u.ManagerID = ?
 
         ORDER BY
@@ -1442,7 +1465,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
     pipelines = [
         {
-            "UserID": row[0],
+            "EmpID": row[0],
             "AccountManager": row[1],
             "AccountName": row[2],
             "MRC": row[3],

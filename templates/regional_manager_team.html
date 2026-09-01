@@ -665,7 +665,7 @@
 
                     {% for member in team_members %}
 
-                    <option value="{{ member.UserID }}">
+                    <option value="{{ member.EmpID }}">
                         {{ member.FullName }}
                     </option>
 
@@ -728,7 +728,7 @@
 
                     {% for pipeline in pipelines %}
 
-                    <tr data-user-id="{{ pipeline.UserID }}">
+                    <tr data-user-id="{{ pipeline.EmpID }}">
 
                         <td class="account-manager">
                             {{ pipeline.AccountManager }}
@@ -810,7 +810,7 @@
 
                 if (
                     selectedMember === 'all' ||
-                    row.dataset.userId === selectedMember
+                    row.dataset.EmpID === selectedMember
                 ) {
                     row.style.display = '';
                 }
