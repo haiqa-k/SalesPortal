@@ -1524,9 +1524,19 @@ def regional_manager_team_dashboard(teamlead_id):
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    role = session.get("role")
+    role = (session.get("role") or "").strip()
 
-    if role not in ["Regional Manager", "Regional Head"]:
+    executive_roles = app.config.get(
+        "EXECUTIVE_DASHBOARD_ROLES",
+        set()
+    )
+
+    allowed_roles = {
+        "Regional Manager",
+        "Regional Head"
+    } | executive_roles
+
+    if role not in allowed_roles:
         return redirect(url_for("login"))
 
 
@@ -1535,10 +1545,15 @@ def regional_manager_team_dashboard(teamlead_id):
 
     cursor = conn.cursor()
 
-
     # ========================================================
     # CHECK THAT THIS USER CAN VIEW THIS TEAM
     # ========================================================
+
+    executive_roles = app.config.get(
+        "EXECUTIVE_DASHBOARD_ROLES",
+        set()
+    )
+
 
     if role == "Regional Manager":
 
@@ -1584,17 +1599,58 @@ def regional_manager_team_dashboard(teamlead_id):
         """, (teamlead_id, viewer_id))
 
 
+    elif role in executive_roles:
+
+        cursor.execute("""
+            SELECT
+                EmpID,
+                EmployeeName,
+                FirstName,
+                LastName
+
+            FROM Users
+
+            WHERE
+                EmpID = ?
+                AND Role = 'Team Lead'
+                AND IsActive = 1
+        """, (teamlead_id,))
+
+
+    else:
+
+        return redirect(
+            url_for("login")
+        )
+
+
     teamlead_row = cursor.fetchone()
+
 
     if not teamlead_row:
 
         if role == "Regional Head":
+
             return redirect(
-                url_for("regional_head_dashboard")
+                url_for(
+                    "regional_head_dashboard"
+                )
             )
 
+
+        elif role in executive_roles:
+
+            return redirect(
+                url_for(
+                    "executive_dashboard"
+                )
+            )
+
+
         return redirect(
-            url_for("regional_manager_dashboard")
+            url_for(
+                "regional_manager_dashboard"
+            )
         )
 
 

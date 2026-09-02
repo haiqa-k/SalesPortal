@@ -535,23 +535,26 @@
 
     <div class="back-row">
 
-        {% if viewer_role == "Regional Head" %}
+        {% if viewer_role == "Regional Manager" %}
 
-        <a
-            href="{{ url_for('regional_head_dashboard') }}"
-            class="back-button"
-        >
-            ← Back to Regional Head Dashboard
-        </a>
+            <a href="{{ url_for('regional_manager_dashboard') }}">
+                ← Back
+            </a>
+
+        {% elif viewer_role == "Regional Head" %}
+
+            <a href="{{ url_for('regional_head_dashboard') }}">
+                ← Back
+            </a>
 
         {% else %}
 
-        <a
-            href="{{ url_for('regional_manager_dashboard') }}"
-            class="back-button"
-        >
-            ← Back to Region Dashboard
-        </a>
+            <a
+                href="{{ url_for('executive_dashboard') }}"
+                class="back-button"
+            >
+                ← Back
+            </a>
 
         {% endif %}
 

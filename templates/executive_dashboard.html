@@ -91,18 +91,16 @@
 
 
         .topbar-title {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
 
-            font-size: 25px;
-
-            font-weight: 600;
-
+            font-size: 32px;
+            font-weight: 700;
             color: #ffffff;
 
-            padding-left: 25px;
-
-            border-left:
-                1px solid
-                rgba(255, 255, 255, 0.25);
+            white-space: nowrap;
+            letter-spacing: 0.5px;
         }
 
 
@@ -565,6 +563,54 @@
         }
 
 
+        .active-pipeline-filter {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 8px;
+
+            padding: 8px 12px;
+
+            background: #242424;
+
+            border: 1px solid #444444;
+
+            border-radius: 6px;
+
+            color: #ffffff;
+
+            font-size: 13px;
+
+            cursor: pointer;
+
+            min-height: 39px;
+        }
+
+
+        .active-pipeline-filter input {
+
+            width: 16px;
+
+            height: 16px;
+
+            min-width: 16px;
+
+            margin: 0;
+
+            cursor: pointer;
+
+            accent-color: #c62828;
+        }
+
+
+        .active-pipeline-filter span {
+
+            white-space: nowrap;
+        }
+
+
         /* =============================================
            PRODUCT PERFORMANCE
         ============================================= */
@@ -573,6 +619,545 @@
         .product-table th:nth-child(n+2) {
 
             text-align: right;
+        }
+
+
+        /* =============================================
+           EXECUTIVE TABS
+        ============================================= */
+
+        .executive-tabs {
+
+            display: inline-flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            padding: 5px;
+
+            margin-bottom: 26px;
+
+            background: rgba(0, 0, 0, 0.22);
+
+            border:
+                1px solid
+                rgba(255, 255, 255, 0.14);
+
+            border-radius: 10px;
+
+            box-shadow:
+                0 5px 16px
+                rgba(0, 0, 0, 0.18);
+        }
+
+
+        .executive-tab {
+
+            min-width: 150px;
+
+            padding: 10px 22px;
+
+            background: transparent;
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.72
+                );
+
+            border: none;
+
+            border-radius: 7px;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+
+        .executive-tab:hover {
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.08
+                );
+
+            color: #ffffff;
+        }
+
+
+        .executive-tab.active {
+
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.90
+                );
+
+            color: #ffffff;
+
+            box-shadow:
+                0 3px 10px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.25
+                );
+        }
+
+
+        .executive-tab-content {
+
+            display: none;
+        }
+
+
+        .executive-tab-content.active {
+
+            display: block;
+        }
+
+
+        .pipeline-tab-heading {
+
+            margin-bottom: 18px;
+        }
+
+
+        .pipeline-tab-title {
+
+            font-size: 24px;
+
+            font-weight: 600;
+
+            margin-bottom: 4px;
+        }
+
+
+        .pipeline-tab-description {
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.68
+                );
+
+            font-size: 13px;
+        }
+
+
+
+        /* =============================================
+           PIPELINE OVERVIEW ANALYTICS
+        ============================================= */
+
+        .pipeline-summary-row {
+
+            display: grid;
+
+            grid-template-columns:
+                minmax(220px, 280px);
+
+            margin-bottom: 22px;
+        }
+
+
+        .pipeline-chart-header {
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            margin-bottom: 5px;
+        }
+
+
+        .pipeline-chart-filter {
+
+            min-width: 210px;
+        }
+
+
+        .pipeline-chart-filter select,
+        .teams-filter select {
+
+            width: 100%;
+
+            background: #242424;
+
+            color: #ffffff;
+
+            border: 1px solid #444444;
+
+            border-radius: 6px;
+
+            padding: 8px 10px;
+
+            font-size: 12px;
+        }
+
+
+        .pipeline-chart-filter select:focus,
+        .teams-filter select:focus {
+
+            outline: none;
+
+            border-color: #c62828;
+
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15);
+        }
+
+
+        /* =============================================
+           TEAMS
+        ============================================= */
+
+        .teams-card {
+
+            background: #171717;
+
+            border: 1px solid #303030;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 8px 22px
+                rgba(0, 0, 0, 0.3);
+
+            margin-bottom: 22px;
+        }
+
+
+        .teams-header {
+
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 20px;
+        }
+
+
+        .teams-title {
+
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 18px;
+
+            font-weight: 600;
+        }
+
+
+        .teams-filter {
+
+            min-width: 230px;
+        }
+
+
+        .teams-body {
+
+            padding: 22px;
+        }
+
+
+        .team-card-wrapper {
+
+            display: block;
+        }
+
+
+        .team-card-link {
+
+            display: block;
+
+            height: 100%;
+
+            color: inherit;
+
+            text-decoration: none;
+        }
+
+
+        .team-card {
+
+            background: #202020;
+
+            border: 1px solid #343434;
+
+            border-radius: 9px;
+
+            padding: 20px;
+
+            height: 100%;
+
+            cursor: pointer;
+
+            transition:
+                transform 0.2s ease,
+                background 0.2s ease,
+                border-color 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+
+        .team-card-link:hover .team-card {
+
+            transform: translateY(-3px);
+
+            background: #272727;
+
+            border-color: #555555;
+
+            box-shadow:
+                0 10px 24px
+                rgba(0, 0, 0, 0.30);
+        }
+
+
+        .team-card-top {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 15px;
+        }
+
+
+        .team-name {
+
+            color: #ffffff;
+
+            font-size: 17px;
+
+            font-weight: 600;
+
+            margin-bottom: 6px;
+        }
+
+
+        .team-role {
+
+            color: #a9a9a9;
+
+            font-size: 12px;
+
+            margin: 0;
+        }
+
+
+        .team-open {
+
+            width: 34px;
+
+            height: 34px;
+
+            border-radius: 50%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #2d2d2d;
+
+            border: 1px solid #444444;
+
+            color: #ffffff;
+
+            font-size: 18px;
+
+            flex-shrink: 0;
+        }
+
+
+        .no-teams-message {
+
+            text-align: center;
+
+            color: #999999;
+
+            padding: 20px;
+        }
+
+
+        /* =============================================
+           PIPELINE TABLE SORTING / PAGING
+        ============================================= */
+
+        #pipelineTable th.sortable {
+
+            cursor: pointer;
+
+            user-select: none;
+        }
+
+
+        .sort-icon {
+
+            display: inline-block;
+
+            width: 7px;
+
+            height: 7px;
+
+            margin-left: 7px;
+
+            vertical-align: 2px;
+
+            border-right: 1.5px solid #777777;
+
+            border-bottom: 1.5px solid #777777;
+
+            transform: rotate(45deg);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+
+        #pipelineTable th.sortable:hover .sort-icon {
+
+            border-color: #ffffff;
+        }
+
+
+        #pipelineTable th.sort-asc .sort-icon {
+
+            transform: rotate(225deg);
+
+            border-color: #ffffff;
+        }
+
+
+        #pipelineTable th.sort-desc .sort-icon {
+
+            transform: rotate(45deg);
+
+            border-color: #ffffff;
+        }
+
+
+        .pipeline-table-footer {
+
+            padding: 15px 20px;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            gap: 15px;
+
+            border-top: 1px solid #292929;
+
+            background: #1d1d1d;
+        }
+
+
+        .pipeline-table-count {
+
+            color: #9d9d9d;
+
+            font-size: 12px;
+        }
+
+
+        .show-all-pipelines-button {
+
+            background: rgba(
+                255,
+                255,
+                255,
+                0.12
+            );
+
+            color: #ffffff;
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.28
+                );
+
+            border-radius: 8px;
+
+            padding: 8px 18px;
+
+            font-size: 12px;
+
+            font-weight: 600;
+
+            cursor: pointer;
+
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+
+        .show-all-pipelines-button:hover {
+
+            background: rgba(
+                255,
+                255,
+                255,
+                0.20
+            );
+
+            border-color: rgba(
+                255,
+                255,
+                255,
+                0.45
+            );
+
+            transform: translateY(-1px);
         }
 
 
@@ -603,6 +1188,41 @@
         @media (
             max-width: 650px
         ) {
+
+            .pipeline-chart-header,
+            .teams-header,
+            .pipeline-table-footer {
+
+                align-items: stretch;
+
+                flex-direction: column;
+            }
+
+
+            .pipeline-chart-filter,
+            .teams-filter {
+
+                min-width: 0;
+
+                width: 100%;
+            }
+
+
+            .executive-tabs {
+
+                display: flex;
+
+                width: 100%;
+            }
+
+
+            .executive-tab {
+
+                flex: 1;
+
+                min-width: 0;
+            }
+
 
             .summary-grid {
 
@@ -705,112 +1325,71 @@
 
     <div class="page-title">
 
-        Executive Sales Analytics
+        Executive Dashboard
 
     </div>
 
 
     <div class="page-subtitle">
 
-        Organization-wide pipeline performance,
-        products, revenue and upcoming sales activity
+        Organization-wide sales analytics
+        and detailed pipeline visibility
 
     </div>
-
 
 
     <!-- =========================================
-         SUMMARY ROW 1
+         EXECUTIVE NAVIGATION TABS
     ========================================== -->
 
-    <div class="summary-grid">
+    <div class="executive-tabs">
+
+        <button
+            type="button"
+            class="executive-tab active"
+            data-tab="analytics"
+        >
+            Analytics
+        </button>
+
+        <button
+            type="button"
+            class="executive-tab"
+            data-tab="pipeline-overview"
+        >
+            Pipeline Overview
+        </button>
+
+    </div>
 
 
-        <div class="summary-card">
 
-            <div class="summary-label">
+    <div
+        id="analytics"
+        class="executive-tab-content active"
+    >
 
-                TOTAL PIPELINE REVENUE
 
-            </div>
+<!-- =========================================
+     SUMMARY ROW 1
+========================================== -->
 
-            <div class="summary-value">
+<div class="summary-grid">
 
-                {{
-                    "{:,.0f}".format(
-                        summary.TotalRevenue or 0
-                    )
-                }}
 
-            </div>
+    <div class="summary-card">
 
+        <div class="summary-label">
+            TOTAL PIPELINE REVENUE
         </div>
 
+        <div class="summary-value">
 
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                ACTIVE PIPELINES
-
-            </div>
-
-            <div class="summary-value">
-
-                {{ summary.ActivePipelines }}
-
-            </div>
-
-            <div class="summary-subtext">
-
-                20% through 80% stages
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                TOTAL MRC
-
-            </div>
-
-            <div class="summary-value">
-
-                {{
-                    "{:,.0f}".format(
-                        summary.TotalMRC or 0
-                    )
-                }}
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                TOTAL PROJECT OTC
-
-            </div>
-
-            <div class="summary-value">
-
-                {{
-                    "{:,.0f}".format(
-                        summary.TotalOTC or 0
-                    )
-                }}
-
-            </div>
+            {{
+                "{:,.0f}".format(
+                    summary.TotalRevenue or 0
+                )
+            }}
 
         </div>
 
@@ -818,91 +1397,20 @@
 
 
 
-    <!-- =========================================
-         SUMMARY ROW 2
-    ========================================== -->
+    <div class="summary-card">
 
-    <div class="summary-grid">
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                AVERAGE PIPELINE VALUE
-
-            </div>
-
-            <div class="summary-value">
-
-                {{
-                    "{:,.0f}".format(
-                        summary.AveragePipelineValue
-                        or 0
-                    )
-                }}
-
-            </div>
-
+        <div class="summary-label">
+            AVERAGE PIPELINE VALUE
         </div>
 
+        <div class="summary-value">
 
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                OVERDUE ACTIVE PIPELINES
-
-            </div>
-
-            <div class="summary-value">
-
-                {{ summary.OverduePipelines }}
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                CLOSING NEXT 7 DAYS
-
-            </div>
-
-            <div class="summary-value">
-
-                {{ summary.UpcomingDeadlines }}
-
-            </div>
-
-        </div>
-
-
-
-        <div class="summary-card">
-
-            <div class="summary-label">
-
-                ACCOUNT MANAGERS
-
-            </div>
-
-            <div class="summary-value">
-
-                {{ summary.AccountManagers }}
-
-            </div>
-
-            <div class="summary-subtext">
-
-                With at least one pipeline
-
-            </div>
+            {{
+                "{:,.0f}".format(
+                    summary.AveragePipelineValue
+                    or 0
+                )
+            }}
 
         </div>
 
@@ -910,6 +1418,118 @@
 
 
 
+    <div class="summary-card">
+
+        <div class="summary-label">
+            TOTAL MRC
+        </div>
+
+        <div class="summary-value">
+
+            {{
+                "{:,.0f}".format(
+                    summary.TotalMRC or 0
+                )
+            }}
+
+        </div>
+
+    </div>
+
+
+
+    <div class="summary-card">
+
+        <div class="summary-label">
+            TOTAL PROJECT OTC
+        </div>
+
+        <div class="summary-value">
+
+            {{
+                "{:,.0f}".format(
+                    summary.TotalOTC or 0
+                )
+            }}
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- =========================================
+     SUMMARY ROW 2
+========================================== -->
+
+<div class="summary-grid">
+
+
+    <div class="summary-card">
+
+        <div class="summary-label">
+            ACTIVE PIPELINES
+        </div>
+
+        <div class="summary-value">
+            {{ summary.ActivePipelines }}
+        </div>
+
+        <div class="summary-subtext">
+            20% through 80% stages
+        </div>
+
+    </div>
+
+
+
+    <div class="summary-card">
+
+        <div class="summary-label">
+            OVERDUE ACTIVE PIPELINES
+        </div>
+
+        <div class="summary-value">
+            {{ summary.OverduePipelines }}
+        </div>
+
+    </div>
+
+
+
+    <div class="summary-card">
+
+        <div class="summary-label">
+            CLOSING NEXT 7 DAYS
+        </div>
+
+        <div class="summary-value">
+            {{ summary.UpcomingDeadlines }}
+        </div>
+
+    </div>
+
+
+
+    <div class="summary-card">
+
+        <div class="summary-label">
+            ACCOUNT MANAGERS
+        </div>
+
+        <div class="summary-value">
+            {{ summary.AccountManagers }}
+        </div>
+
+        <div class="summary-subtext">
+            With at least one pipeline
+        </div>
+
+    </div>
+
+</div>
     <!-- =========================================
          REVENUE ANALYTICS
     ========================================== -->
@@ -1230,6 +1850,229 @@
     </div>
 
 
+
+    </div>
+
+
+    <div
+        id="pipeline-overview"
+        class="executive-tab-content"
+    >
+
+
+
+
+        <!-- =========================================
+             PIPELINE SUMMARY
+        ========================================== -->
+
+  
+
+
+        <!-- =========================================
+             PIPELINE ANALYTICS
+        ========================================== -->
+
+        <div class="chart-grid">
+
+            <div class="dashboard-card">
+
+                <div class="section-title">
+                    Revenue by Team
+                </div>
+
+                <div class="section-description">
+                    Total pipeline revenue grouped by Team Lead
+                </div>
+
+                <div class="chart-container">
+                    <canvas id="pipelineTeamRevenueChart"></canvas>
+                </div>
+
+            </div>
+
+
+            <div class="dashboard-card">
+
+                <div class="pipeline-chart-header">
+
+                    <div>
+
+                        <div class="section-title">
+                            Pipeline Status
+                        </div>
+
+                        <div
+                            class="section-description"
+                            style="margin-bottom:0;"
+                        >
+                            Sales-cycle distribution for all teams
+                            or a selected team
+                        </div>
+
+                    </div>
+
+
+                    <div class="pipeline-chart-filter">
+
+                        <select id="pipelineTeamStatusFilter">
+
+                            <option value="">
+                                All Teams
+                            </option>
+
+                            {% for team in team_leads %}
+
+                                <option
+                                    value="{{ team.EmployeeName }}"
+                                >
+                                    {{ team.EmployeeName }}
+                                </option>
+
+                            {% endfor %}
+
+                        </select>
+
+                    </div>
+
+                </div>
+
+
+                <div class="chart-container">
+                    <canvas id="pipelineTeamStatusChart"></canvas>
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- =========================================
+             TEAMS
+        ========================================== -->
+
+        <div class="teams-card">
+
+            <div class="teams-header">
+
+                <h2 class="teams-title">
+                    Teams
+                </h2>
+
+
+                <div class="teams-filter">
+
+                    <select id="executiveManagerFilter">
+
+                        <option value="">
+                            All Regional Managers
+                        </option>
+
+                        {% for manager in regional_managers %}
+
+                            <option value="{{ manager.EmpID }}">
+                                {{ manager.EmployeeName }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="teams-body">
+
+                <div
+                    class="row g-3"
+                    id="executiveTeamGrid"
+                >
+
+                    {% for team in team_leads %}
+
+                        {% set manager = namespace(name='-') %}
+
+                        {% for rm in regional_managers %}
+
+                            {% if rm.EmpID == team.ManagerID %}
+                                {% set manager.name = rm.EmployeeName %}
+                            {% endif %}
+
+                        {% endfor %}
+
+
+                        <div
+                            class="col-lg-4 col-md-6 team-card-wrapper"
+                            data-manager-id="{{ team.ManagerID }}"
+                        >
+
+                            <a
+                                href="{{ url_for(
+                                    'regional_manager_team_dashboard',
+                                    teamlead_id=team.EmpID
+                                ) }}"
+                                class="team-card-link"
+                            >
+
+                                <div class="team-card">
+
+                                    <div class="team-card-top">
+
+                                        <div>
+
+                                            <div class="team-name">
+                                                {{ team.EmployeeName }}
+                                            </div>
+
+                                            <p class="team-role">
+                                                Team Lead · RM:
+                                                {{ manager.name }}
+                                            </p>
+
+                                        </div>
+
+                                        <div class="team-open">
+                                            ›
+                                        </div>
+
+                                    </div>
+
+                                </div>
+
+                            </a>
+
+                        </div>
+
+                    {% else %}
+
+                        <div class="col-12">
+
+                            <div class="no-teams-message">
+                                No teams found.
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+
+
+                <div
+                    id="executiveNoTeamsMessage"
+                    class="no-teams-message"
+                    style="display:none;"
+                >
+                    No teams found for this Regional Manager.
+                </div>
+
+            </div>
+
+        </div>
+
+
 <!-- =========================================
      DEADLINES
 ========================================== -->
@@ -1444,6 +2287,8 @@
         </div>
 
     </div>
+
+
     <!-- =========================================
          PIPELINE DETAIL
     ========================================== -->
@@ -1599,6 +2444,20 @@
             </select>
 
 
+            <label class="active-pipeline-filter">
+
+                <input
+                    type="checkbox"
+                    id="activePipelineFilter"
+                >
+
+                <span>
+                    Active Pipelines
+                </span>
+
+            </label>
+
+
             <select id="statusFilter">
 
                 <option value="">
@@ -1661,64 +2520,79 @@
 
                     <tr>
 
-                        <th>
+                        <th class="sortable" data-column="0" data-type="text">
                             Account Manager
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="1" data-type="text">
                             Regional Head
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="2" data-type="text">
                             Regional Manager
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="3" data-type="text">
                             Team Lead
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="4" data-type="text">
                             Account
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="5" data-type="text">
                             Product
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="6" data-type="text">
                             Vertical
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="7" data-type="text">
                             Region
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="8" data-type="number">
                             MRC
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="9" data-type="number">
                             ARR
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="10" data-type="number">
                             Project OTC
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="11" data-type="number">
                             Total Revenue
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="12" data-type="date">
                             Closure Date
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="13" data-type="status">
                             Status
+                            <span class="sort-icon"></span>
                         </th>
 
-                        <th>
+                        <th class="sortable" data-column="14" data-type="text">
                             Next Action
+                            <span class="sort-icon"></span>
                         </th>
 
                     </tr>
@@ -1844,6 +2718,29 @@
 
         </div>
 
+
+        <div class="pipeline-table-footer">
+
+            <div
+                id="pipelineTableCount"
+                class="pipeline-table-count"
+            >
+            </div>
+
+
+            <button
+                type="button"
+                id="showAllPipelinesButton"
+                class="show-all-pipelines-button"
+            >
+                Show All
+            </button>
+
+        </div>
+
+    </div>
+
+
     </div>
 
 </div>
@@ -1898,6 +2795,29 @@
 
     const topManagers =
         {{ top_account_managers | tojson }};
+
+
+    const pipelineOverviewData = [
+
+        {% for p in pipelines %}
+
+        {
+            team:
+                {{ (p.TeamLead or "") | tojson }},
+
+            revenue:
+                {{ "{:.6f}".format(
+                    p.TotalRevenue or 0
+                ) }},
+
+            status:
+                {{ (p.Status or "") | tojson }}
+        }
+        {% if not loop.last %},{% endif %}
+
+        {% endfor %}
+
+    ];
 
 
 
@@ -2453,12 +3373,354 @@ if (productMixCanvas) {
 
 
 
+
     /* ============================================
-       PIPELINE FILTERS
+       PIPELINE OVERVIEW CHARTS
+    ============================================ */
+
+    let pipelineTeamRevenueChart = null;
+    let pipelineTeamStatusChart = null;
+
+
+    const pipelineStatusColors = [
+        "#c62828",
+        "#7b1fa2",
+        "#512da8",
+        "#ef5350",
+        "#9575cd",
+        "#ab47bc",
+        "#616161"
+    ];
+
+
+    function getRevenueByTeam() {
+
+        const revenueMap = {};
+
+        pipelineOverviewData.forEach(
+            function (pipeline) {
+
+                const team =
+                    pipeline.team || "Unassigned";
+
+                revenueMap[team] =
+                    (revenueMap[team] || 0)
+                    + Number(
+                        pipeline.revenue || 0
+                    );
+            }
+        );
+
+        delete revenueMap["Unassigned"];
+
+        return revenueMap;
+    }
+
+
+    function getStatusByTeam(teamName) {
+
+        const statusMap = {};
+
+        pipelineOverviewData.forEach(
+            function (pipeline) {
+
+                if (
+                    teamName &&
+                    pipeline.team !== teamName
+                ) {
+                    return;
+                }
+
+                const status =
+                    pipeline.status || "Unknown";
+
+                statusMap[status] =
+                    (statusMap[status] || 0)
+                    + 1;
+            }
+        );
+
+        return statusMap;
+    }
+
+
+    function initializePipelineOverviewCharts() {
+
+        if (!pipelineTeamRevenueChart) {
+
+            const revenueCanvas =
+                document.getElementById(
+                    "pipelineTeamRevenueChart"
+                );
+
+            if (revenueCanvas) {
+
+                const revenueByTeam =
+                    getRevenueByTeam();
+
+                pipelineTeamRevenueChart =
+                    new Chart(
+                        revenueCanvas,
+                        {
+                            type: "bar",
+
+                            data: {
+                                labels:
+                                    Object.keys(
+                                        revenueByTeam
+                                    ),
+
+                                datasets: [{
+                                    label:
+                                        "Pipeline Revenue",
+
+                                    data:
+                                        Object.values(
+                                            revenueByTeam
+                                        ),
+
+                                    backgroundColor:
+                                        "rgba(198, 40, 40, 0.75)",
+
+                                    borderColor:
+                                        "#c62828",
+
+                                    borderWidth: 1,
+
+                                    borderRadius: 5,
+
+                                    maxBarThickness: 48
+                                }]
+                            },
+
+                            options: {
+                                responsive: true,
+
+                                maintainAspectRatio:
+                                    false,
+
+                                plugins: {
+                                    legend: {
+                                        labels: {
+                                            color:
+                                                "#d5d5d5"
+                                        }
+                                    }
+                                },
+
+                                scales: {
+                                    x: {
+                                        ticks: {
+                                            color:
+                                                "#d5d5d5"
+                                        },
+
+                                        grid: {
+                                            color:
+                                                "rgba(255,255,255,0.06)"
+                                        }
+                                    },
+
+                                    y: {
+                                        beginAtZero:
+                                            true,
+
+                                        ticks: {
+                                            color:
+                                                "#d5d5d5"
+                                        },
+
+                                        grid: {
+                                            color:
+                                                "rgba(255,255,255,0.06)"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    );
+            }
+        }
+
+
+        if (!pipelineTeamStatusChart) {
+
+            const statusCanvas =
+                document.getElementById(
+                    "pipelineTeamStatusChart"
+                );
+
+            if (statusCanvas) {
+
+                const statusData =
+                    getStatusByTeam("");
+
+                pipelineTeamStatusChart =
+                    new Chart(
+                        statusCanvas,
+                        {
+                            type: "doughnut",
+
+                            data: {
+                                labels:
+                                    Object.keys(
+                                        statusData
+                                    ),
+
+                                datasets: [{
+                                    data:
+                                        Object.values(
+                                            statusData
+                                        ),
+
+                                    backgroundColor:
+                                        pipelineStatusColors,
+
+                                    borderColor:
+                                        "#171717",
+
+                                    borderWidth: 3
+                                }]
+                            },
+
+                            options: {
+                                responsive: true,
+
+                                maintainAspectRatio:
+                                    false,
+
+                                plugins: {
+                                    legend: {
+                                        position:
+                                            "bottom",
+
+                                        labels: {
+                                            color:
+                                                "#d5d5d5",
+
+                                            padding: 18,
+
+                                            usePointStyle:
+                                                true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    );
+            }
+        }
+    }
+
+
+    const pipelineTeamStatusFilter =
+        document.getElementById(
+            "pipelineTeamStatusFilter"
+        );
+
+
+    if (pipelineTeamStatusFilter) {
+
+        pipelineTeamStatusFilter.addEventListener(
+            "change",
+            function () {
+
+                initializePipelineOverviewCharts();
+
+                if (!pipelineTeamStatusChart) {
+                    return;
+                }
+
+                const statusData =
+                    getStatusByTeam(
+                        this.value
+                    );
+
+                pipelineTeamStatusChart.data.labels =
+                    Object.keys(
+                        statusData
+                    );
+
+                pipelineTeamStatusChart.data.datasets[0].data =
+                    Object.values(
+                        statusData
+                    );
+
+                pipelineTeamStatusChart.update();
+            }
+        );
+    }
+
+
+    /* ============================================
+       EXECUTIVE TEAM CARDS FILTER
+    ============================================ */
+
+    const executiveManagerFilter =
+        document.getElementById(
+            "executiveManagerFilter"
+        );
+
+
+    if (executiveManagerFilter) {
+
+        executiveManagerFilter.addEventListener(
+            "change",
+            function () {
+
+                const selectedManager =
+                    this.value;
+
+                const cards =
+                    document.querySelectorAll(
+                        ".team-card-wrapper[data-manager-id]"
+                    );
+
+                let visibleCount = 0;
+
+
+                cards.forEach(
+                    function (card) {
+
+                        const matches =
+                            !selectedManager ||
+                            card.dataset.managerId ===
+                                selectedManager;
+
+                        card.style.display =
+                            matches
+                                ? ""
+                                : "none";
+
+                        if (matches) {
+                            visibleCount++;
+                        }
+                    }
+                );
+
+
+                const noTeams =
+                    document.getElementById(
+                        "executiveNoTeamsMessage"
+                    );
+
+                if (noTeams) {
+
+                    noTeams.style.display =
+                        visibleCount === 0
+                            ? "block"
+                            : "none";
+                }
+            }
+        );
+    }
+
+
+    /* ============================================
+       PIPELINE FILTERS + SORTING + SHOW ALL
     ============================================ */
 
     const filters = [
-
         "rhFilter",
         "rmFilter",
         "tlFilter",
@@ -2466,163 +3728,601 @@ if (productMixCanvas) {
         "regionFilter",
         "productFilter",
         "statusFilter"
+    ];
+
+
+    let showAllPipelines = false;
+
+    const initialPipelineLimit = 10;
+
+
+    const activePipelineStatuses = [
+
+        "Customer Visit (20%)",
+
+        "Ask for Proposal (40%)",
+
+        "Negotiations (60%)",
+
+        "Documentation/Acceptance/Processing (80%)"
 
     ];
 
 
-    filters.forEach(function(id) {
+    const pipelineStatusOrder = {
+        "Customer Visit (20%)": 1,
+        "Ask for Proposal (40%)": 2,
+        "Negotiations (60%)": 3,
+        "Documentation/Acceptance/Processing (80%)": 4,
+        "System Entry/Revenue Locked (100%)": 5,
+        "Lost to Competitor": 6,
+        "Retired - No Decision": 7
+    };
 
-        document
-            .getElementById(id)
-            .addEventListener(
-                "change",
-                filterTable
+
+    function getPipelineFilterValue(id) {
+
+        const element =
+            document.getElementById(id);
+
+        return element
+            ? element.value
+            : "";
+    }
+
+
+    function updatePipelineTable() {
+
+        const rh =
+            getPipelineFilterValue(
+                "rhFilter"
             );
 
-    });
+        const rm =
+            getPipelineFilterValue(
+                "rmFilter"
+            );
+
+        const tl =
+            getPipelineFilterValue(
+                "tlFilter"
+            );
+
+        const edo =
+            getPipelineFilterValue(
+                "edoFilter"
+            );
+
+        const region =
+            getPipelineFilterValue(
+                "regionFilter"
+            );
+
+        const product =
+            getPipelineFilterValue(
+                "productFilter"
+            );
+
+        const status =
+            getPipelineFilterValue(
+                "statusFilter"
+            );
 
 
-    document
-        .getElementById(
-            "pipelineSearch"
-        )
-        .addEventListener(
-            "input",
-            filterTable
+        const searchInput =
+            document.getElementById(
+                "pipelineSearch"
+            );
+
+        const search =
+            searchInput
+                ? searchInput.value
+                    .trim()
+                    .toLowerCase()
+                : "";
+
+
+        const activePipelineCheckbox =
+            document.getElementById(
+                "activePipelineFilter"
+            );
+
+
+        const activeOnly =
+            activePipelineCheckbox
+                ? activePipelineCheckbox.checked
+                : false;
+
+
+        const rows =
+            Array.from(
+                document.querySelectorAll(
+                    "#pipelineTable tbody tr"
+                )
+            );
+
+
+        const matchingRows =
+            rows.filter(
+                function (row) {
+
+                    const text =
+                        row.innerText
+                            .toLowerCase();
+
+
+                    return (
+                        (!rh ||
+                            row.dataset.rh === rh)
+
+                        &&
+
+                        (!rm ||
+                            row.dataset.rm === rm)
+
+                        &&
+
+                        (!tl ||
+                            row.dataset.tl === tl)
+
+                        &&
+
+                        (!edo ||
+                            row.dataset.edo === edo)
+
+                        &&
+
+                        (!region ||
+                            row.dataset.region ===
+                                region)
+
+                        &&
+
+                        (!product ||
+                            row.dataset.product ===
+                                product)
+
+                        &&
+
+                        (!status ||
+                            row.dataset.status ===
+                                status)
+
+                        &&
+
+                        (
+                            !activeOnly ||
+
+                            activePipelineStatuses.includes(
+                                row.dataset.status
+                            )
+                        )
+
+                        &&
+
+                        (!search ||
+                            text.includes(search))
+                    );
+                }
+            );
+
+
+        rows.forEach(
+            function (row) {
+
+                row.style.display =
+                    "none";
+            }
         );
 
 
+        matchingRows.forEach(
+            function (row, index) {
 
-    function filterTable() {
-
-
-        const rh =
-            document
-                .getElementById(
-                    "rhFilter"
-                )
-                .value;
-
-
-        const rm =
-            document
-                .getElementById(
-                    "rmFilter"
-                )
-                .value;
-
-
-        const tl =
-            document
-                .getElementById(
-                    "tlFilter"
-                )
-                .value;
-
-
-        const edo =
-            document
-                .getElementById(
-                    "edoFilter"
-                )
-                .value;
-
-
-        const region =
-            document
-                .getElementById(
-                    "regionFilter"
-                )
-                .value;
-
-
-        const product =
-            document
-                .getElementById(
-                    "productFilter"
-                )
-                .value;
-
-
-        const status =
-            document
-                .getElementById(
-                    "statusFilter"
-                )
-                .value;
-
-
-        const search =
-            document
-                .getElementById(
-                    "pipelineSearch"
-                )
-                .value
-                .trim()
-                .toLowerCase();
-
-
-        document
-            .querySelectorAll(
-                "#pipelineTable tbody tr"
-            )
-            .forEach(function(row) {
-
-
-                const text =
-                    row.innerText
-                        .toLowerCase();
-
-
-                const matches =
-
-                    (!rh ||
-                        row.dataset.rh === rh)
-
-                    &&
-
-                    (!rm ||
-                        row.dataset.rm === rm)
-
-                    &&
-
-                    (!tl ||
-                        row.dataset.tl === tl)
-
-                    &&
-
-                    (!edo ||
-                        row.dataset.edo === edo)
-
-                    &&
-
-                    (!region ||
-                        row.dataset.region === region)
-
-                    &&
-
-                    (!product ||
-                        row.dataset.product === product)
-
-                    &&
-
-                    (!status ||
-                        row.dataset.status === status)
-
-                    &&
-
-                    (!search ||
-                        text.includes(search));
-
+                const shouldShow =
+                    showAllPipelines ||
+                    index <
+                        initialPipelineLimit;
 
                 row.style.display =
-                    matches
-                    ? ""
-                    : "none";
+                    shouldShow
+                        ? "table-row"
+                        : "none";
+            }
+        );
 
-            });
 
+        const countElement =
+            document.getElementById(
+                "pipelineTableCount"
+            );
+
+        if (countElement) {
+
+            const shownCount =
+                showAllPipelines
+                    ? matchingRows.length
+                    : Math.min(
+                        initialPipelineLimit,
+                        matchingRows.length
+                    );
+
+            countElement.textContent =
+                "Showing " +
+                shownCount +
+                " of " +
+                matchingRows.length +
+                " pipelines";
+        }
+
+
+        const showAllButton =
+            document.getElementById(
+                "showAllPipelinesButton"
+            );
+
+        if (showAllButton) {
+
+            if (
+                matchingRows.length <=
+                initialPipelineLimit
+            ) {
+
+                showAllButton.style.display =
+                    "none";
+
+            } else {
+
+                showAllButton.style.display =
+                    "inline-flex";
+
+                showAllButton.textContent =
+                    showAllPipelines
+                        ? "Show First 10"
+                        : "Show All (" +
+                            matchingRows.length +
+                            ")";
+            }
+        }
     }
+
+
+    filters.forEach(
+        function (id) {
+
+            const element =
+                document.getElementById(id);
+
+            if (element) {
+
+                element.addEventListener(
+                    "change",
+                    function () {
+
+                        showAllPipelines =
+                            false;
+
+                        updatePipelineTable();
+                    }
+                );
+            }
+        }
+    );
+
+
+    const activePipelineFilter =
+        document.getElementById(
+            "activePipelineFilter"
+        );
+
+
+    if (activePipelineFilter) {
+
+        activePipelineFilter.addEventListener(
+            "change",
+            function () {
+
+                showAllPipelines =
+                    false;
+
+                updatePipelineTable();
+            }
+        );
+    }
+
+
+    const pipelineSearch =
+        document.getElementById(
+            "pipelineSearch"
+        );
+
+
+    if (pipelineSearch) {
+
+        pipelineSearch.addEventListener(
+            "input",
+            function () {
+
+                showAllPipelines =
+                    false;
+
+                updatePipelineTable();
+            }
+        );
+    }
+
+
+    const showAllPipelinesButton =
+        document.getElementById(
+            "showAllPipelinesButton"
+        );
+
+
+    if (showAllPipelinesButton) {
+
+        showAllPipelinesButton.addEventListener(
+            "click",
+            function () {
+
+                showAllPipelines =
+                    !showAllPipelines;
+
+                updatePipelineTable();
+            }
+        );
+    }
+
+
+    function parsePipelineDate(value) {
+
+        const trimmed =
+            value.trim();
+
+        if (!trimmed || trimmed === "-") {
+            return 0;
+        }
+
+
+        const direct =
+            Date.parse(trimmed);
+
+        if (!Number.isNaN(direct)) {
+            return direct;
+        }
+
+
+        const parts =
+            trimmed.split("-");
+
+        if (parts.length === 3) {
+
+            const day =
+                parseInt(
+                    parts[0],
+                    10
+                );
+
+            const month =
+                parseInt(
+                    parts[1],
+                    10
+                ) - 1;
+
+            const year =
+                parseInt(
+                    parts[2],
+                    10
+                );
+
+            return new Date(
+                year,
+                month,
+                day
+            ).getTime();
+        }
+
+
+        return 0;
+    }
+
+
+    const sortablePipelineHeaders =
+        document.querySelectorAll(
+            "#pipelineTable th.sortable"
+        );
+
+
+    sortablePipelineHeaders.forEach(
+        function (header) {
+
+            header.addEventListener(
+                "click",
+                function () {
+
+                    const table =
+                        this.closest(
+                            "table"
+                        );
+
+                    const tbody =
+                        table.querySelector(
+                            "tbody"
+                        );
+
+                    const columnIndex =
+                        parseInt(
+                            this.dataset.column,
+                            10
+                        );
+
+                    const dataType =
+                        this.dataset.type;
+
+
+                    const currentlyAscending =
+                        this.classList.contains(
+                            "sort-asc"
+                        );
+
+                    const direction =
+                        currentlyAscending
+                            ? "desc"
+                            : "asc";
+
+
+                    sortablePipelineHeaders.forEach(
+                        function (otherHeader) {
+
+                            otherHeader.classList.remove(
+                                "sort-asc",
+                                "sort-desc"
+                            );
+                        }
+                    );
+
+
+                    this.classList.add(
+                        direction === "asc"
+                            ? "sort-asc"
+                            : "sort-desc"
+                    );
+
+
+                    const rows =
+                        Array.from(
+                            tbody.querySelectorAll(
+                                "tr"
+                            )
+                        );
+
+
+                    rows.sort(
+                        function (rowA, rowB) {
+
+                            const valueA =
+                                rowA.cells[
+                                    columnIndex
+                                ]
+                                .textContent
+                                .trim();
+
+                            const valueB =
+                                rowB.cells[
+                                    columnIndex
+                                ]
+                                .textContent
+                                .trim();
+
+
+                            let comparison = 0;
+
+
+                            if (
+                                dataType ===
+                                "number"
+                            ) {
+
+                                const numberA =
+                                    parseFloat(
+                                        valueA.replace(
+                                            /,/g,
+                                            ""
+                                        )
+                                    ) || 0;
+
+                                const numberB =
+                                    parseFloat(
+                                        valueB.replace(
+                                            /,/g,
+                                            ""
+                                        )
+                                    ) || 0;
+
+                                comparison =
+                                    numberA -
+                                    numberB;
+                            }
+
+
+                            else if (
+                                dataType ===
+                                "status"
+                            ) {
+
+                                comparison =
+                                    (
+                                        pipelineStatusOrder[
+                                            valueA
+                                        ] || 999
+                                    )
+                                    -
+                                    (
+                                        pipelineStatusOrder[
+                                            valueB
+                                        ] || 999
+                                    );
+                            }
+
+
+                            else if (
+                                dataType ===
+                                "date"
+                            ) {
+
+                                comparison =
+                                    parsePipelineDate(
+                                        valueA
+                                    )
+                                    -
+                                    parsePipelineDate(
+                                        valueB
+                                    );
+                            }
+
+
+                            else {
+
+                                comparison =
+                                    valueA.localeCompare(
+                                        valueB,
+                                        undefined,
+                                        {
+                                            numeric:
+                                                true,
+
+                                            sensitivity:
+                                                "base"
+                                        }
+                                    );
+                            }
+
+
+                            return direction ===
+                                "asc"
+                                ? comparison
+                                : -comparison;
+                        }
+                    );
+
+
+                    rows.forEach(
+                        function (row) {
+
+                            tbody.appendChild(
+                                row
+                            );
+                        }
+                    );
+
+
+                    updatePipelineTable();
+                }
+            );
+        }
+    );
+
+
+    updatePipelineTable();
 
 </script>
 
@@ -2708,6 +4408,108 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
     updateOverdueRows();
+
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const tabs =
+        document.querySelectorAll(
+            ".executive-tab"
+        );
+
+    const tabContents =
+        document.querySelectorAll(
+            ".executive-tab-content"
+        );
+
+
+    tabs.forEach(function (tab) {
+
+        tab.addEventListener(
+            "click",
+            function () {
+
+                const target =
+                    this.dataset.tab;
+
+
+                tabs.forEach(
+                    function (button) {
+
+                        button.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+                tabContents.forEach(
+                    function (content) {
+
+                        content.classList.remove(
+                            "active"
+                        );
+
+                    }
+                );
+
+
+                this.classList.add(
+                    "active"
+                );
+
+
+                const targetContent =
+                    document.getElementById(
+                        target
+                    );
+
+
+                if (targetContent) {
+
+                    targetContent.classList.add(
+                        "active"
+                    );
+
+                }
+
+
+                if (
+                    target ===
+                    "pipeline-overview"
+                ) {
+
+                    initializePipelineOverviewCharts();
+
+                    setTimeout(
+                        function () {
+
+                            if (
+                                pipelineTeamRevenueChart
+                            ) {
+                                pipelineTeamRevenueChart.resize();
+                            }
+
+                            if (
+                                pipelineTeamStatusChart
+                            ) {
+                                pipelineTeamStatusChart.resize();
+                            }
+
+                        },
+                        0
+                    );
+                }
+
+            }
+        );
+
+    });
 
 });
 </script>
