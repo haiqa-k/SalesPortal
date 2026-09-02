@@ -6,6 +6,11 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
+app.config["EXECUTIVE_DASHBOARD_ROLES"] = {
+    "HOD",
+    "Admin"
+}
+
 # SQL Server connection
 conn_str = (
     "Driver={ODBC Driver 17 for SQL Server};"
@@ -52,6 +57,13 @@ def login():
                     return redirect(url_for("regional_manager_dashboard"))
                 elif role == "Regional Head":
                     return redirect(url_for("regional_head_dashboard"))
+                elif role in app.config.get(
+                    "EXECUTIVE_DASHBOARD_ROLES",
+                    set()
+                ):
+                    return redirect(
+                        url_for("executive_dashboard")
+                    )
                 elif role == "Head":
                     return redirect(url_for("head_dashboard"))
             else:
@@ -2582,7 +2594,7 @@ def regional_head_dashboard():
 
             AND ClosureDate <= DATEADD(
                 DAY,
-                30,
+                7,
                 CAST(GETDATE() AS DATE)
             )
 
@@ -2629,6 +2641,770 @@ def regional_head_dashboard():
         pipelines=pipelines,
 
         upcoming_deadlines=upcoming_deadlines
+    )
+
+
+from datetime import date
+
+
+@app.route("/executive-dashboard")
+def executive_dashboard():
+
+    # =====================================================
+    # SECURITY
+    # =====================================================
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    role = session.get("role")
+
+    allowed_roles = app.config.get(
+        "EXECUTIVE_DASHBOARD_ROLES",
+        set()
+    )
+
+    if role not in allowed_roles:
+        return redirect(url_for("login"))
+
+
+    first_name = session.get("first_name", "")
+    cursor = conn.cursor()
+
+
+    # =====================================================
+    # GET SALES ORGANIZATION
+    #
+    # We load the sales hierarchy globally rather than
+    # tying the dashboard to a specific HOD.
+    # =====================================================
+
+    cursor.execute("""
+        SELECT
+            EmpID,
+            EmployeeName,
+            FirstName,
+            LastName,
+            Role,
+            ManagerID
+        FROM Users
+        WHERE IsActive = 1
+          AND Role IN (
+              'Regional Head',
+              'Regional Manager',
+              'Team Lead',
+              'EDO'
+          )
+    """)
+
+    user_rows = cursor.fetchall()
+
+
+    users = {}
+
+    for row in user_rows:
+
+        users[row[0]] = {
+            "EmpID": row[0],
+            "EmployeeName": row[1],
+            "FirstName": row[2],
+            "LastName": row[3],
+            "Role": row[4],
+            "ManagerID": row[5]
+        }
+
+
+    # =====================================================
+    # USERS BY ROLE
+    # =====================================================
+
+    regional_heads = [
+        u for u in users.values()
+        if u["Role"] == "Regional Head"
+    ]
+
+    regional_managers = [
+        u for u in users.values()
+        if u["Role"] == "Regional Manager"
+    ]
+
+    team_leads = [
+        u for u in users.values()
+        if u["Role"] == "Team Lead"
+    ]
+
+    edos = [
+        u for u in users.values()
+        if u["Role"] == "EDO"
+    ]
+
+
+    # =====================================================
+    # EMPLOYEE LOOKUP
+    #
+    # Pipelines.[Account Manager]
+    # matches Users.EmployeeName
+    # =====================================================
+
+    employee_lookup = {}
+
+    for user in users.values():
+
+        if user["EmployeeName"]:
+
+            employee_lookup[
+                user["EmployeeName"]
+                .strip()
+                .lower()
+            ] = user
+
+
+    # =====================================================
+    # FIND MANAGEMENT ANCESTOR
+    # =====================================================
+
+    def find_ancestor(user, required_role):
+
+        current = user
+
+        while current:
+
+            if current["Role"] == required_role:
+                return current
+
+            manager_id = current["ManagerID"]
+
+            if manager_id is None:
+                return None
+
+            current = users.get(manager_id)
+
+        return None
+
+
+    # =====================================================
+    # GET PIPELINES
+    #
+    # IMPORTANT:
+    # Uses canonical EmployeeName matching.
+    # =====================================================
+
+    cursor.execute("""
+        SELECT
+            p.PipelineID,                    -- 0
+            p.[Account Manager],             -- 1
+            p.[Vertical],                    -- 2
+            p.[Account Name],                -- 3
+            p.[Product],                     -- 4
+            p.[Region],                      -- 5
+            p.[MRC],                         -- 6
+            p.[Contract Duration (Months)],  -- 7
+            p.[ARR],                         -- 8
+            p.[Project OTC],                 -- 9
+            p.[Total Project Revenue],       -- 10
+            p.[Estimated Closure Date],      -- 11
+            p.[Estimated Closure Month],     -- 12
+            p.EstimatedClosureDateFull,      -- 13
+            p.[Sales Cycle Status],          -- 14
+            p.[Next Action]                  -- 15
+
+        FROM Pipelines p
+
+        INNER JOIN Users u
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
+
+        WHERE u.IsActive = 1
+          AND u.Role IN (
+              'Regional Head',
+              'Regional Manager',
+              'Team Lead',
+              'EDO'
+          )
+
+        ORDER BY
+            CASE
+                WHEN p.EstimatedClosureDateFull IS NULL
+                THEN 1
+                ELSE 0
+            END,
+            p.EstimatedClosureDateFull ASC,
+            p.[Account Name]
+    """)
+
+    pipeline_rows = cursor.fetchall()
+
+
+    # =====================================================
+    # STATUS GROUPS
+    # =====================================================
+
+    ACTIVE_STATUSES = {
+        "Customer Visit (20%)",
+        "Ask for Proposal (40%)",
+        "Negotiations (60%)",
+        "Documentation/Acceptance/Processing (80%)"
+    }
+
+    WON_STATUS = "System Entry/Revenue Locked (100%)"
+
+    LOST_STATUSES = {
+        "Lost to Competitor",
+        "Retired - No Decision"
+    }
+
+
+    # =====================================================
+    # ANALYTICS STRUCTURES
+    # =====================================================
+
+    pipelines = []
+
+    total_revenue = 0
+    total_mrc = 0
+    total_otc = 0
+    active_count = 0
+    overdue_count = 0
+    upcoming_count = 0
+
+    revenue_by_rh = {}
+    revenue_by_region = {}
+    status_counts = {}
+
+    product_pipeline_counts = {}
+    product_revenue = {}
+    product_active_counts = {}
+    product_closed_counts = {}
+
+    account_manager_revenue = {}
+
+    products = set()
+    regions = set()
+
+    upcoming_deadlines = []
+    overdue_pipelines = []
+
+    account_managers_with_pipelines = set()
+
+    today = date.today()
+
+
+    # =====================================================
+    # PROCESS PIPELINES
+    # =====================================================
+
+    for row in pipeline_rows:
+
+        account_manager = row[1]
+
+        owner = None
+
+        if account_manager:
+
+            owner = employee_lookup.get(
+                account_manager.strip().lower()
+            )
+
+
+        # ---------------------------------------------
+        # HIERARCHY
+        # ---------------------------------------------
+
+        regional_head = (
+            find_ancestor(owner, "Regional Head")
+            if owner else None
+        )
+
+        regional_manager = (
+            find_ancestor(owner, "Regional Manager")
+            if owner else None
+        )
+
+        team_lead = (
+            find_ancestor(owner, "Team Lead")
+            if owner else None
+        )
+
+
+        rh_name = (
+            regional_head["EmployeeName"]
+            if regional_head
+            else ""
+        )
+
+        rm_name = (
+            regional_manager["EmployeeName"]
+            if regional_manager
+            else ""
+        )
+
+        tl_name = (
+            team_lead["EmployeeName"]
+            if team_lead
+            else ""
+        )
+
+
+        # ---------------------------------------------
+        # CORRECT COLUMN MAPPING
+        # ---------------------------------------------
+
+        mrc = row[6] or 0
+        arr = row[8] or 0
+        project_otc = row[9] or 0
+        revenue = row[10] or 0
+
+        closure_date = row[13]
+
+        status = row[14]
+        product = row[4]
+        region = row[5]
+
+
+        # pyodbc normally returns DATE as datetime.date.
+        # This also handles string values safely.
+        if closure_date and isinstance(closure_date, str):
+
+            try:
+                closure_date = date.fromisoformat(
+                    closure_date[:10]
+                )
+            except ValueError:
+                closure_date = None
+
+
+        # ---------------------------------------------
+        # TOTALS
+        # ---------------------------------------------
+
+        total_revenue += revenue
+        total_mrc += mrc
+        total_otc += project_otc
+
+
+        if account_manager:
+            account_managers_with_pipelines.add(
+                account_manager
+            )
+
+
+        # ---------------------------------------------
+        # ACTIVE PIPELINES
+        # ---------------------------------------------
+
+        is_active = status in ACTIVE_STATUSES
+
+        if is_active:
+            active_count += 1
+
+
+        # ---------------------------------------------
+        # OVERDUE / UPCOMING
+        # ---------------------------------------------
+
+        days_remaining = None
+
+        if closure_date:
+
+            days_remaining = (
+                closure_date - today
+            ).days
+
+
+            if is_active and closure_date < today:
+
+                overdue_count += 1
+
+                overdue_pipelines.append({
+                    "PipelineID": row[0],
+                    "AccountName": row[3],
+                    "AccountManager": account_manager,
+                    "Product": product,
+                    "Status": status,
+                    "ClosureDate": closure_date,
+                    "DaysOverdue": abs(days_remaining)
+                })
+
+
+            elif (
+                is_active
+                and 0 <= days_remaining <= 7
+            ):
+
+                upcoming_count += 1
+
+                upcoming_deadlines.append({
+                    "PipelineID": row[0],
+                    "AccountName": row[3],
+                    "AccountManager": account_manager,
+                    "Product": product,
+                    "Status": status,
+                    "ClosureDate": closure_date,
+                    "DaysRemaining": days_remaining
+                })
+
+
+        # ---------------------------------------------
+        # REVENUE BY REGIONAL HEAD
+        # ---------------------------------------------
+
+        display_rh = (
+            rh_name
+            if rh_name
+            else "Unassigned"
+        )
+
+        revenue_by_rh[display_rh] = (
+            revenue_by_rh.get(display_rh, 0)
+            + revenue
+        )
+
+
+        # ---------------------------------------------
+        # REVENUE BY REGION
+        # ---------------------------------------------
+
+        if region:
+
+            regions.add(region)
+
+            revenue_by_region[region] = (
+                revenue_by_region.get(region, 0)
+                + revenue
+            )
+
+
+        # ---------------------------------------------
+        # STATUS
+        # ---------------------------------------------
+
+        if status:
+
+            status_counts[status] = (
+                status_counts.get(status, 0)
+                + 1
+            )
+
+
+        # ---------------------------------------------
+        # PRODUCT ANALYTICS
+        # ---------------------------------------------
+
+        if product:
+
+            products.add(product)
+
+            product_pipeline_counts[product] = (
+                product_pipeline_counts.get(
+                    product,
+                    0
+                )
+                + 1
+            )
+
+            product_revenue[product] = (
+                product_revenue.get(
+                    product,
+                    0
+                )
+                + revenue
+            )
+
+
+            if status in ACTIVE_STATUSES:
+
+                product_active_counts[product] = (
+                    product_active_counts.get(
+                        product,
+                        0
+                    )
+                    + 1
+                )
+
+            else:
+
+                product_closed_counts[product] = (
+                    product_closed_counts.get(
+                        product,
+                        0
+                    )
+                    + 1
+                )
+
+
+        # ---------------------------------------------
+        # ACCOUNT MANAGER REVENUE
+        # ---------------------------------------------
+
+        if account_manager:
+
+            account_manager_revenue[
+                account_manager
+            ] = (
+                account_manager_revenue.get(
+                    account_manager,
+                    0
+                )
+                + revenue
+            )
+
+
+        # ---------------------------------------------
+        # PIPELINE RECORD
+        # ---------------------------------------------
+
+        pipelines.append({
+
+            "PipelineID": row[0],
+
+            "AccountManager": account_manager,
+
+            "RegionalHead": rh_name,
+
+            "RegionalManager": rm_name,
+
+            "TeamLead": tl_name,
+
+            "Vertical": row[2],
+
+            "AccountName": row[3],
+
+            "Product": product,
+
+            "Region": region,
+
+            "MRC": mrc,
+
+            "ContractDuration": row[7],
+
+            "ARR": arr,
+
+            "ProjectOTC": project_otc,
+
+            "TotalRevenue": revenue,
+
+            "ClosureDateFull": closure_date,
+
+            "Status": status,
+
+            "NextAction": row[15],
+
+            "DaysRemaining": days_remaining
+        })
+
+
+    # =====================================================
+    # AVERAGES
+    # =====================================================
+
+    total_pipeline_count = len(pipelines)
+
+    average_pipeline_value = (
+        total_revenue / total_pipeline_count
+        if total_pipeline_count
+        else 0
+    )
+
+
+    # =====================================================
+    # PRODUCT PERFORMANCE
+    # =====================================================
+
+    product_performance = []
+
+    for product in sorted(products):
+
+        pipeline_count = (
+            product_pipeline_counts.get(
+                product,
+                0
+            )
+        )
+
+        revenue = (
+            product_revenue.get(
+                product,
+                0
+            )
+        )
+
+        active = (
+            product_active_counts.get(
+                product,
+                0
+            )
+        )
+
+        closed = (
+            product_closed_counts.get(
+                product,
+                0
+            )
+        )
+
+        average_value = (
+            revenue / pipeline_count
+            if pipeline_count
+            else 0
+        )
+
+
+        product_performance.append({
+
+            "Product": product,
+
+            "PipelineCount": pipeline_count,
+
+            "ActiveCount": active,
+
+            "ClosedCount": closed,
+
+            "Revenue": revenue,
+
+            "AverageValue": average_value
+        })
+
+
+    # Highest pipeline count first
+    product_performance.sort(
+        key=lambda x: x["PipelineCount"],
+        reverse=True
+    )
+
+
+    # =====================================================
+    # TOP ACCOUNT MANAGERS
+    # =====================================================
+
+    top_account_managers = [
+
+        {
+            "Name": name,
+            "Revenue": revenue
+        }
+
+        for name, revenue
+        in account_manager_revenue.items()
+    ]
+
+    top_account_managers.sort(
+        key=lambda x: x["Revenue"],
+        reverse=True
+    )
+
+    top_account_managers = (
+        top_account_managers[:10]
+    )
+
+
+    # =====================================================
+    # SORT DEADLINES
+    # =====================================================
+
+    upcoming_deadlines.sort(
+        key=lambda x: x["ClosureDate"]
+    )
+
+    overdue_pipelines.sort(
+        key=lambda x: x["DaysOverdue"],
+        reverse=True
+    )
+
+
+
+    # =====================================================
+    # SUMMARY
+    # =====================================================
+
+    summary = {
+
+        "TotalRevenue": total_revenue,
+
+        "ActivePipelines": active_count,
+
+        "TotalMRC": total_mrc,
+
+        "TotalOTC": total_otc,
+
+        "AveragePipelineValue":
+            average_pipeline_value,
+
+        "OverduePipelines":
+            overdue_count,
+
+        "UpcomingDeadlines":
+            upcoming_count,
+
+        "AccountManagers":
+            len(
+                account_managers_with_pipelines
+            ),
+
+        "TotalPipelines":
+            total_pipeline_count
+    }
+
+
+    cursor.close()
+
+
+    # =====================================================
+    # RENDER
+    # =====================================================
+
+    return render_template(
+
+        "executive_dashboard.html",
+
+        first_name=first_name,
+
+        viewer_role=role,
+
+        summary=summary,
+
+        regional_heads=regional_heads,
+
+        regional_managers=regional_managers,
+
+        team_leads=team_leads,
+
+        edos=edos,
+
+        products=sorted(products),
+
+        regions=sorted(regions),
+
+        pipelines=pipelines,
+
+        revenue_by_rh=revenue_by_rh,
+
+        revenue_by_region=revenue_by_region,
+
+        status_counts=status_counts,
+
+        product_performance=
+            product_performance,
+
+        product_pipeline_counts=
+            product_pipeline_counts,
+
+        product_revenue=
+            product_revenue,
+
+        product_active_counts=
+            product_active_counts,
+
+        product_closed_counts=
+            product_closed_counts,
+
+        top_account_managers=
+            top_account_managers,
+
+        upcoming_deadlines=
+            upcoming_deadlines,
+
+        overdue_pipelines=
+            overdue_pipelines
     )
 
 
