@@ -2681,6 +2681,59 @@ def regional_head_dashboard():
 
         for row in cursor.fetchall()
     ]
+
+    # ========================================================
+    # EDIT HISTORY
+    # ========================================================
+
+    history = []
+    history_users = []
+
+    history_cursor = conn.cursor()
+
+    history_cursor.execute("""
+        SELECT
+            HistoryID,
+            [Account Name],
+            FieldName,
+            OldValue,
+            NewValue,
+            EditedBy,
+            EditedOn
+        FROM dbo.History
+        ORDER BY EditedOn DESC
+    """)
+
+    history = [
+        {
+            "HistoryID": row[0],
+            "AccountName": row[1],
+            "FieldName": row[2],
+            "OldValue": row[3],
+            "NewValue": row[4],
+            "EditedBy": row[5],
+            "EditedOn": row[6]
+        }
+        for row in history_cursor.fetchall()
+    ]
+
+
+    history_cursor.execute("""
+        SELECT DISTINCT
+            EditedBy
+        FROM dbo.History
+        WHERE
+            EditedBy IS NOT NULL
+            AND LTRIM(RTRIM(EditedBy)) <> ''
+        ORDER BY EditedBy
+    """)
+
+    history_users = [
+        row[0]
+        for row in history_cursor.fetchall()
+    ]
+
+    history_cursor.close()
     # ========================================================
     # RENDER
     # ========================================================
@@ -2705,7 +2758,9 @@ def regional_head_dashboard():
         
         pipelines=pipelines,
 
-        upcoming_deadlines=upcoming_deadlines
+        upcoming_deadlines=upcoming_deadlines,
+        history=history,
+        history_users=history_users
     )
 
 

@@ -739,6 +739,187 @@
 
 
         /* =========================
+           EDIT HISTORY
+        ========================= */
+
+        .history-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .history-header {
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 20px;
+        }
+
+        .history-header-left {
+            min-width: 0;
+        }
+
+        .history-title {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .history-subtitle {
+            margin: 5px 0 0;
+
+            color: #9f9f9f;
+
+            font-size: 12px;
+        }
+
+        .history-filter {
+            min-width: 240px;
+        }
+
+        .history-table-wrapper {
+            overflow-x: auto;
+
+            max-height: 650px;
+        }
+
+        .history-table {
+            width: 100%;
+
+            margin: 0;
+
+            white-space: nowrap;
+
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .history-table thead th {
+            background: #292929;
+
+            color: #e5e5e5;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+
+            padding: 15px 16px;
+
+            border-bottom: 1px solid #414141;
+
+            position: sticky;
+            top: 0;
+
+            z-index: 2;
+        }
+
+        .history-table tbody td {
+            background: #171717;
+
+            color: #d5d5d5;
+
+            padding: 15px 16px;
+
+            font-size: 13px;
+
+            border-bottom: 1px solid #292929;
+
+            vertical-align: top;
+        }
+
+        .history-table tbody tr:nth-child(even) td {
+            background: #1c1c1c;
+        }
+
+        .history-table tbody tr:hover td {
+            background: #252525;
+        }
+
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .history-account {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .history-field-badge {
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            border-radius: 5px;
+
+            background: rgba(198, 40, 40, 0.18);
+
+            color: #ef9a9a;
+
+            font-size: 12px;
+
+            white-space: nowrap;
+        }
+
+        .history-value {
+            min-width: 180px;
+            max-width: 340px;
+
+            white-space: normal !important;
+
+            overflow-wrap: anywhere;
+        }
+
+        .history-date-sort {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .history-date-sort:hover {
+            background: #333333 !important;
+        }
+
+        .history-date-sort-icon {
+            display: inline-block;
+
+            margin-left: 7px;
+
+            color: #aaaaaa;
+
+            font-size: 12px;
+        }
+
+        .history-footer {
+            padding: 14px 20px;
+
+            background: #1d1d1d;
+
+            border-top: 1px solid #292929;
+
+            color: #9d9d9d;
+
+            font-size: 12px;
+        }
+
+
+        /* =========================
            RESPONSIVE
         ========================= */
 
@@ -775,7 +956,8 @@
             }
 
             .table-header,
-            .teams-header {
+            .teams-header,
+            .history-header {
                 flex-direction: column;
                 align-items: flex-start;
             }
@@ -783,6 +965,7 @@
             .table-controls,
             .table-filter,
             .teams-filter,
+            .history-filter,
             .form-select {
                 width: 100%;
             }
@@ -1872,6 +2055,207 @@
     </div>
 
 
+    <!-- =========================
+         EDIT HISTORY
+    ========================= -->
+
+    <div class="history-card mt-4">
+
+        <div class="history-header">
+
+            <div class="history-header-left">
+
+                <h2 class="history-title">
+                    Audit Trail
+                </h2>
+
+                <p class="history-subtitle">
+                    Pipeline changes made by users within your view
+                </p>
+
+            </div>
+
+
+            <div class="history-filter">
+
+                <select
+                    id="historyUserFilter"
+                    class="form-select"
+                >
+
+                    <option value="">
+                        All Users
+                    </option>
+
+                    {% for user in history_users %}
+
+                        <option value="{{ user }}">
+                            {{ user }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="history-table-wrapper">
+
+            <table
+                id="historyTable"
+                class="history-table"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Account Name
+                        </th>
+
+                        <th>
+                            Edited Field
+                        </th>
+
+                        <th>
+                            Old Value
+                        </th>
+
+                        <th>
+                            New Value
+                        </th>
+
+                        <th>
+                            Edited By
+                        </th>
+
+                        <th
+                            id="historyDateHeader"
+                            class="history-date-sort"
+                        >
+                            Edited On
+
+                            <span
+                                id="historyDateSortIcon"
+                                class="history-date-sort-icon"
+                            >
+                                ↓
+                            </span>
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="historyTableBody">
+
+                    {% for item in history %}
+
+                        <tr
+                            data-history-user="{{ item.EditedBy or '' }}"
+                            data-history-date="{{
+                                item.EditedOn.isoformat()
+                                if item.EditedOn
+                                else ''
+                            }}"
+                        >
+
+                            <td>
+                                {{ item.HistoryID }}
+                            </td>
+
+                            <td class="history-account">
+                                {{ item.AccountName or '-' }}
+                            </td>
+
+                            <td>
+
+                                <span class="history-field-badge">
+                                    {{ item.FieldName or '-' }}
+                                </span>
+
+                            </td>
+
+                            <td class="history-value">
+                                {{ item.OldValue or '-' }}
+                            </td>
+
+                            <td class="history-value">
+                                {{ item.NewValue or '-' }}
+                            </td>
+
+                            <td>
+                                {{ item.EditedBy or '-' }}
+                            </td>
+
+                            <td>
+
+                                {% if item.EditedOn %}
+
+                                    {{
+                                        item.EditedOn.strftime(
+                                            "%d-%m-%Y %I:%M %p"
+                                        )
+                                    }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="7"
+                                class="empty-message"
+                            >
+                                No edit history available.
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        {% if history %}
+
+            <div class="history-footer">
+
+                <span id="historyVisibleCount">
+                    Showing {{ history|length }}
+                    record{% if history|length != 1 %}s{% endif %}
+                </span>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
 </div>
 
 
@@ -2411,6 +2795,216 @@ sortableHeaders.forEach(header => {
     );
 
 });
+
+
+
+/* =========================
+   EDIT HISTORY
+========================= */
+
+const historyUserFilter =
+    document.getElementById(
+        'historyUserFilter'
+    );
+
+const historyTableBody =
+    document.getElementById(
+        'historyTableBody'
+    );
+
+const historyDateHeader =
+    document.getElementById(
+        'historyDateHeader'
+    );
+
+const historyDateSortIcon =
+    document.getElementById(
+        'historyDateSortIcon'
+    );
+
+const historyVisibleCount =
+    document.getElementById(
+        'historyVisibleCount'
+    );
+
+
+let historyDateDescending = true;
+
+
+function updateHistoryVisibleCount() {
+
+    if (
+        !historyTableBody ||
+        !historyVisibleCount
+    ) {
+        return;
+    }
+
+
+    const rows =
+        Array.from(
+            historyTableBody.querySelectorAll(
+                'tr[data-history-user]'
+            )
+        );
+
+
+    const visibleRows =
+        rows.filter(
+            row =>
+                row.style.display !== 'none'
+        );
+
+
+    const count =
+        visibleRows.length;
+
+
+    historyVisibleCount.textContent =
+        'Showing ' +
+        count +
+        ' record' +
+        (
+            count === 1
+                ? ''
+                : 's'
+        );
+}
+
+
+function applyHistoryUserFilter() {
+
+    if (
+        !historyUserFilter ||
+        !historyTableBody
+    ) {
+        return;
+    }
+
+
+    const selectedUser =
+        historyUserFilter.value;
+
+
+    const rows =
+        historyTableBody.querySelectorAll(
+            'tr[data-history-user]'
+        );
+
+
+    rows.forEach(row => {
+
+        const rowUser =
+            row.dataset.historyUser || '';
+
+
+        const matches =
+            selectedUser === '' ||
+            rowUser === selectedUser;
+
+
+        row.style.display =
+            matches
+                ? ''
+                : 'none';
+
+    });
+
+
+    updateHistoryVisibleCount();
+}
+
+
+if (historyUserFilter) {
+
+    historyUserFilter.addEventListener(
+        'change',
+        applyHistoryUserFilter
+    );
+}
+
+
+if (
+    historyDateHeader &&
+    historyTableBody
+) {
+
+    historyDateHeader.addEventListener(
+        'click',
+        function () {
+
+            historyDateDescending =
+                !historyDateDescending;
+
+
+            const rows =
+                Array.from(
+                    historyTableBody.querySelectorAll(
+                        'tr[data-history-user]'
+                    )
+                );
+
+
+            rows.sort(
+                (rowA, rowB) => {
+
+                    const dateA =
+                        Date.parse(
+                            rowA.dataset.historyDate || ''
+                        );
+
+                    const dateB =
+                        Date.parse(
+                            rowB.dataset.historyDate || ''
+                        );
+
+
+                    const safeDateA =
+                        Number.isNaN(dateA)
+                            ? 0
+                            : dateA;
+
+                    const safeDateB =
+                        Number.isNaN(dateB)
+                            ? 0
+                            : dateB;
+
+
+                    return (
+                        historyDateDescending
+                            ? safeDateB - safeDateA
+                            : safeDateA - safeDateB
+                    );
+
+                }
+            );
+
+
+            rows.forEach(row => {
+
+                historyTableBody.appendChild(
+                    row
+                );
+
+            });
+
+
+            if (historyDateSortIcon) {
+
+                historyDateSortIcon.textContent =
+                    historyDateDescending
+                        ? '↓'
+                        : '↑';
+            }
+
+
+            applyHistoryUserFilter();
+        }
+    );
+}
+
+
+applyHistoryUserFilter();
 
 
 
