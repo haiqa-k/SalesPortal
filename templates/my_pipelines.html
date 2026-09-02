@@ -200,6 +200,134 @@
 
 
         /* =========================
+           TABLE FILTERS
+        ========================= */
+
+        .pipeline-filters {
+            padding: 16px 20px;
+            background: #1a1a1a;
+            border-bottom: 1px solid #303030;
+
+            display: grid;
+            grid-template-columns:
+                minmax(220px, 1.5fr)
+                repeat(3, minmax(160px, 1fr))
+                auto;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .pipeline-filter-input,
+        .pipeline-filter-select {
+            height: 40px;
+
+            background: #242424;
+            color: #ffffff;
+
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+
+            padding: 0 11px;
+            font-size: 13px;
+        }
+
+        .pipeline-filter-input::placeholder {
+            color: #8f8f8f;
+        }
+
+        .pipeline-filter-input:focus,
+        .pipeline-filter-select:focus {
+            outline: none;
+            border-color: #c62828;
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15);
+        }
+
+        .pipeline-filter-select option {
+            background: #1e1e1e;
+            color: #ffffff;
+        }
+
+        .clear-filters-btn {
+            height: 40px;
+
+            background: #2a2a2a;
+            color: #d5d5d5;
+
+            border: 1px solid #444444;
+            border-radius: 6px;
+
+            padding: 0 14px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+        .clear-filters-btn:hover {
+            background: #353535;
+            color: #ffffff;
+        }
+
+        .filtered-count {
+            padding: 10px 20px;
+
+            background: #1a1a1a;
+            color: #999999;
+
+            border-bottom: 1px solid #292929;
+
+            font-size: 12px;
+        }
+
+
+        /* =========================
+           SORTING
+        ========================= */
+
+        .sortable {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sort-icon {
+            display: inline-block;
+
+            width: 7px;
+            height: 7px;
+
+            margin-left: 7px;
+
+            vertical-align: 2px;
+
+            border-right: 1.5px solid #777777;
+            border-bottom: 1.5px solid #777777;
+
+            transform: rotate(45deg);
+
+            transition:
+                transform 0.2s ease,
+                border-color 0.2s ease;
+        }
+
+        .sortable:hover .sort-icon {
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-asc .sort-icon {
+            transform: rotate(225deg);
+            border-color: #ffffff;
+        }
+
+        .sortable.sort-desc .sort-icon {
+            transform: rotate(45deg);
+            border-color: #ffffff;
+        }
+
+
+        /* =========================
            TABLE
         ========================= */
 
@@ -410,6 +538,17 @@
             .user-info {
                 font-size: 12px;
             }
+
+
+            .pipeline-filters {
+                grid-template-columns: 1fr;
+            }
+
+            .pipeline-filter-input,
+            .pipeline-filter-select,
+            .clear-filters-btn {
+                width: 100%;
+            }
         }
 
     </style>
@@ -615,6 +754,54 @@
         </div>
 
 
+        <div class="pipeline-filters">
+
+            <input
+                type="text"
+                id="pipelineSearch"
+                class="pipeline-filter-input"
+                placeholder="Search account, product, next action..."
+            >
+
+            <select
+                id="verticalFilter"
+                class="pipeline-filter-select"
+            >
+                <option value="">All Verticals</option>
+            </select>
+
+            <select
+                id="productFilter"
+                class="pipeline-filter-select"
+            >
+                <option value="">All Products</option>
+            </select>
+
+            <select
+                id="statusFilter"
+                class="pipeline-filter-select"
+            >
+                <option value="">All Statuses</option>
+            </select>
+
+            <button
+                type="button"
+                id="clearPipelineFilters"
+                class="clear-filters-btn"
+            >
+                Clear Filters
+            </button>
+
+        </div>
+
+        <div
+            id="filteredPipelineCount"
+            class="filtered-count"
+        >
+            Showing {{ pipelines|length }} of {{ pipelines|length }} pipelines
+        </div>
+
+
         <div class="table-wrapper">
 
             <table class="table pipeline-table">
@@ -624,30 +811,141 @@
                     <tr>
 
                         <th>Edit</th>
-                        <th>Vertical</th>
-                        <th>Account Name</th>
-                        <th>Product</th>
-                        <th>Region</th>
-                        <th>MRC</th>
-                        <th>Contract Duration</th>
-                        <th>ARR</th>
-                        <th>Project OTC</th>
-                        <th>Total Project Revenue</th>
-                        <th>Estimated Closure Date</th>
-                        <th>Estimated Closure Month</th>
-                        <th>Sales Cycle Status</th>
-                        <th>Next Action</th>
+
+                        <th
+                            class="sortable"
+                            data-column="1"
+                            data-type="text"
+                        >
+                            Vertical
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="2"
+                            data-type="text"
+                        >
+                            Account Name
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="3"
+                            data-type="text"
+                        >
+                            Product
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="4"
+                            data-type="text"
+                        >
+                            Region
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="5"
+                            data-type="number"
+                        >
+                            MRC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="6"
+                            data-type="number"
+                        >
+                            Contract Duration
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="7"
+                            data-type="number"
+                        >
+                            ARR
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="8"
+                            data-type="number"
+                        >
+                            Project OTC
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="9"
+                            data-type="number"
+                        >
+                            Total Project Revenue
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="10"
+                            data-type="date"
+                        >
+                            Estimated Closure Date
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="11"
+                            data-type="text"
+                        >
+                            Estimated Closure Month
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="12"
+                            data-type="status"
+                        >
+                            Sales Cycle Status
+                            <span class="sort-icon"></span>
+                        </th>
+
+                        <th
+                            class="sortable"
+                            data-column="13"
+                            data-type="text"
+                        >
+                            Next Action
+                            <span class="sort-icon"></span>
+                        </th>
 
                     </tr>
 
                 </thead>
 
 
-                <tbody>
+                <tbody id="pipelineBody">
 
                     {% for p in pipelines %}
 
-                    <tr>
+                    <tr
+                        data-vertical="{{ p[1] or '' }}"
+                        data-account="{{ p[2] or '' }}"
+                        data-product="{{ p[3] or '' }}"
+                        data-region="{{ p[4] or '' }}"
+                        data-status="{{ p[12] or '' }}"
+                        data-next-action="{{ p[14] or '' }}"
+                    >
 
                         <!-- EDIT -->
 
@@ -728,6 +1026,512 @@
 
 </div>
 
+
+
+<script>
+
+    /* =========================
+       FILTER DROPDOWN OPTIONS
+    ========================= */
+
+    const pipelineRows =
+        Array.from(
+            document.querySelectorAll(
+                '#pipelineBody tr[data-account]'
+            )
+        );
+
+    const pipelineSearch =
+        document.getElementById(
+            'pipelineSearch'
+        );
+
+    const verticalFilter =
+        document.getElementById(
+            'verticalFilter'
+        );
+
+    const productFilter =
+        document.getElementById(
+            'productFilter'
+        );
+
+    const statusFilter =
+        document.getElementById(
+            'statusFilter'
+        );
+
+    const clearFiltersButton =
+        document.getElementById(
+            'clearPipelineFilters'
+        );
+
+    const filteredCount =
+        document.getElementById(
+            'filteredPipelineCount'
+        );
+
+
+    function addUniqueOptions(
+        selectElement,
+        values
+    ) {
+
+        const uniqueValues =
+            [...new Set(
+                values
+                    .map(value =>
+                        (value || '').trim()
+                    )
+                    .filter(Boolean)
+            )]
+            .sort(
+                (a, b) =>
+                    a.localeCompare(
+                        b,
+                        undefined,
+                        {
+                            sensitivity: 'base'
+                        }
+                    )
+            );
+
+
+        uniqueValues.forEach(value => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+            option.value =
+                value;
+
+            option.textContent =
+                value;
+
+            selectElement.appendChild(
+                option
+            );
+
+        });
+
+    }
+
+
+    addUniqueOptions(
+        verticalFilter,
+        pipelineRows.map(
+            row => row.dataset.vertical
+        )
+    );
+
+    addUniqueOptions(
+        productFilter,
+        pipelineRows.map(
+            row => row.dataset.product
+        )
+    );
+
+    addUniqueOptions(
+        statusFilter,
+        pipelineRows.map(
+            row => row.dataset.status
+        )
+    );
+
+
+    function normalize(value) {
+
+        return String(value || '')
+            .trim()
+            .toLowerCase();
+
+    }
+
+
+    function applyPipelineFilters() {
+
+        const searchTerm =
+            normalize(
+                pipelineSearch.value
+            );
+
+        const selectedVertical =
+            normalize(
+                verticalFilter.value
+            );
+
+        const selectedProduct =
+            normalize(
+                productFilter.value
+            );
+
+        const selectedStatus =
+            normalize(
+                statusFilter.value
+            );
+
+
+        let visibleCount = 0;
+
+
+        pipelineRows.forEach(row => {
+
+            const searchableText =
+                normalize(
+                    [
+                        row.dataset.vertical,
+                        row.dataset.account,
+                        row.dataset.product,
+                        row.dataset.region,
+                        row.dataset.status,
+                        row.dataset.nextAction
+                    ].join(' ')
+                );
+
+
+            const matchesSearch =
+                !searchTerm ||
+                searchableText.includes(
+                    searchTerm
+                );
+
+            const matchesVertical =
+                !selectedVertical ||
+                normalize(
+                    row.dataset.vertical
+                ) === selectedVertical;
+
+            const matchesProduct =
+                !selectedProduct ||
+                normalize(
+                    row.dataset.product
+                ) === selectedProduct;
+
+            const matchesStatus =
+                !selectedStatus ||
+                normalize(
+                    row.dataset.status
+                ) === selectedStatus;
+
+
+            const shouldShow =
+                matchesSearch &&
+                matchesVertical &&
+                matchesProduct &&
+                matchesStatus;
+
+
+            row.style.display =
+                shouldShow
+                    ? ''
+                    : 'none';
+
+
+            if (shouldShow) {
+                visibleCount += 1;
+            }
+
+        });
+
+
+        filteredCount.textContent =
+            `Showing ${visibleCount} of ${pipelineRows.length} pipelines`;
+
+    }
+
+
+    [
+        verticalFilter,
+        productFilter,
+        statusFilter
+    ].forEach(filter => {
+
+        filter.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+
+    });
+
+
+    pipelineSearch.addEventListener(
+        'input',
+        applyPipelineFilters
+    );
+
+
+    clearFiltersButton.addEventListener(
+        'click',
+        function () {
+
+            pipelineSearch.value = '';
+            verticalFilter.value = '';
+            productFilter.value = '';
+            statusFilter.value = '';
+
+            applyPipelineFilters();
+
+        }
+    );
+
+
+    /* =========================
+       COLUMN SORTING
+    ========================= */
+
+    const sortableHeaders =
+        document.querySelectorAll(
+            '.pipeline-table th.sortable'
+        );
+
+
+    const statusOrder = {
+        "Customer Visit (20%)": 1,
+        "Ask for Proposal (40%)": 2,
+        "Negotiations (60%)": 3,
+        "Documentation/Acceptance/Processing (80%)": 4,
+        "System Entry/Revenue Locked (100%)": 5,
+        "Lost to Competitor": 6,
+        "Retired - No Decision": 7
+    };
+
+
+    const monthOrder = {
+        january: 1,
+        february: 2,
+        march: 3,
+        april: 4,
+        may: 5,
+        june: 6,
+        july: 7,
+        august: 8,
+        september: 9,
+        october: 10,
+        november: 11,
+        december: 12
+    };
+
+
+    function parseNumeric(value) {
+
+        return parseFloat(
+            String(value || '')
+                .replace(/,/g, '')
+                .replace(/[^\d.-]/g, '')
+        ) || 0;
+
+    }
+
+
+    function parseDateValue(value) {
+
+        const text =
+            String(value || '')
+                .trim();
+
+        if (!text || text === '-') {
+            return 0;
+        }
+
+
+        const directDate =
+            Date.parse(text);
+
+        if (!Number.isNaN(directDate)) {
+            return directDate;
+        }
+
+
+        const day =
+            parseInt(text, 10);
+
+        return Number.isNaN(day)
+            ? 0
+            : day;
+
+    }
+
+
+    sortableHeaders.forEach(header => {
+
+        header.addEventListener(
+            'click',
+            function () {
+
+                const columnIndex =
+                    parseInt(
+                        this.dataset.column
+                    );
+
+                const dataType =
+                    this.dataset.type;
+
+
+                const direction =
+                    this.classList.contains(
+                        'sort-asc'
+                    )
+                        ? 'desc'
+                        : 'asc';
+
+
+                sortableHeaders.forEach(
+                    otherHeader => {
+
+                        otherHeader.classList.remove(
+                            'sort-asc',
+                            'sort-desc'
+                        );
+
+                    }
+                );
+
+
+                this.classList.add(
+                    direction === 'asc'
+                        ? 'sort-asc'
+                        : 'sort-desc'
+                );
+
+
+                const currentRows =
+                    Array.from(
+                        document.querySelectorAll(
+                            '#pipelineBody tr[data-account]'
+                        )
+                    );
+
+
+                currentRows.sort(
+                    (rowA, rowB) => {
+
+                        const valueA =
+                            rowA.cells[
+                                columnIndex
+                            ]
+                            .textContent
+                            .trim();
+
+                        const valueB =
+                            rowB.cells[
+                                columnIndex
+                            ]
+                            .textContent
+                            .trim();
+
+
+                        let comparison = 0;
+
+
+                        if (
+                            dataType ===
+                            'number'
+                        ) {
+
+                            comparison =
+                                parseNumeric(valueA)
+                                -
+                                parseNumeric(valueB);
+
+                        }
+
+
+                        else if (
+                            dataType ===
+                            'date'
+                        ) {
+
+                            comparison =
+                                parseDateValue(
+                                    valueA
+                                )
+                                -
+                                parseDateValue(
+                                    valueB
+                                );
+
+                        }
+
+
+                        else if (
+                            dataType ===
+                            'status'
+                        ) {
+
+                            comparison =
+                                (
+                                    statusOrder[valueA]
+                                    || 999
+                                )
+                                -
+                                (
+                                    statusOrder[valueB]
+                                    || 999
+                                );
+
+                        }
+
+
+                        else if (
+                            columnIndex === 11
+                        ) {
+
+                            comparison =
+                                (
+                                    monthOrder[
+                                        normalize(valueA)
+                                    ] || 999
+                                )
+                                -
+                                (
+                                    monthOrder[
+                                        normalize(valueB)
+                                    ] || 999
+                                );
+
+                        }
+
+
+                        else {
+
+                            comparison =
+                                valueA.localeCompare(
+                                    valueB,
+                                    undefined,
+                                    {
+                                        numeric: true,
+                                        sensitivity:
+                                            'base'
+                                    }
+                                );
+
+                        }
+
+
+                        return direction === 'asc'
+                            ? comparison
+                            : -comparison;
+
+                    }
+                );
+
+
+                currentRows.forEach(row => {
+                    document
+                        .getElementById(
+                            'pipelineBody'
+                        )
+                        .appendChild(row);
+                });
+
+            }
+        );
+
+    });
+
+</script>
 
 </body>
 </html>
