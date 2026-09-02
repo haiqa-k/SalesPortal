@@ -2310,15 +2310,15 @@
             <div class="dashboard-card">
 
                 <div class="section-title">
-                    Revenue by Team
+                    Revenue by Regional Head
                 </div>
 
                 <div class="section-description">
-                    Total pipeline revenue grouped by Team Lead
+                    Total pipeline revenue grouped by Regional Head
                 </div>
 
                 <div class="chart-container">
-                    <canvas id="pipelineTeamRevenueChart"></canvas>
+                    <canvas id="pipelineRHRevenueChart"></canvas>
                 </div>
 
             </div>
@@ -2338,8 +2338,8 @@
                             class="section-description"
                             style="margin-bottom:0;"
                         >
-                            Sales-cycle distribution for all teams
-                            or a selected team
+                            Sales-cycle distribution for the full organization
+                            or a selected Regional Head
                         </div>
 
                     </div>
@@ -2347,18 +2347,18 @@
 
                     <div class="pipeline-chart-filter">
 
-                        <select id="pipelineTeamStatusFilter">
+                        <select id="pipelineRHStatusFilter">
 
                             <option value="">
-                                All Teams
+                                All Regional Heads
                             </option>
 
-                            {% for team in team_leads %}
+                            {% for regional_head in regional_heads %}
 
                                 <option
-                                    value="{{ team.EmployeeName }}"
+                                    value="{{ regional_head.EmployeeName }}"
                                 >
-                                    {{ team.EmployeeName }}
+                                    {{ regional_head.EmployeeName }}
                                 </option>
 
                             {% endfor %}
@@ -2375,7 +2375,7 @@
                     <div class="status-chart-layout">
 
                         <div class="status-chart-canvas">
-                            <canvas id="pipelineTeamStatusChart"></canvas>
+                            <canvas id="pipelineRHStatusChart"></canvas>
                         </div>
 
 
@@ -2383,34 +2383,34 @@
 
                             <div
                                 class="status-metrics-title"
-                                id="teamStatusMetricTitle"
+                                id="rhStatusMetricTitle"
                             >
                                 All Pipelines
                             </div>
 
                             <div class="status-metric-row">
                                 <span>Total Pipelines</span>
-                                <strong id="teamStatusMetricPipelines">0</strong>
+                                <strong id="rhStatusMetricPipelines">0</strong>
                             </div>
 
                             <div class="status-metric-row">
                                 <span>Percentage</span>
-                                <strong id="teamStatusMetricPercentage">0%</strong>
+                                <strong id="rhStatusMetricPercentage">0%</strong>
                             </div>
 
                             <div class="status-metric-row">
                                 <span>Total Revenue</span>
-                                <strong id="teamStatusMetricRevenue">0</strong>
+                                <strong id="rhStatusMetricRevenue">0</strong>
                             </div>
 
                             <div class="status-metric-row">
                                 <span>Total MRC</span>
-                                <strong id="teamStatusMetricMRC">0</strong>
+                                <strong id="rhStatusMetricMRC">0</strong>
                             </div>
 
                             <div class="status-metric-row">
                                 <span>Total OTC</span>
-                                <strong id="teamStatusMetricOTC">0</strong>
+                                <strong id="rhStatusMetricOTC">0</strong>
                             </div>
 
                         </div>
@@ -2425,7 +2425,7 @@
 
 
         <!-- =========================================
-             TEAMS
+             REGIONAL HEADS
         ========================================== -->
 
         <div class="teams-card">
@@ -2433,29 +2433,8 @@
             <div class="teams-header">
 
                 <h2 class="teams-title">
-                    Teams
+                    Regional Heads
                 </h2>
-
-
-                <div class="teams-filter">
-
-                    <select id="executiveManagerFilter">
-
-                        <option value="">
-                            All Regional Managers
-                        </option>
-
-                        {% for manager in regional_managers %}
-
-                            <option value="{{ manager.EmpID }}">
-                                {{ manager.EmployeeName }}
-                            </option>
-
-                        {% endfor %}
-
-                    </select>
-
-                </div>
 
             </div>
 
@@ -2464,31 +2443,19 @@
 
                 <div
                     class="row g-3"
-                    id="executiveTeamGrid"
+                    id="executiveRegionalHeadGrid"
                 >
 
-                    {% for team in team_leads %}
-
-                        {% set manager = namespace(name='-') %}
-
-                        {% for rm in regional_managers %}
-
-                            {% if rm.EmpID == team.ManagerID %}
-                                {% set manager.name = rm.EmployeeName %}
-                            {% endif %}
-
-                        {% endfor %}
-
+                    {% for regional_head in regional_heads %}
 
                         <div
                             class="col-lg-4 col-md-6 team-card-wrapper"
-                            data-manager-id="{{ team.ManagerID }}"
                         >
 
                             <a
                                 href="{{ url_for(
-                                    'regional_manager_team_dashboard',
-                                    teamlead_id=team.EmpID
+                                    'executive_regional_head_dashboard',
+                                    regional_head_id=regional_head.EmpID
                                 ) }}"
                                 class="team-card-link"
                             >
@@ -2500,12 +2467,11 @@
                                         <div>
 
                                             <div class="team-name">
-                                                {{ team.EmployeeName }}
+                                                {{ regional_head.EmployeeName }}
                                             </div>
 
                                             <p class="team-role">
-                                                Team Lead · RM:
-                                                {{ manager.name }}
+                                                Regional Head · View Regional Dashboard
                                             </p>
 
                                         </div>
@@ -2527,22 +2493,13 @@
                         <div class="col-12">
 
                             <div class="no-teams-message">
-                                No teams found.
+                                No Regional Heads found.
                             </div>
 
                         </div>
 
                     {% endfor %}
 
-                </div>
-
-
-                <div
-                    id="executiveNoTeamsMessage"
-                    class="no-teams-message"
-                    style="display:none;"
-                >
-                    No teams found for this Regional Manager.
                 </div>
 
             </div>
@@ -3495,6 +3452,9 @@
         {% for p in pipelines %}
 
         {
+            regionalHead:
+                {{ (p.RegionalHead or "") | tojson }},
+
             team:
                 {{ (p.TeamLead or "") | tojson }},
 
@@ -4466,11 +4426,11 @@ if (productMixCanvas) {
 
 
     /* ============================================
-       PIPELINE OVERVIEW CHARTS
+       PIPELINE OVERVIEW CHARTS - REGIONAL HEAD LEVEL
     ============================================ */
 
-    let pipelineTeamRevenueChart = null;
-    let pipelineTeamStatusChart = null;
+    let pipelineRHRevenueChart = null;
+    let pipelineRHStatusChart = null;
 
 
     const pipelineStatusColors = [
@@ -4484,18 +4444,18 @@ if (productMixCanvas) {
     ];
 
 
-    function getRevenueByTeam() {
+    function getRevenueByRegionalHead() {
 
         const revenueMap = {};
 
         pipelineOverviewData.forEach(
             function (pipeline) {
 
-                const team =
-                    pipeline.team || "Unassigned";
+                const regionalHead =
+                    pipeline.regionalHead || "Unassigned";
 
-                revenueMap[team] =
-                    (revenueMap[team] || 0)
+                revenueMap[regionalHead] =
+                    (revenueMap[regionalHead] || 0)
                     + Number(
                         pipeline.revenue || 0
                     );
@@ -4508,7 +4468,9 @@ if (productMixCanvas) {
     }
 
 
-    function getStatusByTeam(teamName) {
+    function getStatusByRegionalHead(
+        regionalHeadName
+    ) {
 
         const statusMap = {};
 
@@ -4516,8 +4478,9 @@ if (productMixCanvas) {
             function (pipeline) {
 
                 if (
-                    teamName &&
-                    pipeline.team !== teamName
+                    regionalHeadName &&
+                    pipeline.regionalHead !==
+                        regionalHeadName
                 ) {
                     return;
                 }
@@ -4562,16 +4525,16 @@ if (productMixCanvas) {
     }
 
 
-    let currentTeamStatusMetrics = {};
+    let currentRHStatusMetrics = {};
 
 
-    function updateTeamStatusMetrics(
+    function updateRHStatusMetrics(
         status = null
     ) {
 
         const totals =
             getStatusTotals(
-                currentTeamStatusMetrics
+                currentRHStatusMetrics
             );
 
         let title =
@@ -4586,14 +4549,14 @@ if (productMixCanvas) {
 
         if (
             status &&
-            currentTeamStatusMetrics[status]
+            currentRHStatusMetrics[status]
         ) {
 
             title =
                 getStatusDisplayTitle(status);
 
             metrics =
-                currentTeamStatusMetrics[status];
+                currentRHStatusMetrics[status];
 
             percentage =
                 totals.count
@@ -4609,14 +4572,14 @@ if (productMixCanvas) {
 
         document
             .getElementById(
-                "teamStatusMetricTitle"
+                "rhStatusMetricTitle"
             )
             .textContent =
                 title;
 
         document
             .getElementById(
-                "teamStatusMetricPipelines"
+                "rhStatusMetricPipelines"
             )
             .textContent =
                 formatStatusNumber(
@@ -4625,7 +4588,7 @@ if (productMixCanvas) {
 
         document
             .getElementById(
-                "teamStatusMetricPercentage"
+                "rhStatusMetricPercentage"
             )
             .textContent =
                 percentage.toFixed(1)
@@ -4633,7 +4596,7 @@ if (productMixCanvas) {
 
         document
             .getElementById(
-                "teamStatusMetricRevenue"
+                "rhStatusMetricRevenue"
             )
             .textContent =
                 formatStatusNumber(
@@ -4642,7 +4605,7 @@ if (productMixCanvas) {
 
         document
             .getElementById(
-                "teamStatusMetricMRC"
+                "rhStatusMetricMRC"
             )
             .textContent =
                 formatStatusNumber(
@@ -4651,7 +4614,7 @@ if (productMixCanvas) {
 
         document
             .getElementById(
-                "teamStatusMetricOTC"
+                "rhStatusMetricOTC"
             )
             .textContent =
                 formatStatusNumber(
@@ -4663,19 +4626,19 @@ if (productMixCanvas) {
 
     function initializePipelineOverviewCharts() {
 
-        if (!pipelineTeamRevenueChart) {
+        if (!pipelineRHRevenueChart) {
 
             const revenueCanvas =
                 document.getElementById(
-                    "pipelineTeamRevenueChart"
+                    "pipelineRHRevenueChart"
                 );
 
             if (revenueCanvas) {
 
-                const revenueByTeam =
-                    getRevenueByTeam();
+                const revenueByRH =
+                    getRevenueByRegionalHead();
 
-                pipelineTeamRevenueChart =
+                pipelineRHRevenueChart =
                     new Chart(
                         revenueCanvas,
                         {
@@ -4684,7 +4647,7 @@ if (productMixCanvas) {
                             data: {
                                 labels:
                                     Object.keys(
-                                        revenueByTeam
+                                        revenueByRH
                                     ),
 
                                 datasets: [{
@@ -4693,7 +4656,7 @@ if (productMixCanvas) {
 
                                     data:
                                         Object.values(
-                                            revenueByTeam
+                                            revenueByRH
                                         ),
 
                                     backgroundColor:
@@ -4760,24 +4723,24 @@ if (productMixCanvas) {
         }
 
 
-        if (!pipelineTeamStatusChart) {
+        if (!pipelineRHStatusChart) {
 
             const statusCanvas =
                 document.getElementById(
-                    "pipelineTeamStatusChart"
+                    "pipelineRHStatusChart"
                 );
 
             if (statusCanvas) {
 
-                currentTeamStatusMetrics =
-                    getStatusByTeam("");
+                currentRHStatusMetrics =
+                    getStatusByRegionalHead("");
 
                 const statusData =
                     buildStatusChartData(
-                        currentTeamStatusMetrics
+                        currentRHStatusMetrics
                     );
 
-                pipelineTeamStatusChart =
+                pipelineRHStatusChart =
                     new Chart(
                         statusCanvas,
                         {
@@ -4830,10 +4793,10 @@ if (productMixCanvas) {
 
                                             const status =
                                                 Object.keys(
-                                                    currentTeamStatusMetrics
+                                                    currentRHStatusMetrics
                                                 )[index];
 
-                                            updateTeamStatusMetrics(
+                                            updateRHStatusMetrics(
                                                 status
                                             );
 
@@ -4841,7 +4804,7 @@ if (productMixCanvas) {
 
                                         else {
 
-                                            updateTeamStatusMetrics();
+                                            updateRHStatusMetrics();
 
                                         }
 
@@ -4883,7 +4846,7 @@ if (productMixCanvas) {
 
                                                     const status =
                                                         Object.keys(
-                                                            currentTeamStatusMetrics
+                                                            currentRHStatusMetrics
                                                         )[index];
 
                                                     return getWrappedTooltipTitle(
@@ -4939,113 +4902,49 @@ if (productMixCanvas) {
                         }
                     );
 
-                updateTeamStatusMetrics();
+                updateRHStatusMetrics();
             }
         }
     }
 
 
-    const pipelineTeamStatusFilter =
+    const pipelineRHStatusFilter =
         document.getElementById(
-            "pipelineTeamStatusFilter"
+            "pipelineRHStatusFilter"
         );
 
 
-    if (pipelineTeamStatusFilter) {
+    if (pipelineRHStatusFilter) {
 
-        pipelineTeamStatusFilter.addEventListener(
+        pipelineRHStatusFilter.addEventListener(
             "change",
             function () {
 
                 initializePipelineOverviewCharts();
 
-                if (!pipelineTeamStatusChart) {
+                if (!pipelineRHStatusChart) {
                     return;
                 }
 
-                currentTeamStatusMetrics =
-                    getStatusByTeam(
+                currentRHStatusMetrics =
+                    getStatusByRegionalHead(
                         this.value
                     );
 
                 const statusData =
                     buildStatusChartData(
-                        currentTeamStatusMetrics
+                        currentRHStatusMetrics
                     );
 
-                pipelineTeamStatusChart.data.labels =
+                pipelineRHStatusChart.data.labels =
                     statusData.displayLabels;
 
-                pipelineTeamStatusChart.data.datasets[0].data =
+                pipelineRHStatusChart.data.datasets[0].data =
                     statusData.counts;
 
-                pipelineTeamStatusChart.update();
+                pipelineRHStatusChart.update();
 
-                updateTeamStatusMetrics();
-            }
-        );
-    }
-
-
-    /* ============================================
-       EXECUTIVE TEAM CARDS FILTER
-    ============================================ */
-
-    const executiveManagerFilter =
-        document.getElementById(
-            "executiveManagerFilter"
-        );
-
-
-    if (executiveManagerFilter) {
-
-        executiveManagerFilter.addEventListener(
-            "change",
-            function () {
-
-                const selectedManager =
-                    this.value;
-
-                const cards =
-                    document.querySelectorAll(
-                        ".team-card-wrapper[data-manager-id]"
-                    );
-
-                let visibleCount = 0;
-
-
-                cards.forEach(
-                    function (card) {
-
-                        const matches =
-                            !selectedManager ||
-                            card.dataset.managerId ===
-                                selectedManager;
-
-                        card.style.display =
-                            matches
-                                ? ""
-                                : "none";
-
-                        if (matches) {
-                            visibleCount++;
-                        }
-                    }
-                );
-
-
-                const noTeams =
-                    document.getElementById(
-                        "executiveNoTeamsMessage"
-                    );
-
-                if (noTeams) {
-
-                    noTeams.style.display =
-                        visibleCount === 0
-                            ? "block"
-                            : "none";
-                }
+                updateRHStatusMetrics();
             }
         );
     }
