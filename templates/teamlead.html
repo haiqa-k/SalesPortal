@@ -220,6 +220,76 @@
         }
 
 
+
+        /* =========================
+           STATUS CHART + METRICS
+        ========================= */
+
+        .status-chart-layout {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .status-chart-canvas {
+            flex: 1;
+            min-width: 0;
+            height: 300px;
+        }
+
+        .status-chart-canvas canvas {
+            max-height: 300px;
+        }
+
+        .status-metrics {
+            width: 220px;
+            flex: 0 0 220px;
+
+            background: #202020;
+            border: 1px solid #343434;
+            border-radius: 9px;
+
+            padding: 16px 18px;
+        }
+
+        .status-metrics-title {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+
+            line-height: 1.4;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .status-metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+
+            padding: 8px 0;
+
+            border-bottom: 1px solid #303030;
+
+            color: #bdbdbd;
+            font-size: 12px;
+        }
+
+        .status-metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-metric-row strong {
+            color: #ffffff;
+            font-weight: 600;
+            text-align: right;
+        }
+
         /* =========================
            TABLE CARD
         ========================= */
@@ -516,6 +586,16 @@
             .form-select {
                 width: 100%;
             }
+
+            .status-chart-layout {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-metrics {
+                width: 100%;
+                flex: 0 0 auto;
+            }
         }
 
     </style>
@@ -539,7 +619,7 @@
     >
 
     <h1 class="topbar-title">
-        Sales Dashboard
+        Sales Pipeline Dashboard
     </h1>
 
     <div class="user-info">
@@ -744,7 +824,49 @@
 
                 <div class="chart-body">
 
-                    <canvas id="statusChart"></canvas>
+                    <div class="status-chart-layout">
+
+                        <div class="status-chart-canvas">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+
+                        <div class="status-metrics">
+
+                            <div
+                                class="status-metrics-title"
+                                id="statusMetricTitle"
+                            >
+                                All Pipelines
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Pipelines</span>
+                                <strong id="statusMetricPipelines">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Percentage</span>
+                                <strong id="statusMetricPercentage">0%</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Revenue</span>
+                                <strong id="statusMetricRevenue">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total MRC</span>
+                                <strong id="statusMetricMRC">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total OTC</span>
+                                <strong id="statusMetricOTC">0</strong>
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -1267,102 +1389,420 @@
         {{ all_statuses | tojson }};
 
 
-    const statusChart = new Chart(statusCtx, {
+    let currentStatusMetrics =
+        allStatuses;
 
-        type: 'doughnut',
 
-        data: {
+    function formatNumber(value) {
 
-            labels: Object.keys(allStatuses),
+        return Number(value || 0).toLocaleString();
 
-            datasets: [{
+    }
 
-                data: Object.values(allStatuses),
 
-                backgroundColor: [
-                    '#c62828',
-                    '#7b1fa2',
-                    '#512da8',
-                    '#ef5350',
-                    '#9575cd',
-                    '#ab47bc',
-                    '#42a5f5'
-                ],
+    function getStatusTotals(statuses) {
 
-                borderColor: '#171717',
+        return Object.values(statuses).reduce(
+            (totals, metrics) => {
 
-                borderWidth: 3
+                totals.count += Number(metrics.count || 0);
+                totals.revenue += Number(metrics.revenue || 0);
+                totals.mrc += Number(metrics.mrc || 0);
+                totals.otc += Number(metrics.otc || 0);
 
-            }]
+                return totals;
 
-        },
+            },
+            {
+                count: 0,
+                revenue: 0,
+                mrc: 0,
+                otc: 0
+            }
+        );
 
-        options: {
+    }
 
-            responsive: true,
 
-            maintainAspectRatio: false,
+    function getStatusDisplayTitle(status) {
 
-            cutout: '60%',
+        const displayTitles = {
 
-            plugins: {
+            "Documentation/Acceptance/Processing (80%)":
+                "Documentation / Acceptance /\nProcessing (80%)",
 
-                legend: {
+            "System Entry/Revenue Locked (100%)":
+                "System Entry / Revenue Locked\n(100%)"
 
-                    position: 'bottom',
+        };
 
-                    labels: {
+        return displayTitles[status] || status;
 
-                        color: '#d5d5d5',
+    }
 
-                        padding: 18,
 
-                        usePointStyle: true
+    function updateStatusMetrics(status = null) {
+
+        const totals =
+            getStatusTotals(currentStatusMetrics);
+
+        let title = 'All Pipelines';
+        let metrics = totals;
+        let percentage = totals.count ? 100 : 0;
+
+
+        if (
+            status &&
+            currentStatusMetrics[status]
+        ) {
+
+            title =
+                getStatusDisplayTitle(status);
+
+            metrics =
+                currentStatusMetrics[status];
+
+            percentage =
+                totals.count
+                    ? (
+                        Number(metrics.count || 0)
+                        / totals.count
+                        * 100
+                      )
+                    : 0;
+
+        }
+
+
+        document
+            .getElementById('statusMetricTitle')
+            .textContent = title;
+
+
+        document
+            .getElementById('statusMetricPipelines')
+            .textContent =
+                formatNumber(metrics.count);
+
+
+        document
+            .getElementById('statusMetricPercentage')
+            .textContent =
+                percentage.toFixed(1) + '%';
+
+
+        document
+            .getElementById('statusMetricRevenue')
+            .textContent =
+                formatNumber(metrics.revenue);
+
+
+        document
+            .getElementById('statusMetricMRC')
+            .textContent =
+                formatNumber(metrics.mrc);
+
+
+        document
+            .getElementById('statusMetricOTC')
+            .textContent =
+                formatNumber(metrics.otc);
+
+    }
+
+
+    function getShortStatusLabel(status) {
+
+        const shortLabels = {
+
+            "Customer Visit (20%)":
+                "Customer Visit (20%)",
+
+            "Ask for Proposal (40%)":
+                "Proposal (40%)",
+
+            "Negotiations (60%)":
+                "Negotiations (60%)",
+
+            "Documentation/Acceptance/Processing (80%)":
+                "Processing (80%)",
+
+            "System Entry/Revenue Locked (100%)":
+                "Revenue Locked (100%)",
+
+            "Lost to Competitor":
+                "Lost",
+
+            "Retired - No Decision":
+                "Retired"
+
+        };
+
+        return shortLabels[status] || status;
+
+    }
+
+
+    function buildStatusChartData(statuses) {
+
+        const fullLabels =
+            Object.keys(statuses);
+
+        const displayLabels =
+            fullLabels.map(
+                status =>
+                    getShortStatusLabel(status)
+            );
+
+        const counts =
+            fullLabels.map(
+                status =>
+                    Number(
+                        statuses[status]?.count || 0
+                    )
+            );
+
+        return {
+            fullLabels,
+            displayLabels,
+            counts
+        };
+
+    }
+
+
+    const initialStatusData =
+        buildStatusChartData(
+            currentStatusMetrics
+        );
+
+
+    const statusChart =
+        new Chart(
+            statusCtx,
+            {
+
+                type: 'doughnut',
+
+                data: {
+
+                    labels:
+                        initialStatusData.displayLabels,
+
+                    datasets: [{
+
+                        data:
+                            initialStatusData.counts,
+
+                        backgroundColor: [
+                            '#c62828',
+                            '#7b1fa2',
+                            '#512da8',
+                            '#ef5350',
+                            '#9575cd',
+                            '#ab47bc',
+                            '#42a5f5'
+                        ],
+
+                        borderColor: '#171717',
+
+                        borderWidth: 3
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive: true,
+
+                    maintainAspectRatio: false,
+
+                    cutout: '60%',
+
+                    onHover: function(event, activeElements) {
+
+                        if (
+                            activeElements.length > 0
+                        ) {
+
+                            const index =
+                                activeElements[0].index;
+
+                            const status =
+                                Object.keys(
+                                    currentStatusMetrics
+                                )[index];
+
+                            updateStatusMetrics(
+                                status
+                            );
+
+                        }
+
+                        else {
+
+                            updateStatusMetrics();
+
+                        }
+
+                    },
+
+                    plugins: {
+
+                        legend: {
+
+                            position: 'bottom',
+
+                            labels: {
+
+                                color: '#d5d5d5',
+                                padding: 18,
+                                usePointStyle: true
+
+                            }
+
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                title: function(context) {
+
+                                    if (!context.length) {
+                                        return '';
+                                    }
+
+                                    const index =
+                                        context[0].dataIndex;
+
+                                    const status =
+                                        Object.keys(
+                                            currentStatusMetrics
+                                        )[index];
+
+                                    if (
+                                        status ===
+                                        "Documentation/Acceptance/Processing (80%)"
+                                    ) {
+                                        return [
+                                            "Documentation / Acceptance /",
+                                            "Processing (80%)"
+                                        ];
+                                    }
+
+                                    if (
+                                        status ===
+                                        "System Entry/Revenue Locked (100%)"
+                                    ) {
+                                        return [
+                                            "System Entry / Revenue Locked",
+                                            "(100%)"
+                                        ];
+                                    }
+
+                                    return status;
+
+                                },
+
+                                label: function(context) {
+
+                                    const value =
+                                        Number(
+                                            context.raw || 0
+                                        );
+
+                                    const total =
+                                        context.dataset.data.reduce(
+                                            (a, b) =>
+                                                Number(a)
+                                                + Number(b),
+                                            0
+                                        );
+
+                                    const percentage =
+                                        total
+                                            ? (
+                                                value
+                                                / total
+                                                * 100
+                                              ).toFixed(1)
+                                            : '0.0';
+
+                                    return (
+                                        value
+                                        + ' pipelines ('
+                                        + percentage
+                                        + '%)'
+                                    );
+
+                                }
+
+                            }
+
+                        }
 
                     }
 
                 }
 
             }
+        );
 
-        }
 
-    });
+    updateStatusMetrics();
 
 
     document
         .getElementById('statusEdoFilter')
-        .addEventListener('change', function () {
+        .addEventListener(
+            'change',
+            function () {
 
-            const selectedEdo = this.value;
+                const selectedEdo =
+                    this.value;
 
-            let statuses;
+
+                if (
+                    selectedEdo === 'all'
+                ) {
+
+                    currentStatusMetrics =
+                        allStatuses;
+
+                }
+
+                else {
+
+                    currentStatusMetrics =
+                        statusByEdo[selectedEdo]
+                            ?.statuses || {};
+
+                }
 
 
-            if (selectedEdo === 'all') {
+                const chartData =
+                    buildStatusChartData(
+                        currentStatusMetrics
+                    );
 
-                statuses = allStatuses;
+
+                statusChart.data.labels =
+                    chartData.displayLabels;
+
+
+                statusChart.data.datasets[0].data =
+                    chartData.counts;
+
+
+                statusChart.update();
+
+
+                updateStatusMetrics();
 
             }
-
-            else {
-
-                statuses =
-                    statusByEdo[selectedEdo]
-                        ?.statuses || {};
-
-            }
-
-
-            statusChart.data.labels =
-                Object.keys(statuses);
-
-            statusChart.data.datasets[0].data =
-                Object.values(statuses);
-
-            statusChart.update();
-
-        });
+        );
 </script>
 
 

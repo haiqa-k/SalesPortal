@@ -361,6 +361,108 @@
         }
 
 
+        .status-chart-layout {
+
+            width: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            gap: 24px;
+        }
+
+
+        .status-chart-canvas {
+
+            flex: 1;
+
+            min-width: 0;
+
+            height: 320px;
+        }
+
+
+        .status-chart-canvas canvas {
+
+            max-height: 320px;
+        }
+
+
+        .status-metrics {
+
+            width: 220px;
+
+            flex: 0 0 220px;
+
+            background: #202020;
+
+            border: 1px solid #343434;
+
+            border-radius: 9px;
+
+            padding: 16px 18px;
+        }
+
+
+        .status-metrics-title {
+
+            color: #ffffff;
+
+            font-size: 14px;
+
+            font-weight: 600;
+
+            margin-bottom: 12px;
+
+            line-height: 1.4;
+
+            white-space: pre-line;
+
+            overflow-wrap: anywhere;
+
+            word-break: break-word;
+        }
+
+
+        .status-metric-row {
+
+            display: flex;
+
+            justify-content: space-between;
+
+            align-items: center;
+
+            gap: 12px;
+
+            padding: 8px 0;
+
+            border-bottom: 1px solid #303030;
+
+            color: #bdbdbd;
+
+            font-size: 12px;
+        }
+
+
+        .status-metric-row:last-child {
+
+            border-bottom: none;
+        }
+
+
+        .status-metric-row strong {
+
+            color: #ffffff;
+
+            font-weight: 600;
+
+            text-align: right;
+        }
+
+
         /* =============================================
            ANALYTICS TABLE
         ============================================= */
@@ -1487,6 +1589,22 @@
             }
 
 
+            .status-chart-layout {
+
+                flex-direction: column;
+
+                align-items: stretch;
+            }
+
+
+            .status-metrics {
+
+                width: 100%;
+
+                flex: 0 0 auto;
+            }
+
+
             .dashboard-container {
 
                 padding:
@@ -1581,7 +1699,7 @@
 
     <div class="page-title">
 
-        Executive View
+        {{viewer_role}} View
 
     </div>
 
@@ -1886,9 +2004,54 @@
 
             <div class="chart-container">
 
-                <canvas
-                    id="statusChart">
-                </canvas>
+                <div class="status-chart-layout">
+
+                    <div class="status-chart-canvas">
+
+                        <canvas
+                            id="statusChart">
+                        </canvas>
+
+                    </div>
+
+
+                    <div class="status-metrics">
+
+                        <div
+                            class="status-metrics-title"
+                            id="statusMetricTitle"
+                        >
+                            All Pipelines
+                        </div>
+
+                        <div class="status-metric-row">
+                            <span>Total Pipelines</span>
+                            <strong id="statusMetricPipelines">0</strong>
+                        </div>
+
+                        <div class="status-metric-row">
+                            <span>Percentage</span>
+                            <strong id="statusMetricPercentage">0%</strong>
+                        </div>
+
+                        <div class="status-metric-row">
+                            <span>Total Revenue</span>
+                            <strong id="statusMetricRevenue">0</strong>
+                        </div>
+
+                        <div class="status-metric-row">
+                            <span>Total MRC</span>
+                            <strong id="statusMetricMRC">0</strong>
+                        </div>
+
+                        <div class="status-metric-row">
+                            <span>Total OTC</span>
+                            <strong id="statusMetricOTC">0</strong>
+                        </div>
+
+                    </div>
+
+                </div>
 
             </div>
 
@@ -2208,7 +2371,52 @@
 
 
                 <div class="chart-container">
-                    <canvas id="pipelineTeamStatusChart"></canvas>
+
+                    <div class="status-chart-layout">
+
+                        <div class="status-chart-canvas">
+                            <canvas id="pipelineTeamStatusChart"></canvas>
+                        </div>
+
+
+                        <div class="status-metrics">
+
+                            <div
+                                class="status-metrics-title"
+                                id="teamStatusMetricTitle"
+                            >
+                                All Pipelines
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Pipelines</span>
+                                <strong id="teamStatusMetricPipelines">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Percentage</span>
+                                <strong id="teamStatusMetricPercentage">0%</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Revenue</span>
+                                <strong id="teamStatusMetricRevenue">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total MRC</span>
+                                <strong id="teamStatusMetricMRC">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total OTC</span>
+                                <strong id="teamStatusMetricOTC">0</strong>
+                            </div>
+
+                        </div>
+
+                    </div>
+
                 </div>
 
             </div>
@@ -3258,6 +3466,10 @@
         {{ status_counts | tojson }};
 
 
+    const statusMetrics =
+        {{ status_metrics | tojson }};
+
+
     const productCounts =
         {{ product_pipeline_counts | tojson }};
 
@@ -3289,6 +3501,16 @@
             revenue:
                 {{ "{:.6f}".format(
                     p.TotalRevenue or 0
+                ) }},
+
+            mrc:
+                {{ "{:.6f}".format(
+                    p.MRC or 0
+                ) }},
+
+            otc:
+                {{ "{:.6f}".format(
+                    p.ProjectOTC or 0
                 ) }},
 
             status:
@@ -3458,65 +3680,453 @@
 
 
 
+    function formatStatusNumber(value) {
+
+        return Number(value || 0)
+            .toLocaleString();
+
+    }
+
+
+    function getStatusDisplayTitle(status) {
+
+        const displayTitles = {
+
+            "Documentation/Acceptance/Processing (80%)":
+                "Documentation / Acceptance /\nProcessing (80%)",
+
+            "System Entry/Revenue Locked (100%)":
+                "System Entry / Revenue Locked\n(100%)"
+
+        };
+
+        return displayTitles[status] || status;
+
+    }
+
+
+    function getShortStatusLabel(status) {
+
+        const shortLabels = {
+
+            "Customer Visit (20%)":
+                "Customer Visit (20%)",
+
+            "Ask for Proposal (40%)":
+                "Proposal (40%)",
+
+            "Negotiations (60%)":
+                "Negotiations (60%)",
+
+            "Documentation/Acceptance/Processing (80%)":
+                "Processing (80%)",
+
+            "System Entry/Revenue Locked (100%)":
+                "Revenue Locked (100%)",
+
+            "Lost to Competitor":
+                "Lost",
+
+            "Retired - No Decision":
+                "Retired"
+
+        };
+
+        return shortLabels[status] || status;
+
+    }
+
+
+    function getStatusTotals(statuses) {
+
+        const totals = {
+            count: 0,
+            revenue: 0,
+            mrc: 0,
+            otc: 0
+        };
+
+        Object.values(statuses).forEach(metrics => {
+
+            totals.count +=
+                Number(metrics.count || 0);
+
+            totals.revenue +=
+                Number(metrics.revenue || 0);
+
+            totals.mrc +=
+                Number(metrics.mrc || 0);
+
+            totals.otc +=
+                Number(metrics.otc || 0);
+
+        });
+
+        return totals;
+
+    }
+
+
+    function buildStatusChartData(statuses) {
+
+        const fullLabels =
+            Object.keys(statuses);
+
+        const displayLabels =
+            fullLabels.map(
+                status =>
+                    getShortStatusLabel(status)
+            );
+
+        const counts =
+            fullLabels.map(
+                status =>
+                    Number(
+                        statuses[status]?.count || 0
+                    )
+            );
+
+        return {
+            fullLabels,
+            displayLabels,
+            counts
+        };
+
+    }
+
+
+    function getWrappedTooltipTitle(status) {
+
+        if (
+            status ===
+            "Documentation/Acceptance/Processing (80%)"
+        ) {
+
+            return [
+                "Documentation / Acceptance /",
+                "Processing (80%)"
+            ];
+
+        }
+
+
+        if (
+            status ===
+            "System Entry/Revenue Locked (100%)"
+        ) {
+
+            return [
+                "System Entry / Revenue Locked",
+                "(100%)"
+            ];
+
+        }
+
+
+        return status;
+
+    }
+
+
     /* ============================================
        STATUS
     ============================================ */
 
-    new Chart(
+    let currentExecutiveStatusMetrics =
+        statusMetrics;
 
-        document.getElementById(
-            "statusChart"
-        ),
 
-        {
+    function updateExecutiveStatusMetrics(
+        status = null
+    ) {
 
-            type: "doughnut",
+        const totals =
+            getStatusTotals(
+                currentExecutiveStatusMetrics
+            );
 
-            data: {
+        let title =
+            "All Pipelines";
 
-                labels:
-                    Object.keys(
-                        statusCounts
-                    ),
+        let metrics =
+            totals;
 
-                datasets: [{
+        let percentage =
+            totals.count ? 100 : 0;
 
-                    data:
-                        Object.values(
-                            statusCounts
-                        ),
 
-                    backgroundColor: [
-                        '#c62828',
-                        '#7b1fa2',
-                        '#512da8',
-                        '#ef5350',
-                        '#9575cd',
-                        '#ab47bc',
-                        '#616161'
-                    ],
+        if (
+            status &&
+            currentExecutiveStatusMetrics[status]
+        ) {
 
-                    borderColor:
-                        '#171717',
+            title =
+                getStatusDisplayTitle(status);
 
-                    borderWidth: 3
+            metrics =
+                currentExecutiveStatusMetrics[status];
 
-                }]
-
-            },
-
-            options: {
-
-                responsive: true,
-
-                maintainAspectRatio: false
-
-            }
+            percentage =
+                totals.count
+                    ? (
+                        Number(metrics.count || 0)
+                        / totals.count
+                        * 100
+                    )
+                    : 0;
 
         }
 
-    );
 
+        document
+            .getElementById(
+                "statusMetricTitle"
+            )
+            .textContent =
+                title;
+
+        document
+            .getElementById(
+                "statusMetricPipelines"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.count
+                );
+
+        document
+            .getElementById(
+                "statusMetricPercentage"
+            )
+            .textContent =
+                percentage.toFixed(1)
+                + "%";
+
+        document
+            .getElementById(
+                "statusMetricRevenue"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.revenue
+                );
+
+        document
+            .getElementById(
+                "statusMetricMRC"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.mrc
+                );
+
+        document
+            .getElementById(
+                "statusMetricOTC"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.otc
+                );
+
+    }
+
+
+    const executiveStatusData =
+        buildStatusChartData(
+            statusMetrics
+        );
+
+
+    const executiveStatusChart =
+        new Chart(
+
+            document.getElementById(
+                "statusChart"
+            ),
+
+            {
+
+                type: "doughnut",
+
+                data: {
+
+                    labels:
+                        executiveStatusData
+                            .displayLabels,
+
+                    datasets: [{
+
+                        data:
+                            executiveStatusData
+                                .counts,
+
+                        backgroundColor: [
+                            '#c62828',
+                            '#7b1fa2',
+                            '#512da8',
+                            '#ef5350',
+                            '#9575cd',
+                            '#ab47bc',
+                            '#616161'
+                        ],
+
+                        borderColor:
+                            '#171717',
+
+                        borderWidth:
+                            3
+
+                    }]
+
+                },
+
+                options: {
+
+                    responsive:
+                        true,
+
+                    maintainAspectRatio:
+                        false,
+
+                    cutout:
+                        "60%",
+
+                    onHover: function(
+                        event,
+                        activeElements
+                    ) {
+
+                        if (
+                            activeElements.length
+                            > 0
+                        ) {
+
+                            const index =
+                                activeElements[0]
+                                    .index;
+
+                            const status =
+                                Object.keys(
+                                    currentExecutiveStatusMetrics
+                                )[index];
+
+                            updateExecutiveStatusMetrics(
+                                status
+                            );
+
+                        }
+
+                        else {
+
+                            updateExecutiveStatusMetrics();
+
+                        }
+
+                    },
+
+                    plugins: {
+
+                        legend: {
+
+                            position:
+                                "bottom",
+
+                            labels: {
+
+                                color:
+                                    "#d5d5d5",
+
+                                padding:
+                                    18,
+
+                                usePointStyle:
+                                    true
+
+                            }
+
+                        },
+
+                        tooltip: {
+
+                            callbacks: {
+
+                                title:
+                                    function(context) {
+
+                                        if (
+                                            !context.length
+                                        ) {
+                                            return "";
+                                        }
+
+                                        const index =
+                                            context[0]
+                                                .dataIndex;
+
+                                        const status =
+                                            Object.keys(
+                                                currentExecutiveStatusMetrics
+                                            )[index];
+
+                                        return getWrappedTooltipTitle(
+                                            status
+                                        );
+
+                                    },
+
+                                label:
+                                    function(context) {
+
+                                        const value =
+                                            Number(
+                                                context.raw
+                                                || 0
+                                            );
+
+                                        const total =
+                                            context
+                                                .dataset
+                                                .data
+                                                .reduce(
+                                                    (a, b) =>
+                                                        Number(a)
+                                                        + Number(b),
+                                                    0
+                                                );
+
+                                        const percentage =
+                                            total
+                                                ? (
+                                                    value
+                                                    / total
+                                                    * 100
+                                                ).toFixed(1)
+                                                : "0.0";
+
+                                        return (
+                                            value
+                                            + " pipelines ("
+                                            + percentage
+                                            + "%)"
+                                        );
+
+                                    }
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        );
+
+
+    updateExecutiveStatusMetrics();
 
 
     /* ============================================
@@ -3915,13 +4525,139 @@ if (productMixCanvas) {
                 const status =
                     pipeline.status || "Unknown";
 
-                statusMap[status] =
-                    (statusMap[status] || 0)
-                    + 1;
+
+                if (!statusMap[status]) {
+
+                    statusMap[status] = {
+                        count: 0,
+                        revenue: 0,
+                        mrc: 0,
+                        otc: 0
+                    };
+
+                }
+
+
+                statusMap[status].count += 1;
+
+                statusMap[status].revenue +=
+                    Number(
+                        pipeline.revenue || 0
+                    );
+
+                statusMap[status].mrc +=
+                    Number(
+                        pipeline.mrc || 0
+                    );
+
+                statusMap[status].otc +=
+                    Number(
+                        pipeline.otc || 0
+                    );
+
             }
         );
 
         return statusMap;
+    }
+
+
+    let currentTeamStatusMetrics = {};
+
+
+    function updateTeamStatusMetrics(
+        status = null
+    ) {
+
+        const totals =
+            getStatusTotals(
+                currentTeamStatusMetrics
+            );
+
+        let title =
+            "All Pipelines";
+
+        let metrics =
+            totals;
+
+        let percentage =
+            totals.count ? 100 : 0;
+
+
+        if (
+            status &&
+            currentTeamStatusMetrics[status]
+        ) {
+
+            title =
+                getStatusDisplayTitle(status);
+
+            metrics =
+                currentTeamStatusMetrics[status];
+
+            percentage =
+                totals.count
+                    ? (
+                        Number(metrics.count || 0)
+                        / totals.count
+                        * 100
+                    )
+                    : 0;
+
+        }
+
+
+        document
+            .getElementById(
+                "teamStatusMetricTitle"
+            )
+            .textContent =
+                title;
+
+        document
+            .getElementById(
+                "teamStatusMetricPipelines"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.count
+                );
+
+        document
+            .getElementById(
+                "teamStatusMetricPercentage"
+            )
+            .textContent =
+                percentage.toFixed(1)
+                + "%";
+
+        document
+            .getElementById(
+                "teamStatusMetricRevenue"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.revenue
+                );
+
+        document
+            .getElementById(
+                "teamStatusMetricMRC"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.mrc
+                );
+
+        document
+            .getElementById(
+                "teamStatusMetricOTC"
+            )
+            .textContent =
+                formatStatusNumber(
+                    metrics.otc
+                );
+
     }
 
 
@@ -4033,8 +4769,13 @@ if (productMixCanvas) {
 
             if (statusCanvas) {
 
-                const statusData =
+                currentTeamStatusMetrics =
                     getStatusByTeam("");
+
+                const statusData =
+                    buildStatusChartData(
+                        currentTeamStatusMetrics
+                    );
 
                 pipelineTeamStatusChart =
                     new Chart(
@@ -4044,15 +4785,13 @@ if (productMixCanvas) {
 
                             data: {
                                 labels:
-                                    Object.keys(
-                                        statusData
-                                    ),
+                                    statusData
+                                        .displayLabels,
 
                                 datasets: [{
                                     data:
-                                        Object.values(
-                                            statusData
-                                        ),
+                                        statusData
+                                            .counts,
 
                                     backgroundColor:
                                         pipelineStatusColors,
@@ -4070,7 +4809,46 @@ if (productMixCanvas) {
                                 maintainAspectRatio:
                                     false,
 
+                                cutout:
+                                    "60%",
+
+                                onHover:
+                                    function(
+                                        event,
+                                        activeElements
+                                    ) {
+
+                                        if (
+                                            activeElements
+                                                .length
+                                            > 0
+                                        ) {
+
+                                            const index =
+                                                activeElements[0]
+                                                    .index;
+
+                                            const status =
+                                                Object.keys(
+                                                    currentTeamStatusMetrics
+                                                )[index];
+
+                                            updateTeamStatusMetrics(
+                                                status
+                                            );
+
+                                        }
+
+                                        else {
+
+                                            updateTeamStatusMetrics();
+
+                                        }
+
+                                    },
+
                                 plugins: {
+
                                     legend: {
                                         position:
                                             "bottom",
@@ -4084,11 +4862,84 @@ if (productMixCanvas) {
                                             usePointStyle:
                                                 true
                                         }
+                                    },
+
+                                    tooltip: {
+
+                                        callbacks: {
+
+                                            title:
+                                                function(context) {
+
+                                                    if (
+                                                        !context.length
+                                                    ) {
+                                                        return "";
+                                                    }
+
+                                                    const index =
+                                                        context[0]
+                                                            .dataIndex;
+
+                                                    const status =
+                                                        Object.keys(
+                                                            currentTeamStatusMetrics
+                                                        )[index];
+
+                                                    return getWrappedTooltipTitle(
+                                                        status
+                                                    );
+
+                                                },
+
+                                            label:
+                                                function(context) {
+
+                                                    const value =
+                                                        Number(
+                                                            context.raw
+                                                            || 0
+                                                        );
+
+                                                    const total =
+                                                        context
+                                                            .dataset
+                                                            .data
+                                                            .reduce(
+                                                                (a, b) =>
+                                                                    Number(a)
+                                                                    + Number(b),
+                                                                0
+                                                            );
+
+                                                    const percentage =
+                                                        total
+                                                            ? (
+                                                                value
+                                                                / total
+                                                                * 100
+                                                            ).toFixed(1)
+                                                            : "0.0";
+
+                                                    return (
+                                                        value
+                                                        + " pipelines ("
+                                                        + percentage
+                                                        + "%)"
+                                                    );
+
+                                                }
+
+                                        }
+
                                     }
+
                                 }
                             }
                         }
                     );
+
+                updateTeamStatusMetrics();
             }
         }
     }
@@ -4112,22 +4963,25 @@ if (productMixCanvas) {
                     return;
                 }
 
-                const statusData =
+                currentTeamStatusMetrics =
                     getStatusByTeam(
                         this.value
                     );
 
-                pipelineTeamStatusChart.data.labels =
-                    Object.keys(
-                        statusData
+                const statusData =
+                    buildStatusChartData(
+                        currentTeamStatusMetrics
                     );
+
+                pipelineTeamStatusChart.data.labels =
+                    statusData.displayLabels;
 
                 pipelineTeamStatusChart.data.datasets[0].data =
-                    Object.values(
-                        statusData
-                    );
+                    statusData.counts;
 
                 pipelineTeamStatusChart.update();
+
+                updateTeamStatusMetrics();
             }
         );
     }

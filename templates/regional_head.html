@@ -273,6 +273,65 @@
             max-height: 300px;
         }
 
+        .status-chart-layout {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+        }
+
+        .status-chart-canvas {
+            flex: 1;
+            min-width: 0;
+            height: 300px;
+        }
+
+        .status-chart-canvas canvas {
+            max-height: 300px;
+        }
+
+        .status-metrics {
+            width: 220px;
+            flex: 0 0 220px;
+            background: #202020;
+            border: 1px solid #343434;
+            border-radius: 9px;
+            padding: 16px 18px;
+        }
+
+        .status-metrics-title {
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            line-height: 1.4;
+            white-space: pre-line;
+            overflow-wrap: anywhere;
+            word-break: break-word;
+        }
+
+        .status-metric-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #303030;
+            color: #bdbdbd;
+            font-size: 12px;
+        }
+
+        .status-metric-row:last-child {
+            border-bottom: none;
+        }
+
+        .status-metric-row strong {
+            color: #ffffff;
+            font-weight: 600;
+            text-align: right;
+        }
+
 
         /* =========================
            TEAMS
@@ -919,6 +978,54 @@
         }
 
 
+
+        /* =========================
+           OVERDUE PIPELINES
+        ========================= */
+
+        .overdue-count {
+            display: inline-block;
+            min-width: 26px;
+            padding: 3px 8px;
+            margin-left: 6px;
+            border-radius: 15px;
+            background: #333333;
+            color: #ffffff;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .overdue-text {
+            color: #ff8a80 !important;
+            font-weight: 600;
+        }
+
+        .show-more-button {
+            background: #2b2b2b;
+            color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 999px;
+            padding: 9px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .show-more-button:hover {
+            background: #3a3a3a;
+            border-color: #5a5a5a;
+            transform: translateY(-1px);
+        }
+
+        .show-more-button:active {
+            transform: translateY(0);
+        }
+
+
         /* =========================
            RESPONSIVE
         ========================= */
@@ -972,6 +1079,16 @@
 
             .column-button {
                 width: 100%;
+            }
+
+            .status-chart-layout {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-metrics {
+                width: 100%;
+                flex: 0 0 auto;
             }
         }
 
@@ -1205,7 +1322,46 @@
 
                 <div class="chart-body">
 
-                    <canvas id="statusChart"></canvas>
+                    <div class="status-chart-layout">
+
+                        <div class="status-chart-canvas">
+                            <canvas id="statusChart"></canvas>
+                        </div>
+
+                        <div class="status-metrics">
+
+                            <div class="status-metrics-title" id="statusMetricTitle">
+                                All Pipelines
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Pipelines</span>
+                                <strong id="statusMetricPipelines">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Percentage</span>
+                                <strong id="statusMetricPercentage">0%</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total Revenue</span>
+                                <strong id="statusMetricRevenue">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total MRC</span>
+                                <strong id="statusMetricMRC">0</strong>
+                            </div>
+
+                            <div class="status-metric-row">
+                                <span>Total OTC</span>
+                                <strong id="statusMetricOTC">0</strong>
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -1345,6 +1501,126 @@
     </div>
 
 </div>
+
+
+    <!-- =========================
+         OVERDUE PIPELINES
+    ========================= -->
+
+    <div class="table-card mb-4">
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Overdue Pipelines
+
+                <span class="overdue-count">
+                    {{ overdue_pipelines|length }}
+                </span>
+            </h2>
+
+            <div style="
+                color:#9f9f9f;
+                font-size:12px;
+            ">
+                Active pipelines past their expected closure date
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="table pipeline-table">
+
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Account Manager</th>
+                        <th>Product</th>
+                        <th>Closure Date</th>
+                        <th>Days Overdue</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="overduePipelineBody">
+
+                    {% for p in overdue_pipelines %}
+
+                        <tr
+                            class="overdue-pipeline-row"
+                            {% if loop.index > 5 %}
+                                style="display:none;"
+                            {% endif %}
+                        >
+
+                            <td class="account-name">
+                                {{ p.AccountName }}
+                            </td>
+
+                            <td>
+                                {{ p.AccountManager }}
+                            </td>
+
+                            <td>
+                                {{ p.Product or '-' }}
+                            </td>
+
+                            <td>
+                                {{ p.ClosureDate }}
+                            </td>
+
+                            <td class="overdue-text">
+                                {{ p.DaysOverdue }} days
+                            </td>
+
+                            <td>
+                                {{ p.Status or '-' }}
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td
+                                colspan="6"
+                                class="empty-message"
+                            >
+                                No overdue pipelines.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if overdue_pipelines|length > 5 %}
+
+            <div
+                style="
+                    padding: 14px 20px;
+                    text-align: center;
+                    border-top: 1px solid #292929;
+                "
+            >
+                <button
+                    type="button"
+                    id="toggleOverduePipelines"
+                    class="show-more-button"
+                >
+                    Show 5 More
+                </button>
+            </div>
+
+        {% endif %}
+
+    </div>
+
 
     <!-- =========================
          TEAMS
@@ -3151,67 +3427,347 @@ const allStatuses =
     {{ all_statuses | tojson }};
 
 
-const statusChart = new Chart(statusCtx, {
+let currentStatusMetrics =
+    allStatuses;
 
-    type: 'doughnut',
 
-    data: {
+function formatNumber(value) {
 
-        labels: Object.keys(allStatuses),
+    return Number(value || 0)
+        .toLocaleString();
 
-        datasets: [{
+}
 
-            data: Object.values(allStatuses),
 
-            backgroundColor: [
-                '#c62828',
-                '#7b1fa2',
-                '#512da8',
-                '#ef5350',
-                '#9575cd',
-                '#ab47bc',
-                '#616161'
-            ],
+function getStatusTotals(statuses) {
 
-            borderColor: '#171717',
+    const totals = {
+        count: 0,
+        revenue: 0,
+        mrc: 0,
+        otc: 0
+    };
 
-            borderWidth: 3
+    Object.values(statuses).forEach(metrics => {
 
-        }]
+        totals.count += Number(metrics.count || 0);
+        totals.revenue += Number(metrics.revenue || 0);
+        totals.mrc += Number(metrics.mrc || 0);
+        totals.otc += Number(metrics.otc || 0);
 
-    },
+    });
 
-    options: {
+    return totals;
 
-        responsive: true,
+}
 
-        maintainAspectRatio: false,
 
-        cutout: '60%',
+function getStatusDisplayTitle(status) {
 
-        plugins: {
+    const displayTitles = {
 
-            legend: {
+        "Documentation/Acceptance/Processing (80%)":
+            "Documentation / Acceptance /\nProcessing (80%)",
 
-                position: 'bottom',
+        "System Entry/Revenue Locked (100%)":
+            "System Entry / Revenue Locked\n(100%)"
 
-                labels: {
+    };
 
-                    color: '#d5d5d5',
+    return displayTitles[status] || status;
 
-                    padding: 18,
+}
 
-                    usePointStyle: true
+
+function updateStatusMetrics(status = null) {
+
+    const totals =
+        getStatusTotals(currentStatusMetrics);
+
+    let title = 'All Pipelines';
+    let metrics = totals;
+    let percentage = totals.count ? 100 : 0;
+
+
+    if (
+        status &&
+        currentStatusMetrics[status]
+    ) {
+
+        title =
+            getStatusDisplayTitle(status);
+
+        metrics =
+            currentStatusMetrics[status];
+
+        percentage =
+            totals.count
+                ? (
+                    Number(metrics.count || 0)
+                    / totals.count
+                    * 100
+                )
+                : 0;
+
+    }
+
+
+    document.getElementById('statusMetricTitle').textContent =
+        title;
+
+    document.getElementById('statusMetricPipelines').textContent =
+        formatNumber(metrics.count);
+
+    document.getElementById('statusMetricPercentage').textContent =
+        percentage.toFixed(1) + '%';
+
+    document.getElementById('statusMetricRevenue').textContent =
+        formatNumber(metrics.revenue);
+
+    document.getElementById('statusMetricMRC').textContent =
+        formatNumber(metrics.mrc);
+
+    document.getElementById('statusMetricOTC').textContent =
+        formatNumber(metrics.otc);
+
+}
+
+
+function getShortStatusLabel(status) {
+
+    const shortLabels = {
+
+        "Customer Visit (20%)":
+            "Customer Visit (20%)",
+
+        "Ask for Proposal (40%)":
+            "Proposal (40%)",
+
+        "Negotiations (60%)":
+            "Negotiations (60%)",
+
+        "Documentation/Acceptance/Processing (80%)":
+            "Processing (80%)",
+
+        "System Entry/Revenue Locked (100%)":
+            "Revenue Locked (100%)",
+
+        "Lost to Competitor":
+            "Lost",
+
+        "Retired - No Decision":
+            "Retired"
+
+    };
+
+    return shortLabels[status] || status;
+
+}
+
+
+function buildStatusChartData(statuses) {
+
+    const fullLabels =
+        Object.keys(statuses);
+
+    const displayLabels =
+        fullLabels.map(
+            status =>
+                getShortStatusLabel(status)
+        );
+
+    const counts =
+        fullLabels.map(
+            status =>
+                Number(
+                    statuses[status]?.count || 0
+                )
+        );
+
+    return {
+        fullLabels,
+        displayLabels,
+        counts
+    };
+
+}
+
+
+const initialStatusData =
+    buildStatusChartData(allStatuses);
+
+
+const statusChart =
+    new Chart(
+        statusCtx,
+        {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels:
+                    initialStatusData.displayLabels,
+
+                datasets: [{
+
+                    data:
+                        initialStatusData.counts,
+
+                    backgroundColor: [
+                        '#c62828',
+                        '#7b1fa2',
+                        '#512da8',
+                        '#ef5350',
+                        '#9575cd',
+                        '#ab47bc',
+                        '#616161'
+                    ],
+
+                    borderColor: '#171717',
+                    borderWidth: 3
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+
+                onHover: function(
+                    event,
+                    activeElements
+                ) {
+
+                    if (activeElements.length > 0) {
+
+                        const index =
+                            activeElements[0].index;
+
+                        const status =
+                            Object.keys(
+                                currentStatusMetrics
+                            )[index];
+
+                        updateStatusMetrics(status);
+
+                    }
+
+                    else {
+
+                        updateStatusMetrics();
+
+                    }
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            color: '#d5d5d5',
+                            padding: 18,
+                            usePointStyle: true
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            title: function(context) {
+
+                                if (!context.length) {
+                                    return '';
+                                }
+
+                                const index =
+                                    context[0].dataIndex;
+
+                                const status =
+                                    Object.keys(
+                                        currentStatusMetrics
+                                    )[index];
+
+
+                                if (
+                                    status ===
+                                    "Documentation/Acceptance/Processing (80%)"
+                                ) {
+                                    return [
+                                        "Documentation / Acceptance /",
+                                        "Processing (80%)"
+                                    ];
+                                }
+
+
+                                if (
+                                    status ===
+                                    "System Entry/Revenue Locked (100%)"
+                                ) {
+                                    return [
+                                        "System Entry / Revenue Locked",
+                                        "(100%)"
+                                    ];
+                                }
+
+
+                                return status;
+
+                            },
+
+                            label: function(context) {
+
+                                const value =
+                                    Number(context.raw || 0);
+
+                                const total =
+                                    context.dataset.data.reduce(
+                                        (a, b) =>
+                                            Number(a) + Number(b),
+                                        0
+                                    );
+
+                                const percentage =
+                                    total
+                                        ? (
+                                            value
+                                            / total
+                                            * 100
+                                        ).toFixed(1)
+                                        : '0.0';
+
+                                return (
+                                    value
+                                    + ' pipelines ('
+                                    + percentage
+                                    + '%)'
+                                );
+
+                            }
+
+                        }
+
+                    }
 
                 }
 
             }
 
         }
+    );
 
-    }
 
-});
+updateStatusMetrics();
 
 
 const statusUserFilter =
@@ -3227,32 +3783,38 @@ if (statusUserFilter) {
             const selectedUser =
                 this.value;
 
-            let statuses;
-
 
             if (selectedUser === 'all') {
 
-                statuses =
+                currentStatusMetrics =
                     allStatuses;
 
             }
 
             else {
 
-                statuses =
+                currentStatusMetrics =
                     statusByUser[selectedUser]
                         ?.statuses || {};
 
             }
 
 
+            const chartData =
+                buildStatusChartData(
+                    currentStatusMetrics
+                );
+
+
             statusChart.data.labels =
-                Object.keys(statuses);
+                chartData.displayLabels;
 
             statusChart.data.datasets[0].data =
-                Object.values(statuses);
+                chartData.counts;
 
             statusChart.update();
+
+            updateStatusMetrics();
 
         }
     );
@@ -3262,6 +3824,88 @@ if (statusUserFilter) {
 
 </script>
 
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const overdueToggle =
+        document.getElementById(
+            "toggleOverduePipelines"
+        );
+
+    if (!overdueToggle) {
+        return;
+    }
+
+    const overdueRows =
+        Array.from(
+            document.querySelectorAll(
+                ".overdue-pipeline-row"
+            )
+        );
+
+    const batchSize = 5;
+
+    let visibleCount =
+        Math.min(
+            batchSize,
+            overdueRows.length
+        );
+
+    function updateOverdueRows() {
+
+        overdueRows.forEach(
+            function (row, index) {
+
+                row.style.display =
+                    index < visibleCount
+                        ? "table-row"
+                        : "none";
+            }
+        );
+
+        const remaining =
+            overdueRows.length - visibleCount;
+
+        if (remaining <= 0) {
+
+            overdueToggle.style.display =
+                "none";
+
+        } else {
+
+            const nextBatch =
+                Math.min(
+                    batchSize,
+                    remaining
+                );
+
+            overdueToggle.textContent =
+                "Show " +
+                nextBatch +
+                " More";
+        }
+    }
+
+    overdueToggle.addEventListener(
+        "click",
+        function () {
+
+            visibleCount =
+                Math.min(
+                    visibleCount + batchSize,
+                    overdueRows.length
+                );
+
+            updateOverdueRows();
+        }
+    );
+
+    updateOverdueRows();
+
+});
+</script>
 
 </body>
 

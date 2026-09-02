@@ -236,26 +236,118 @@ def change_password():
         message=message,
         message_type=message_type
     )
-
 @app.route("/my-pipelines")
 def my_pipelines():
+
     if "user_id" not in session:
         return redirect(url_for("login"))
-    edo_name = session.get("employee_name") or f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
+
+    edo_name = (
+        session.get("employee_name")
+        or f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
+    )
+
     role = session.get("role")
+
     cursor = conn.cursor()
+
+
+    # ========================================================
+    # PIPELINES FOR THIS USER
+    # ========================================================
+
     cursor.execute("""
-        SELECT PipelineID, [Vertical], [Account Name], [Product], [Region], [MRC],
-               [Contract Duration (Months)], [ARR], [Project OTC], [Total Project Revenue],
-               [Estimated Closure Date], [Estimated Closure Month], [Sales Cycle Status],
-               [Account Manager], [Next Action]
+        SELECT
+            PipelineID,
+            [Vertical],
+            [Account Name],
+            [Product],
+            [Region],
+            [MRC],
+            [Contract Duration (Months)],
+            [ARR],
+            [Project OTC],
+            [Total Project Revenue],
+            [Estimated Closure Date],
+            [Estimated Closure Month],
+            [Sales Cycle Status],
+            [Account Manager],
+            [Next Action]
+
         FROM Pipelines
-        WHERE [Account Manager] = ?
+
+        WHERE
+            LTRIM(RTRIM([Account Manager])) =
+            LTRIM(RTRIM(?))
+
+        ORDER BY
+            [Account Name]
     """, (edo_name,))
+
     pipelines = cursor.fetchall()
 
-    return render_template("my_pipelines.html", edo_name=edo_name, role=role, pipelines=pipelines)
 
+    # ========================================================
+    # SUMMARY CARDS
+    #
+    # Includes ALL pipelines:
+    # - Active
+    # - 100%
+    # - Lost
+    # - Retired
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+
+            COALESCE(
+                SUM([Total Project Revenue]),
+                0
+            ) AS TotalRevenue,
+
+            COALESCE(
+                SUM([MRC]),
+                0
+            ) AS TotalMRC,
+
+            COALESCE(
+                SUM([Project OTC]),
+                0
+            ) AS TotalOTC,
+
+            COUNT(PipelineID) AS TotalPipelines
+
+        FROM Pipelines
+
+        WHERE
+            LTRIM(RTRIM([Account Manager])) =
+            LTRIM(RTRIM(?))
+
+    """, (edo_name,))
+
+    summary_row = cursor.fetchone()
+
+
+    summary = {
+        "TotalRevenue": summary_row[0] or 0,
+        "TotalMRC": summary_row[1] or 0,
+        "TotalOTC": summary_row[2] or 0,
+        "TotalPipelines": summary_row[3] or 0
+    }
+
+
+    cursor.close()
+
+
+    return render_template(
+        "my_pipelines.html",
+
+        edo_name=edo_name,
+        role=role,
+
+        pipelines=pipelines,
+        summary=summary
+    )
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
 def edit_pipeline(pipeline_id):
@@ -476,7 +568,23 @@ def teamlead_dashboard():
             u.EmpID,
             u.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(p.PipelineID) AS StatusCount
+
+            COUNT(p.PipelineID) AS StatusCount,
+
+            COALESCE(
+                SUM(p.[Total Project Revenue]),
+                0
+            ) AS TotalRevenue,
+
+            COALESCE(
+                SUM(p.[MRC]),
+                0
+            ) AS TotalMRC,
+
+            COALESCE(
+                SUM(p.[Project OTC]),
+                0
+            ) AS TotalOTC
 
         FROM Users u
 
@@ -509,7 +617,11 @@ def teamlead_dashboard():
         emp_id = str(row[0])
         employee_name = row[1]
         status = row[2]
+
         count = row[3] or 0
+        revenue = row[4] or 0
+        mrc = row[5] or 0
+        otc = row[6] or 0
 
         if emp_id not in status_by_edo:
             status_by_edo[emp_id] = {
@@ -518,19 +630,32 @@ def teamlead_dashboard():
             }
 
         if status:
-            status_by_edo[emp_id]["statuses"][status] = count
+            status_by_edo[emp_id]["statuses"][status] = {
+                "count": count,
+                "revenue": revenue,
+                "mrc": mrc,
+                "otc": otc
+            }
 
 
     all_statuses = {}
 
     for edo_data in status_by_edo.values():
 
-        for status, count in edo_data["statuses"].items():
+        for status, metrics in edo_data["statuses"].items():
 
-            all_statuses[status] = (
-                all_statuses.get(status, 0)
-                + count
-            )
+            if status not in all_statuses:
+                all_statuses[status] = {
+                    "count": 0,
+                    "revenue": 0,
+                    "mrc": 0,
+                    "otc": 0
+                }
+
+            all_statuses[status]["count"] += metrics["count"]
+            all_statuses[status]["revenue"] += metrics["revenue"]
+            all_statuses[status]["mrc"] += metrics["mrc"]
+            all_statuses[status]["otc"] += metrics["otc"]
 
 
     # =========================
@@ -1281,7 +1406,23 @@ def regional_manager_dashboard():
             uh.EmpID,
             uh.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(p.PipelineID) AS StatusCount
+
+            COUNT(p.PipelineID) AS StatusCount,
+
+            COALESCE(
+                SUM(p.[Total Project Revenue]),
+                0
+            ) AS TotalRevenue,
+
+            COALESCE(
+                SUM(p.[MRC]),
+                0
+            ) AS TotalMRC,
+
+            COALESCE(
+                SUM(p.[Project OTC]),
+                0
+            ) AS TotalOTC
 
         FROM UserHierarchy uh
 
@@ -1311,6 +1452,9 @@ def regional_manager_dashboard():
         employee_name = row[1]
         status = row[2]
         count = row[3] or 0
+        revenue = row[4] or 0
+        mrc = row[5] or 0
+        otc = row[6] or 0
 
         if emp_id not in status_by_user:
             status_by_user[emp_id] = {
@@ -1319,19 +1463,32 @@ def regional_manager_dashboard():
             }
 
         if status:
-            status_by_user[emp_id]["statuses"][status] = count
+            status_by_user[emp_id]["statuses"][status] = {
+                "count": count,
+                "revenue": revenue,
+                "mrc": mrc,
+                "otc": otc
+            }
 
 
     all_statuses = {}
 
     for user_data in status_by_user.values():
 
-        for status, count in user_data["statuses"].items():
+        for status, metrics in user_data["statuses"].items():
 
-            all_statuses[status] = (
-                all_statuses.get(status, 0)
-                + count
-            )
+            if status not in all_statuses:
+                all_statuses[status] = {
+                    "count": 0,
+                    "revenue": 0,
+                    "mrc": 0,
+                    "otc": 0
+                }
+
+            all_statuses[status]["count"] += metrics["count"]
+            all_statuses[status]["revenue"] += metrics["revenue"]
+            all_statuses[status]["mrc"] += metrics["mrc"]
+            all_statuses[status]["otc"] += metrics["otc"]
 
 
     # ========================================================
@@ -1797,7 +1954,23 @@ def regional_manager_team_dashboard(teamlead_id):
             u.EmpID,
             u.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(p.PipelineID) AS StatusCount
+
+            COUNT(p.PipelineID) AS StatusCount,
+
+            COALESCE(
+                SUM(p.[Total Project Revenue]),
+                0
+            ) AS TotalRevenue,
+
+            COALESCE(
+                SUM(p.[MRC]),
+                0
+            ) AS TotalMRC,
+
+            COALESCE(
+                SUM(p.[Project OTC]),
+                0
+            ) AS TotalOTC
 
         FROM Users u
 
@@ -1831,6 +2004,9 @@ def regional_manager_team_dashboard(teamlead_id):
         employee_name = row[1]
         status = row[2]
         count = row[3] or 0
+        revenue = row[4] or 0
+        mrc = row[5] or 0
+        otc = row[6] or 0
 
         if emp_id not in status_by_user:
             status_by_user[emp_id] = {
@@ -1839,19 +2015,32 @@ def regional_manager_team_dashboard(teamlead_id):
             }
 
         if status:
-            status_by_user[emp_id]["statuses"][status] = count
+            status_by_user[emp_id]["statuses"][status] = {
+                "count": count,
+                "revenue": revenue,
+                "mrc": mrc,
+                "otc": otc
+            }
 
 
     all_statuses = {}
 
     for user_data in status_by_user.values():
 
-        for status, count in user_data["statuses"].items():
+        for status, metrics in user_data["statuses"].items():
 
-            all_statuses[status] = (
-                all_statuses.get(status, 0)
-                + count
-            )
+            if status not in all_statuses:
+                all_statuses[status] = {
+                    "count": 0,
+                    "revenue": 0,
+                    "mrc": 0,
+                    "otc": 0
+                }
+
+            all_statuses[status]["count"] += metrics["count"]
+            all_statuses[status]["revenue"] += metrics["revenue"]
+            all_statuses[status]["mrc"] += metrics["mrc"]
+            all_statuses[status]["otc"] += metrics["otc"]
 
 
     # ========================================================
@@ -1934,6 +2123,7 @@ def regional_manager_team_dashboard(teamlead_id):
 
         pipelines=pipelines
     )
+
 
 
 
@@ -2340,7 +2530,23 @@ def regional_head_dashboard():
             uh.EmpID,
             uh.EmployeeName,
             p.[Sales Cycle Status],
-            COUNT(p.PipelineID) AS StatusCount
+
+            COUNT(p.PipelineID) AS StatusCount,
+
+            COALESCE(
+                SUM(p.[Total Project Revenue]),
+                0
+            ) AS TotalRevenue,
+
+            COALESCE(
+                SUM(p.[MRC]),
+                0
+            ) AS TotalMRC,
+
+            COALESCE(
+                SUM(p.[Project OTC]),
+                0
+            ) AS TotalOTC
 
         FROM UserHierarchy uh
 
@@ -2370,6 +2576,9 @@ def regional_head_dashboard():
         employee_name = row[1]
         status = row[2]
         count = row[3] or 0
+        revenue = row[4] or 0
+        mrc = row[5] or 0
+        otc = row[6] or 0
 
         if emp_id not in status_by_user:
             status_by_user[emp_id] = {
@@ -2378,19 +2587,32 @@ def regional_head_dashboard():
             }
 
         if status:
-            status_by_user[emp_id]["statuses"][status] = count
+            status_by_user[emp_id]["statuses"][status] = {
+                "count": count,
+                "revenue": revenue,
+                "mrc": mrc,
+                "otc": otc
+            }
 
 
     all_statuses = {}
 
     for user_data in status_by_user.values():
 
-        for status, count in user_data["statuses"].items():
+        for status, metrics in user_data["statuses"].items():
 
-            all_statuses[status] = (
-                all_statuses.get(status, 0)
-                + count
-            )
+            if status not in all_statuses:
+                all_statuses[status] = {
+                    "count": 0,
+                    "revenue": 0,
+                    "mrc": 0,
+                    "otc": 0
+                }
+
+            all_statuses[status]["count"] += metrics["count"]
+            all_statuses[status]["revenue"] += metrics["revenue"]
+            all_statuses[status]["mrc"] += metrics["mrc"]
+            all_statuses[status]["otc"] += metrics["otc"]
 
 
     # ========================================================
@@ -2683,6 +2905,102 @@ def regional_head_dashboard():
     ]
 
     # ========================================================
+    # OVERDUE PIPELINES
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+
+            -- Start with the Regional Head
+            SELECT
+                EmpID,
+                EmployeeName,
+                Role,
+                ManagerID
+
+            FROM Users
+
+            WHERE
+                EmpID = ?
+                AND IsActive = 1
+
+
+            UNION ALL
+
+
+            -- Everyone underneath the Regional Head
+            SELECT
+                u.EmpID,
+                u.EmployeeName,
+                u.Role,
+                u.ManagerID
+
+            FROM Users u
+
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+
+            WHERE
+                u.IsActive = 1
+        )
+
+
+        SELECT
+            p.PipelineID,
+            p.[Account Name],
+            p.[Account Manager],
+            p.[Product],
+            p.EstimatedClosureDateFull,
+            p.[Sales Cycle Status],
+
+            DATEDIFF(
+                DAY,
+                p.EstimatedClosureDateFull,
+                CAST(GETDATE() AS DATE)
+            ) AS DaysOverdue
+
+        FROM Pipelines p
+
+        INNER JOIN UserHierarchy uh
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(uh.EmployeeName))
+
+        WHERE
+            p.EstimatedClosureDateFull IS NOT NULL
+
+            AND p.EstimatedClosureDateFull <
+                CAST(GETDATE() AS DATE)
+
+            AND p.[Sales Cycle Status] IN (
+                'Customer Visit (20%)',
+                'Ask for Proposal (40%)',
+                'Negotiations (60%)',
+                'Documentation/Acceptance/Processing (80%)'
+            )
+
+        ORDER BY
+            p.EstimatedClosureDateFull ASC,
+            p.[Account Name] ASC
+
+    """, (regional_head_id,))
+
+
+    overdue_pipelines = [
+        {
+            "PipelineID": row[0],
+            "AccountName": row[1],
+            "AccountManager": row[2],
+            "Product": row[3],
+            "ClosureDate": row[4],
+            "Status": row[5],
+            "DaysOverdue": row[6]
+        }
+
+        for row in cursor.fetchall()
+    ]
+
+
+    # ========================================================
     # EDIT HISTORY
     # ========================================================
 
@@ -2759,10 +3077,10 @@ def regional_head_dashboard():
         pipelines=pipelines,
 
         upcoming_deadlines=upcoming_deadlines,
+        overdue_pipelines=overdue_pipelines,
         history=history,
-        history_users=history_users
+        history_users=history_users,
     )
-
 
 from datetime import date
 
@@ -2990,6 +3308,7 @@ def executive_dashboard():
     revenue_by_rh = {}
     revenue_by_region = {}
     status_counts = {}
+    status_metrics = {}
 
     product_pipeline_counts = {}
     product_revenue = {}
@@ -3204,6 +3523,19 @@ def executive_dashboard():
                 status_counts.get(status, 0)
                 + 1
             )
+
+            if status not in status_metrics:
+                status_metrics[status] = {
+                    "count": 0,
+                    "revenue": 0,
+                    "mrc": 0,
+                    "otc": 0
+                }
+
+            status_metrics[status]["count"] += 1
+            status_metrics[status]["revenue"] += revenue
+            status_metrics[status]["mrc"] += mrc
+            status_metrics[status]["otc"] += project_otc
 
 
         # ---------------------------------------------
@@ -3553,6 +3885,7 @@ def executive_dashboard():
         revenue_by_region=revenue_by_region,
 
         status_counts=status_counts,
+        status_metrics=status_metrics,
 
         product_performance=
             product_performance,

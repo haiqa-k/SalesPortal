@@ -331,6 +331,59 @@
         }
 
 
+
+        /* =========================
+           SUMMARY CARDS
+        ========================= */
+
+        .summary-card {
+            background: #171717;
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+
+            height: 100%;
+
+            transition:
+                transform 0.2s ease,
+                box-shadow 0.2s ease;
+        }
+
+        .summary-card:hover {
+            transform: translateY(-3px);
+
+            box-shadow:
+                0 14px 35px rgba(0, 0, 0, 0.45);
+        }
+
+        .summary-card .card-body {
+            padding: 22px;
+        }
+
+        .summary-label {
+            color: #bdbdbd;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+
+            margin-bottom: 10px;
+        }
+
+        .summary-value {
+            color: #ffffff;
+
+            font-size: 24px;
+            font-weight: 600;
+
+            margin: 0;
+        }
+
+
         /* =========================
            RESPONSIVE
         ========================= */
@@ -439,6 +492,99 @@
 
     <div class="dashboard-subtitle">
         Review and manage your sales pipeline
+    </div>
+
+
+
+    <!-- =========================
+         SUMMARY CARDS
+    ========================= -->
+
+    <div class="row g-4 mb-4">
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total Revenue
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalRevenue }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total MRC
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalMRC }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total OTC
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalOTC }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <div class="col-lg-3 col-md-6">
+
+            <div class="summary-card">
+
+                <div class="card-body">
+
+                    <div class="summary-label">
+                        Total Pipelines
+                    </div>
+
+                    <p class="summary-value">
+                        {{ summary.TotalPipelines }}
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
     </div>
 
 
