@@ -299,6 +299,15 @@ def edit_pipeline(pipeline_id):
 
         return redirect(url_for("my_pipelines"))
 
+    
+    cursor.execute(
+        """
+        EXEC sys.sp_set_session_context
+            @key = N'EditedBy',
+            @value = ?
+        """,
+        session.get("employee_name")
+    )
     # Load pipeline for editing
     cursor.execute("""
         SELECT PipelineID, [Account Name], [Estimated Closure Date], 
@@ -3404,6 +3413,58 @@ def executive_dashboard():
     cursor.close()
 
 
+    # ========================================================
+    # EDIT HISTORY - ADMIN ONLY
+    # ========================================================
+
+    history = []
+    history_users = []
+
+    if role == "Admin":
+
+        history_cursor = conn.cursor()
+
+        history_cursor.execute("""
+            SELECT
+                HistoryID,
+                [Account Name],
+                FieldName,
+                OldValue,
+                NewValue,
+                EditedBy,
+                EditedOn
+            FROM dbo.History
+            ORDER BY EditedOn DESC
+        """)
+
+        history = [
+            {
+                "HistoryID": row[0],
+                "AccountName": row[1],
+                "FieldName": row[2],
+                "OldValue": row[3],
+                "NewValue": row[4],
+                "EditedBy": row[5],
+                "EditedOn": row[6]
+            }
+            for row in history_cursor.fetchall()
+        ]
+
+
+        history_cursor.execute("""
+            SELECT DISTINCT
+                EditedBy
+            FROM dbo.History
+            WHERE EditedBy IS NOT NULL
+            ORDER BY EditedBy
+        """)
+
+        history_users = [
+            row[0]
+            for row in history_cursor.fetchall()
+        ]
+
+        history_cursor.close()
     # =====================================================
     # RENDER
     # =====================================================
@@ -3460,7 +3521,13 @@ def executive_dashboard():
             upcoming_deadlines,
 
         overdue_pipelines=
-            overdue_pipelines
+            overdue_pipelines,
+
+        history=
+            history,
+
+        history_users=
+            history_users
     )
 
 
