@@ -1735,7 +1735,7 @@
         </button>
 
 
-        {% if viewer_role == "Admin" %}
+        {% if viewer_role in ["Admin", "HOD"] %}
 
             <button
                 type="button"
@@ -3178,7 +3178,7 @@
     </div>
 
 
-    {% if viewer_role == "Admin" %}
+    {% if viewer_role in ["Admin", "HOD"] %}
 
     <!-- =========================================
          EDIT HISTORY
@@ -5651,7 +5651,7 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
 
     /* ============================================
-       EDIT HISTORY - ADMIN ONLY
+       EDIT HISTORY - ADMIN & HOD ONLY
     ============================================ */
 
     const historyUserFilter =
