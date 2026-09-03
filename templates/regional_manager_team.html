@@ -1119,6 +1119,10 @@
     src="{{ url_for('static', filename='js/pipeline_columns.js') }}">
 </script>
 
+
+<script src="{{ url_for('static', filename='js/pieColors.js') }}"></script>
+
+
 <script>
 
     /* =========================
@@ -1617,15 +1621,10 @@
                         data:
                             initialStatusData.counts,
 
-                        backgroundColor: [
-                            '#c62828',
-                            '#7b1fa2',
-                            '#512da8',
-                            '#ef5350',
-                            '#9575cd',
-                            '#ab47bc',
-                            '#616161'
-                        ],
+                        backgroundColor:
+                            getPieColors(
+                                Object.keys(currentStatusMetrics)
+                            ),
 
                         borderColor:
                             '#171717',

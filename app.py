@@ -3821,7 +3821,7 @@ def executive_dashboard():
     history = []
     history_users = []
 
-    if role == "Admin":
+    if role in ["Admin", "HOD"]:
 
         history_cursor = conn.cursor()
 

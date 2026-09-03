@@ -21,7 +21,7 @@
     <script
         src="https://cdn.jsdelivr.net/npm/chart.js">
     </script>
-
+  
 
     <style>
 
@@ -3398,7 +3398,7 @@
 </div>
 
 
-
+<script src="{{ url_for('static', filename='js/pieColors.js') }}"></script>
 <script>
 
     /* ============================================
@@ -3927,15 +3927,10 @@
                             executiveStatusData
                                 .counts,
 
-                        backgroundColor: [
-                            '#c62828',
-                            '#7b1fa2',
-                            '#512da8',
-                            '#ef5350',
-                            '#9575cd',
-                            '#ab47bc',
-                            '#616161'
-                        ],
+                        backgroundColor:
+                            getPieColors(
+                                Object.keys(statusMetrics)
+                            ),
 
                         borderColor:
                             '#171717',
@@ -4763,7 +4758,9 @@ if (productMixCanvas) {
                                             .counts,
 
                                     backgroundColor:
-                                        pipelineStatusColors,
+                                        getPieColors(
+                                            Object.keys(statusMetrics)
+                                        ),
 
                                     borderColor:
                                         "#171717",
