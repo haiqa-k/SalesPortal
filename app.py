@@ -3314,6 +3314,7 @@ def executive_dashboard():
     product_revenue = {}
     product_active_counts = {}
     product_closed_counts = {}
+    product_lost_counts = {}
 
     account_manager_revenue = {}
 
@@ -3573,10 +3574,20 @@ def executive_dashboard():
                     + 1
                 )
 
-            else:
+            elif status == WON_STATUS:
 
                 product_closed_counts[product] = (
                     product_closed_counts.get(
+                        product,
+                        0
+                    )
+                    + 1
+                )
+
+            elif status in LOST_STATUSES:
+
+                product_lost_counts[product] = (
+                    product_lost_counts.get(
                         product,
                         0
                     )
@@ -3694,6 +3705,13 @@ def executive_dashboard():
             )
         )
 
+        lost = (
+            product_lost_counts.get(
+                product,
+                0
+            )
+        )
+
         average_value = (
             revenue / pipeline_count
             if pipeline_count
@@ -3704,15 +3722,11 @@ def executive_dashboard():
         product_performance.append({
 
             "Product": product,
-
             "PipelineCount": pipeline_count,
-
             "ActiveCount": active,
-
             "ClosedCount": closed,
-
+            "LostCount": lost,
             "Revenue": revenue,
-
             "AverageValue": average_value
         })
 
