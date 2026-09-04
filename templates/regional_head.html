@@ -1974,16 +1974,6 @@
                         </label>
 
 
-                        <label>
-                            <input
-                                type="checkbox"
-                                class="column-toggle"
-                                data-column="closure-month"
-                                checked
-                            >
-                            Estimated Closure Month
-                        </label>
-
 
                         <label>
                             <input
@@ -2143,13 +2133,6 @@
 
 
                         <th
-                            data-col="closure-month"
-                        >
-                            Estimated Closure Month
-                        </th>
-
-
-                        <th
                             class="sortable"
                             data-col="status"
                             data-type="status"
@@ -2270,17 +2253,12 @@
                         </td>
 
 
-                        <td
-                            data-col="closure-date"
-                        >
-                            {{ pipeline.EstimatedClosureDate or '-' }}
-                        </td>
-
-
-                        <td
-                            data-col="closure-month"
-                        >
-                            {{ pipeline.EstimatedClosureMonth or '-' }}
+                        <td data-col="closure-date">
+                            {% if pipeline.EstimatedClosureDateFull %}
+                                {{ pipeline.EstimatedClosureDateFull.strftime('%d %b %Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
 

@@ -894,7 +894,6 @@
                         ('project-otc', 'Project OTC'),
                         ('total-revenue', 'Total Revenue'),
                         ('closure-date', 'Closure Date'),
-                        ('closure-month', 'Closure Month'),
                         ('status', 'Status'),
                         ('next-action', 'Next Action')
                     ],
@@ -988,17 +987,19 @@
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th data-col="closure-date">
-                            Closure Date
-                        </th>
-
-                        <th data-col="closure-month">
-                            Closure Month
+                        <th
+                            class="sortable"
+                            data-column="10"
+                            data-col="closure-date"
+                            data-type="date"
+                        >
+                            Estimated Closure Date
+                            <span class="sort-icon"></span>
                         </th>
 
                         <th
                             class="sortable"
-                            data-column="12"
+                            data-column="11"
                             data-type="status"
                             data-col="status"
                         >
@@ -1067,11 +1068,11 @@
                         </td>
 
                         <td data-col="closure-date">
-                            {{ pipeline.EstimatedClosureDate or '-' }}
-                        </td>
-
-                        <td data-col="closure-month">
-                            {{ pipeline.EstimatedClosureMonth or '-' }}
+                            {% if pipeline.EstimatedClosureDateFull %}
+                                {{ pipeline.EstimatedClosureDateFull.strftime('%d %b %Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
                         <td data-col="status">
@@ -1270,7 +1271,22 @@
                         numberA - numberB;
 
                 }
+                
+                else if (dataType === 'date') {
 
+                    const dateA =
+                        valueA === '-'
+                            ? 0
+                            : new Date(valueA).getTime();
+
+                    const dateB =
+                        valueB === '-'
+                            ? 0
+                            : new Date(valueB).getTime();
+
+                    comparison =
+                        dateA - dateB;
+                }
 
                 else if (dataType === 'status') {
 

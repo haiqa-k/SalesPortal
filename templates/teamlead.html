@@ -1035,8 +1035,14 @@
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th data-col="closure-date">
-                            Closure Date
+                        <th
+                            class="sortable"
+                            data-column="10"
+                            data-type="date"
+                            data-col="closure-date"
+                        >
+                            Estimated Closure Date
+                            <span class="sort-icon"></span>
                         </th>
 
                         <th data-col="closure-month">
@@ -1115,7 +1121,11 @@
                         </td>
 
                         <td data-col="closure-date">
-                            {{ pipeline.EstimatedClosureDate or '-' }}
+                            {% if pipeline.EstimatedClosureDateFull %}
+                                {{ pipeline.EstimatedClosureDateFull.strftime('%d %b %Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
                         <td data-col="closure-month">
@@ -1264,6 +1274,22 @@
 
                     comparison = numberA - numberB;
 
+                }
+
+                else if (dataType === 'date') {
+
+                    const dateA =
+                        valueA === '-'
+                            ? 0
+                            : new Date(valueA).getTime();
+
+                    const dateB =
+                        valueB === '-'
+                            ? 0
+                            : new Date(valueB).getTime();
+
+                    comparison =
+                        dateA - dateB;
                 }
 
                 else if (dataType === 'status') {

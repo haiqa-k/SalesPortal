@@ -685,7 +685,7 @@ def teamlead_dashboard():
                 p.[ARR],
                 p.[Project OTC],
                 p.[Total Project Revenue],
-                p.[Estimated Closure Date],
+                p.EstimatedClosureDateFull,
                 p.[Estimated Closure Month],
                 p.[Sales Cycle Status],
                 p.[Next Action]
@@ -722,7 +722,7 @@ def teamlead_dashboard():
                 "ARR": row[8],
                 "ProjectOTC": row[9],
                 "TotalProjectRevenue": row[10],
-                "EstimatedClosureDate": row[11],
+                "EstimatedClosureDateFull": row[11],
                 "EstimatedClosureMonth": row[12],
                 "SalesCycleStatus": row[13],
                 "NextAction": row[14]
@@ -774,7 +774,7 @@ def teamlead_dashboard():
                         p.[ARR],
                         p.[Project OTC],
                         p.[Total Project Revenue],
-                        p.[Estimated Closure Date],
+                        p.EstimatedClosureDateFull,
                         p.[Estimated Closure Month],
                         p.[Sales Cycle Status],
                         p.[Next Action]
@@ -815,7 +815,7 @@ def teamlead_dashboard():
                         "ARR": row[8],
                         "ProjectOTC": row[9],
                         "TotalProjectRevenue": row[10],
-                        "EstimatedClosureDate": row[11],
+                        "EstimatedClosureDateFull": row[11],
                         "EstimatedClosureMonth": row[12],
                         "SalesCycleStatus": row[13],
                         "NextAction": row[14]
@@ -1604,8 +1604,7 @@ def regional_manager_dashboard():
             p.[ARR],
             p.[Project OTC],
             p.[Total Project Revenue],
-            p.[Estimated Closure Date],
-            p.[Estimated Closure Month],
+            p.EstimatedClosureDateFull,
             p.[Sales Cycle Status],
             p.[Next Action]
 
@@ -1639,10 +1638,9 @@ def regional_manager_dashboard():
             "ARR": row[10],
             "ProjectOTC": row[11],
             "TotalProjectRevenue": row[12],
-            "EstimatedClosureDate": row[13],
-            "EstimatedClosureMonth": row[14],
-            "SalesCycleStatus": row[15],
-            "NextAction": row[16]
+            "EstimatedClosureDateFull": row[13],
+            "SalesCycleStatus": row[14],
+            "NextAction": row[15]
         }
         for row in cursor.fetchall()
     ]
@@ -2060,8 +2058,7 @@ def regional_manager_team_dashboard(teamlead_id):
             p.[ARR],
             p.[Project OTC],
             p.[Total Project Revenue],
-            p.[Estimated Closure Date],
-            p.[Estimated Closure Month],
+            p.EstimatedClosureDateFull,
             p.[Sales Cycle Status],
             p.[Next Action]
 
@@ -2094,10 +2091,9 @@ def regional_manager_team_dashboard(teamlead_id):
             "ARR": row[8],
             "ProjectOTC": row[9],
             "TotalProjectRevenue": row[10],
-            "EstimatedClosureDate": row[11],
-            "EstimatedClosureMonth": row[12],
-            "SalesCycleStatus": row[13],
-            "NextAction": row[14]
+            "EstimatedClosureDateFull": row[11],
+            "SalesCycleStatus": row[12],
+            "NextAction": row[13]
         }
         for row in cursor.fetchall()
     ]
@@ -2735,7 +2731,7 @@ def regional_head_dashboard():
                 p.[ARR],
                 p.[Project OTC],
                 p.[Total Project Revenue],
-                p.[Estimated Closure Date],
+                p.EstimatedClosureDateFull,
                 p.[Estimated Closure Month],
                 p.[Sales Cycle Status],
                 p.[Next Action]
@@ -2776,10 +2772,9 @@ def regional_head_dashboard():
                 "ARR": row[12],
                 "ProjectOTC": row[13],
                 "TotalProjectRevenue": row[14],
-                "EstimatedClosureDate": row[15],
-                "EstimatedClosureMonth": row[16],
-                "SalesCycleStatus": row[17],
-                "NextAction": row[18]
+                "EstimatedClosureDateFull": row[15],
+                "SalesCycleStatus": row[16],
+                "NextAction": row[17]
             }
 
             for row in cursor.fetchall()

@@ -957,8 +957,14 @@
                             <span class="sort-icon"></span>
                         </th>
 
-                        <th data-col="closure-date">
+                        <th
+                            class="sortable"
+                            data-column="12"
+                            data-type="date"
+                            data-col="closure-date"
+                        >
                             Closure Date
+                            <span class="sort-icon"></span>
                         </th>
 
                         <th
@@ -1246,6 +1252,24 @@
                             comparison =
                                 numberA - numberB;
 
+                        }
+
+                        else if (
+                            dataType === 'date'
+                        ) {
+
+                            const dateA =
+                                valueA === '-'
+                                    ? 0
+                                    : Date.parse(valueA);
+
+                            const dateB =
+                                valueB === '-'
+                                    ? 0
+                                    : Date.parse(valueB);
+
+                            comparison =
+                                dateA - dateB;
                         }
 
 
