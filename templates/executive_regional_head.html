@@ -512,6 +512,147 @@
         }
 
 
+
+        /* =========================
+           PIPELINE FILTER BAR
+        ========================= */
+
+        .table-card .table-header {
+            display: grid !important;
+            grid-template-columns: 250px minmax(0, 1fr) !important;
+            align-items: center !important;
+            gap: 18px !important;
+        }
+
+        .table-card .table-header-controls {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .table-card .pipeline-filters {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            flex-wrap: nowrap !important;
+            gap: 8px !important;
+            min-width: 0 !important;
+            flex: 1 1 auto !important;
+        }
+
+        .table-card .pipeline-filters .form-control,
+        .table-card .pipeline-filters .form-select,
+        .table-card .active-pipeline-filter,
+        .table-card .btn-clear-filters,
+        .table-card .column-selector .dropdown-toggle {
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+        }
+
+        .table-card .pipeline-filters .form-control,
+        .table-card .pipeline-filters .form-select {
+            background-color: #202020 !important;
+            color: #ffffff !important;
+            border: 1px solid #3a3a3a !important;
+        }
+
+        .table-card #pipelineSearch::placeholder {
+            color: #9a9a9a !important;
+            opacity: 1 !important;
+        }
+
+        .table-card .filter-search {
+            flex: 1 1 260px !important;
+            width: 260px !important;
+            min-width: 220px !important;
+            max-width: 330px !important;
+        }
+
+        .table-card .filter-individual {
+            flex: 0 1 170px !important;
+            width: 170px !important;
+            min-width: 145px !important;
+        }
+
+        .table-card .filter-product {
+            flex: 0 1 155px !important;
+            width: 155px !important;
+            min-width: 130px !important;
+        }
+
+        .table-card .active-pipeline-filter {
+            flex: 0 0 auto !important;
+            min-width: 152px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            background: #202020 !important;
+            border: 1px solid #3a3a3a !important;
+            color: #ffffff !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+        }
+
+        .table-card .active-pipeline-filter input {
+            width: 15px !important;
+            height: 15px !important;
+            min-width: 15px !important;
+            margin: 0 !important;
+            accent-color: #c62828;
+            cursor: pointer;
+        }
+
+        .table-card .btn-clear-filters {
+            flex: 0 0 68px !important;
+            width: 68px !important;
+            min-width: 68px !important;
+            padding: 0 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #292929 !important;
+            color: #ffffff !important;
+            border: 1px solid #444444 !important;
+            white-space: nowrap !important;
+        }
+
+        .table-card .column-selector {
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+        }
+
+        .table-card .column-selector .dropdown-toggle {
+            width: 105px !important;
+            min-width: 105px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        @media (max-width: 1450px) {
+            .table-card .table-header {
+                grid-template-columns: 1fr !important;
+                align-items: stretch !important;
+            }
+
+            .table-card .table-header-controls,
+            .table-card .pipeline-filters {
+                justify-content: flex-start !important;
+                flex-wrap: wrap !important;
+            }
+        }
+
         @media (max-width: 768px) {
 
             .topbar {
@@ -614,7 +755,7 @@
     <div class="back-row">
 
         <a
-            href="{{ url_for('executive_dashboard') }}"
+            href="{{ url_for('executive_dashboard') }}?tab=pipeline-overview"
             class="back-button"
         >
             ← Back to Executive Dashboard
@@ -818,26 +959,54 @@
 
             <div class="table-header-controls">
 
-                <div class="table-filter">
+                <div class="pipeline-filters">
+
+                    <input
+                        type="text"
+                        id="pipelineSearch"
+                        class="form-control filter-search"
+                        placeholder="Search account name, status, product, manager..."
+                    >
 
                     <select
                         id="memberFilter"
-                        class="form-select"
+                        class="form-select filter-individual"
                     >
-
-                        <option value="all">
+                        <option value="">
                             All Individuals
                         </option>
 
                         {% for user in regional_users %}
-
                             <option value="{{ user.EmpID }}">
                                 {{ user.FullName }}
                             </option>
-
                         {% endfor %}
-
                     </select>
+
+                    <select
+                        id="productFilter"
+                        class="form-select filter-product"
+                    >
+                        <option value="">
+                            All Products
+                        </option>
+                    </select>
+
+                    <label class="active-pipeline-filter">
+                        <input
+                            type="checkbox"
+                            id="activePipelineFilter"
+                        >
+                        <span>Active Pipelines</span>
+                    </label>
+
+                    <button
+                        type="button"
+                        id="clearPipelineFilters"
+                        class="btn-clear-filters"
+                    >
+                        Clear
+                    </button>
 
                 </div>
 
@@ -991,7 +1160,11 @@
 
                     {% for pipeline in pipelines %}
 
-                        <tr data-user-id="{{ pipeline.EmpID }}">
+                        <tr
+                            data-user-id="{{ pipeline.EmpID }}"
+                            data-product="{{ pipeline.Product or '' }}"
+                            data-status="{{ pipeline.SalesCycleStatus or '' }}"
+                        >
 
                             <td
                                 class="account-manager"
@@ -1100,46 +1273,189 @@
 <script src="{{ url_for('static', filename='js/pieColors.js') }}"></script>
 <script>
 
-    const memberFilter =
-        document.getElementById(
-            'memberFilter'
+    /* =========================
+       PIPELINE FILTERING
+    ========================= */
+
+    const pipelineRows =
+        Array.from(
+            document.querySelectorAll(
+                '#pipelineBody tr[data-user-id]'
+            )
         );
+
+    const memberFilter =
+        document.getElementById('memberFilter');
+
+    const pipelineSearch =
+        document.getElementById('pipelineSearch');
+
+    const productFilter =
+        document.getElementById('productFilter');
+
+    const activePipelineFilter =
+        document.getElementById('activePipelineFilter');
+
+    const clearPipelineFilters =
+        document.getElementById('clearPipelineFilters');
+
+    const activePipelineStatuses =
+        new Set([
+            "Customer Visit (20%)",
+            "Ask for Proposal (40%)",
+            "Negotiations (60%)",
+            "Documentation/Acceptance/Processing (80%)"
+        ]);
+
+
+    function populatePipelineFilter(selectElement, values) {
+
+        if (!selectElement) {
+            return;
+        }
+
+        const uniqueValues =
+            [...new Set(values)]
+                .filter(Boolean)
+                .sort((a, b) => a.localeCompare(b));
+
+        uniqueValues.forEach(value => {
+
+            const option =
+                document.createElement('option');
+
+            option.value = value;
+            option.textContent = value;
+
+            selectElement.appendChild(option);
+        });
+    }
+
+
+    populatePipelineFilter(
+        productFilter,
+        pipelineRows.map(
+            row => row.dataset.product
+        )
+    );
+
+
+    function applyPipelineFilters() {
+
+        const selectedMember =
+            memberFilter ? memberFilter.value : '';
+
+        const searchValue =
+            pipelineSearch
+                ? pipelineSearch.value.trim().toLowerCase()
+                : '';
+
+        const selectedProduct =
+            productFilter ? productFilter.value : '';
+
+        const activeOnly =
+            activePipelineFilter
+                ? activePipelineFilter.checked
+                : false;
+
+
+        pipelineRows.forEach(row => {
+
+            const userId =
+                row.dataset.userId || '';
+
+            const product =
+                row.dataset.product || '';
+
+            const status =
+                row.dataset.status || '';
+
+            const rowText =
+                row.textContent.toLowerCase();
+
+
+            const matchesMember =
+                !selectedMember ||
+                userId === selectedMember;
+
+            const matchesSearch =
+                !searchValue ||
+                rowText.includes(searchValue);
+
+            const matchesProduct =
+                !selectedProduct ||
+                product === selectedProduct;
+
+            const matchesActive =
+                !activeOnly ||
+                activePipelineStatuses.has(status);
+
+
+            row.style.display =
+                (
+                    matchesMember &&
+                    matchesSearch &&
+                    matchesProduct &&
+                    matchesActive
+                )
+                    ? ''
+                    : 'none';
+        });
+    }
 
 
     if (memberFilter) {
-
         memberFilter.addEventListener(
             'change',
+            applyPipelineFilters
+        );
+    }
+
+    if (productFilter) {
+        productFilter.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+    }
+
+    if (activePipelineFilter) {
+        activePipelineFilter.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+    }
+
+    if (pipelineSearch) {
+        pipelineSearch.addEventListener(
+            'input',
+            applyPipelineFilters
+        );
+    }
+
+    if (clearPipelineFilters) {
+        clearPipelineFilters.addEventListener(
+            'click',
             function () {
 
-                const selectedMember =
-                    this.value;
+                if (memberFilter) {
+                    memberFilter.value = '';
+                }
 
-                const rows =
-                    document.querySelectorAll(
-                        '#pipelineBody tr[data-user-id]'
-                    );
+                if (pipelineSearch) {
+                    pipelineSearch.value = '';
+                }
 
+                if (productFilter) {
+                    productFilter.value = '';
+                }
 
-                rows.forEach(row => {
+                if (activePipelineFilter) {
+                    activePipelineFilter.checked = false;
+                }
 
-                    if (
-                        selectedMember === 'all' ||
-                        row.dataset.userId ===
-                            selectedMember
-                    ) {
-                        row.style.display = '';
-                    }
-
-                    else {
-                        row.style.display = 'none';
-                    }
-
-                });
-
+                applyPipelineFilters();
             }
         );
-
     }
 
 

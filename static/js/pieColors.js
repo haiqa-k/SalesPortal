@@ -1,10 +1,10 @@
 const pieColors = {
     "Customer Visit (20%)": "#2196F3",
-    "Ask for Proposal (40%)": "#FFC107",
-    "Negotiations (60%)": "#F44336",
+    "Ask for Proposal (40%)": "#d5e70f",
+    "Negotiations (60%)": "#c122e9",
     "Documentation/Acceptance/Processing (80%)": "#FF9800",
     "System Entry/Revenue Locked (100%)": "#4CAF50",
-    "Lost to Competitor": "#4f4d4d",
+    "Lost to Competitor": "#F44336",
     "Retired - No Decision": "#91146b"
 };
 

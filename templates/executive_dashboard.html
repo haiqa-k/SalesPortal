@@ -3755,7 +3755,8 @@
         return {
             fullLabels,
             displayLabels,
-            counts
+            counts,
+            colors: getPieColors(fullLabels)
         };
 
     }
@@ -3928,9 +3929,7 @@
                                 .counts,
 
                         backgroundColor:
-                            getPieColors(
-                                Object.keys(statusMetrics)
-                            ),
+                            executiveStatusData.colors,
 
                         borderColor:
                             '#171717',
@@ -4758,9 +4757,7 @@ if (productMixCanvas) {
                                             .counts,
 
                                     backgroundColor:
-                                        getPieColors(
-                                            Object.keys(statusMetrics)
-                                        ),
+                                        statusData.colors,
 
                                     borderColor:
                                         "#171717",
@@ -4944,6 +4941,9 @@ if (productMixCanvas) {
 
                 pipelineRHStatusChart.data.datasets[0].data =
                     statusData.counts;
+
+                pipelineRHStatusChart.data.datasets[0].backgroundColor =
+                    statusData.colors;
 
                 pipelineRHStatusChart.update();
 
@@ -5879,6 +5879,62 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(
             ".executive-tab-content"
         );
+
+
+    function activateExecutiveTab(target) {
+
+        const targetTab =
+            Array.from(tabs).find(
+                tab => tab.dataset.tab === target
+            );
+
+        const targetContent =
+            document.getElementById(target);
+
+        if (!targetTab || !targetContent) {
+            return false;
+        }
+
+        tabs.forEach(function (button) {
+            button.classList.remove("active");
+        });
+
+        tabContents.forEach(function (content) {
+            content.classList.remove("active");
+        });
+
+        targetTab.classList.add("active");
+        targetContent.classList.add("active");
+
+        if (target === "pipeline-overview") {
+            initializePipelineOverviewCharts();
+
+            setTimeout(
+                function () {
+                    if (pipelineRHRevenueChart) {
+                        pipelineRHRevenueChart.resize();
+                    }
+
+                    if (pipelineRHStatusChart) {
+                        pipelineRHStatusChart.resize();
+                    }
+                },
+                0
+            );
+        }
+
+        return true;
+    }
+
+
+    const requestedTab =
+        new URLSearchParams(
+            window.location.search
+        ).get("tab");
+
+    if (requestedTab) {
+        activateExecutiveTab(requestedTab);
+    }
 
 
     tabs.forEach(function (tab) {
