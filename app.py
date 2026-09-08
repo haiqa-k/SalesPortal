@@ -3,6 +3,13 @@ import pyodbc
 import bcrypt
 from datetime import datetime
 
+from flask import send_file
+from io import BytesIO
+from openpyxl import Workbook
+from openpyxl.styles import Font
+from openpyxl.utils import get_column_letter
+import re
+
 app = Flask(__name__)
 app.secret_key = "supersecretkey"
 
@@ -236,6 +243,365 @@ def change_password():
         message=message,
         message_type=message_type
     )
+
+
+
+@app.route("/pipeline-overview/export")
+def export_pipeline_overview():
+
+    # ========================================================
+    # AUTHENTICATION
+    # ========================================================
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    user_id = session["user_id"]
+
+    role = (
+        session.get("role")
+        or ""
+    ).strip()
+
+    employee_name = (
+        session.get("employee_name")
+        or f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
+    )
+
+
+    # ========================================================
+    # ALLOWED ROLES
+    # ========================================================
+
+    allowed_roles = {
+        "EDO",
+        "Team Lead",
+        "Regional Manager",
+        "Regional Head",
+        "Head",
+        "HOD",
+        "Admin"
+    }
+
+    if role not in allowed_roles:
+        return redirect(url_for("login"))
+
+
+    cursor = conn.cursor()
+
+
+    try:
+
+        # ====================================================
+        # EXECUTIVE / ADMIN
+        #
+        # HOD and Admin can export all pipelines.
+        # ====================================================
+
+        if role in {"HOD", "Admin"}:
+
+            cursor.execute("""
+                SELECT
+                    p.[Account Manager],
+                    p.[Vertical],
+                    p.[Account Name],
+                    p.[Product],
+                    p.[Region],
+                    p.[MRC],
+                    p.[Contract Duration (Months)],
+                    p.[ARR],
+                    p.[Project OTC],
+                    p.[Total Project Revenue],
+                    p.EstimatedClosureDateFull,
+                    p.[Sales Cycle Status],
+                    p.[Next Action]
+
+                FROM Pipelines p
+
+                ORDER BY
+                    p.[Account Manager],
+                    p.[Account Name]
+            """)
+
+
+        # ====================================================
+        # HIERARCHY-BASED EXPORT
+        #
+        # Works for:
+        # - EDO
+        # - Team Lead
+        # - Regional Manager
+        # - Regional Head
+        # - Head
+        #
+        # Starts from the logged-in user and recursively gets
+        # every active user underneath them.
+        #
+        # For an EDO, there normally won't be anyone underneath,
+        # so this naturally returns only their own pipelines.
+        # ====================================================
+
+        else:
+
+            cursor.execute("""
+                WITH UserHierarchy AS (
+
+                    -- Logged-in user
+                    SELECT
+                        u.EmpID,
+                        u.EmployeeName,
+                        u.ManagerID,
+                        u.Role
+
+                    FROM Users u
+
+                    WHERE
+                        u.EmpID = ?
+                        AND u.IsActive = 1
+
+
+                    UNION ALL
+
+
+                    -- Everyone reporting underneath
+                    SELECT
+                        child.EmpID,
+                        child.EmployeeName,
+                        child.ManagerID,
+                        child.Role
+
+                    FROM Users child
+
+                    INNER JOIN UserHierarchy parent
+                        ON child.ManagerID = parent.EmpID
+
+                    WHERE
+                        child.IsActive = 1
+                )
+
+                SELECT
+                    p.[Account Manager],
+                    p.[Vertical],
+                    p.[Account Name],
+                    p.[Product],
+                    p.[Region],
+                    p.[MRC],
+                    p.[Contract Duration (Months)],
+                    p.[ARR],
+                    p.[Project OTC],
+                    p.[Total Project Revenue],
+                    p.EstimatedClosureDateFull,
+                    p.[Sales Cycle Status],
+                    p.[Next Action]
+
+                FROM Pipelines p
+
+                INNER JOIN UserHierarchy uh
+                    ON
+                        LTRIM(RTRIM(p.[Account Manager])) =
+                        LTRIM(RTRIM(uh.EmployeeName))
+
+                ORDER BY
+                    p.[Account Manager],
+                    p.[Account Name]
+
+                OPTION (MAXRECURSION 100)
+            """, (
+                user_id,
+            ))
+
+
+        rows = cursor.fetchall()
+
+
+        # ====================================================
+        # EXCEL FILE
+        # ====================================================
+
+        workbook = Workbook()
+
+        worksheet = workbook.active
+        worksheet.title = "Pipeline Overview"
+
+
+        # ====================================================
+        # HEADERS
+        # ====================================================
+
+        headers = [
+            "Account Manager",
+            "Vertical",
+            "Account Name",
+            "Product",
+            "Region",
+            "MRC",
+            "Contract Duration (Months)",
+            "ARR",
+            "Project OTC",
+            "Total Project Revenue",
+            "Estimated Closure Date",
+            "Sales Cycle Status",
+            "Next Action"
+        ]
+
+
+        for column_number, header in enumerate(
+            headers,
+            start=1
+        ):
+
+            cell = worksheet.cell(
+                row=1,
+                column=column_number,
+                value=header
+            )
+
+            cell.font = Font(
+                bold=True
+            )
+
+
+        # ====================================================
+        # DATA
+        # ====================================================
+
+        for row_number, row in enumerate(
+            rows,
+            start=2
+        ):
+
+            for column_number, value in enumerate(
+                row,
+                start=1
+            ):
+
+                cell = worksheet.cell(
+                    row=row_number,
+                    column=column_number,
+                    value=value
+                )
+
+
+                # EstimatedClosureDateFull column
+                if column_number == 11 and value:
+
+                    cell.number_format = "DD MMM YYYY"
+
+
+        # ====================================================
+        # FREEZE HEADER ROW
+        # ====================================================
+
+        worksheet.freeze_panes = "A2"
+
+
+        # ====================================================
+        # EXCEL FILTERS
+        # ====================================================
+
+        worksheet.auto_filter.ref = (
+            f"A1:M{max(1, worksheet.max_row)}"
+        )
+
+
+        # ====================================================
+        # AUTO-SIZE COLUMNS
+        # ====================================================
+
+        for column_cells in worksheet.columns:
+
+            max_length = 0
+
+            column_letter = get_column_letter(
+                column_cells[0].column
+            )
+
+            for cell in column_cells:
+
+                try:
+
+                    value = (
+                        str(cell.value)
+                        if cell.value is not None
+                        else ""
+                    )
+
+                    if len(value) > max_length:
+                        max_length = len(value)
+
+                except Exception:
+                    pass
+
+
+            adjusted_width = min(
+                max_length + 3,
+                45
+            )
+
+            worksheet.column_dimensions[
+                column_letter
+            ].width = adjusted_width
+
+
+        # ====================================================
+        # WRITE EXCEL INTO MEMORY
+        # ====================================================
+
+        output = BytesIO()
+
+        workbook.save(output)
+
+        output.seek(0)
+
+
+        # ====================================================
+        # FILE NAME
+        # ====================================================
+
+        safe_name = re.sub(
+            r"[^A-Za-z0-9_-]+",
+            "_",
+            employee_name
+        ).strip("_")
+
+
+        if role in {"HOD", "Admin"}:
+
+            filename = (
+                "Sales_Pipeline_Overview.xlsx"
+            )
+
+        else:
+
+            filename = (
+                f"{safe_name}_Pipeline_Overview.xlsx"
+            )
+
+
+        # ====================================================
+        # DOWNLOAD
+        # ====================================================
+
+        return send_file(
+            output,
+            as_attachment=True,
+            download_name=filename,
+            mimetype=(
+                "application/"
+                "vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            )
+        )
+
+
+    finally:
+
+        cursor.close()
+
+
+
+        
+
 @app.route("/my-pipelines")
 def my_pipelines():
 
@@ -253,7 +619,26 @@ def my_pipelines():
 
 
     # ========================================================
+    # ACTIVE PIPELINE STATUSES
+    #
+    # Only these are considered active for:
+    # - Upcoming Deadlines
+    # - Overdue Pipelines
+    # ========================================================
+
+    active_statuses = (
+        "Customer Visit (20%)",
+        "Ask for Proposal (40%)",
+        "Negotiations (60%)",
+        "Documentation/Acceptance/Processing (80%)"
+    )
+
+
+    # ========================================================
     # PIPELINES FOR THIS USER
+    #
+    # Uses EstimatedClosureDateFull instead of the old
+    # separate day/month fields.
     # ========================================================
 
     cursor.execute("""
@@ -268,8 +653,7 @@ def my_pipelines():
             [ARR],
             [Project OTC],
             [Total Project Revenue],
-            [Estimated Closure Date],
-            [Estimated Closure Month],
+            EstimatedClosureDateFull,
             [Sales Cycle Status],
             [Account Manager],
             [Next Action]
@@ -336,6 +720,134 @@ def my_pipelines():
     }
 
 
+    # ========================================================
+    # UPCOMING DEADLINES
+    #
+    # Active pipelines whose expected closure date is:
+    # - Today
+    # - Within the next 7 days
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            [Account Name],
+            [Product],
+            EstimatedClosureDateFull,
+
+            DATEDIFF(
+                DAY,
+                CAST(GETDATE() AS DATE),
+                EstimatedClosureDateFull
+            ) AS DaysRemaining,
+
+            [Sales Cycle Status],
+            [Next Action]
+
+        FROM Pipelines
+
+        WHERE
+            LTRIM(RTRIM([Account Manager])) =
+            LTRIM(RTRIM(?))
+
+            AND EstimatedClosureDateFull IS NOT NULL
+
+            AND [Sales Cycle Status] IN (?, ?, ?, ?)
+
+            AND EstimatedClosureDateFull >=
+                CAST(GETDATE() AS DATE)
+
+            AND EstimatedClosureDateFull <=
+                DATEADD(
+                    DAY,
+                    7,
+                    CAST(GETDATE() AS DATE)
+                )
+
+        ORDER BY
+            EstimatedClosureDateFull ASC
+
+    """, (
+        edo_name,
+        active_statuses[0],
+        active_statuses[1],
+        active_statuses[2],
+        active_statuses[3]
+    ))
+
+    upcoming_deadlines = []
+
+    for row in cursor.fetchall():
+
+        upcoming_deadlines.append({
+            "AccountName": row[0],
+            "Product": row[1],
+            "ClosureDate": row[2],
+            "DaysRemaining": row[3],
+            "Status": row[4],
+            "NextAction": row[5]
+        })
+
+
+    # ========================================================
+    # OVERDUE PIPELINES
+    #
+    # Active pipelines whose expected closure date
+    # has already passed.
+    # ========================================================
+
+    cursor.execute("""
+        SELECT
+            [Account Name],
+            [Product],
+            EstimatedClosureDateFull,
+
+            DATEDIFF(
+                DAY,
+                EstimatedClosureDateFull,
+                CAST(GETDATE() AS DATE)
+            ) AS DaysOverdue,
+
+            [Sales Cycle Status],
+            [Next Action]
+
+        FROM Pipelines
+
+        WHERE
+            LTRIM(RTRIM([Account Manager])) =
+            LTRIM(RTRIM(?))
+
+            AND EstimatedClosureDateFull IS NOT NULL
+
+            AND [Sales Cycle Status] IN (?, ?, ?, ?)
+
+            AND EstimatedClosureDateFull <
+                CAST(GETDATE() AS DATE)
+
+        ORDER BY
+            EstimatedClosureDateFull ASC
+
+    """, (
+        edo_name,
+        active_statuses[0],
+        active_statuses[1],
+        active_statuses[2],
+        active_statuses[3]
+    ))
+
+    overdue_pipelines = []
+
+    for row in cursor.fetchall():
+
+        overdue_pipelines.append({
+            "AccountName": row[0],
+            "Product": row[1],
+            "ClosureDate": row[2],
+            "DaysOverdue": row[3],
+            "Status": row[4],
+            "NextAction": row[5]
+        })
+
+
     cursor.close()
 
 
@@ -346,8 +858,12 @@ def my_pipelines():
         role=role,
 
         pipelines=pipelines,
-        summary=summary
+        summary=summary,
+
+        upcoming_deadlines=upcoming_deadlines,
+        overdue_pipelines=overdue_pipelines
     )
+
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
 def edit_pipeline(pipeline_id):

@@ -512,6 +512,83 @@
         }
 
 
+
+        /* =========================
+           UPCOMING / OVERDUE PIPELINES
+        ========================= */
+
+        .deadline-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: 600;
+            min-width: 75px;
+            text-align: center;
+        }
+
+        .deadline-today {
+            background: rgba(198, 40, 40, 0.25);
+            color: #ff8a80;
+            border: 1px solid rgba(255, 138, 128, 0.35);
+        }
+
+        .deadline-urgent {
+            background: rgba(239, 83, 80, 0.18);
+            color: #ef9a9a;
+            border: 1px solid rgba(239, 83, 80, 0.30);
+        }
+
+        .deadline-soon {
+            background: rgba(255, 167, 38, 0.15);
+            color: #ffcc80;
+            border: 1px solid rgba(255, 167, 38, 0.30);
+        }
+
+        .deadline-later {
+            background: rgba(126, 87, 194, 0.17);
+            color: #b39ddb;
+            border: 1px solid rgba(126, 87, 194, 0.30);
+        }
+
+        .overdue-count {
+            display: inline-block;
+            min-width: 26px;
+            padding: 3px 8px;
+            margin-left: 6px;
+            border-radius: 15px;
+            background: #333333;
+            color: #ffffff;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .overdue-text {
+            color: #ff8a80 !important;
+            font-weight: 600;
+        }
+
+        .deadline-section-meta {
+            color: #9f9f9f;
+            font-size: 12px;
+        }
+
+        .show-more-button {
+            background: #2b2b2b;
+            color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 999px;
+            padding: 9px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .show-more-button:hover {
+            background: #3a3a3a;
+            border-color: #5a5a5a;
+        }
+
         /* =========================
            RESPONSIVE
         ========================= */
@@ -727,6 +804,230 @@
     </div>
 
 
+
+    <!-- =========================
+         UPCOMING DEADLINES
+    ========================= -->
+
+    <div class="table-card mb-4">
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Upcoming Deadlines
+            </h2>
+
+            <div class="deadline-section-meta">
+                Next 7 Days
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="table pipeline-table">
+
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Product</th>
+                        <th>Closure Date</th>
+                        <th>Days Remaining</th>
+                        <th>Status</th>
+                        <th>Next Action</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for deadline in upcoming_deadlines %}
+
+                    <tr>
+
+                        <td class="account-name">
+                            {{ deadline.AccountName }}
+                        </td>
+
+                        <td>
+                            {{ deadline.Product or '-' }}
+                        </td>
+
+                        <td>
+                            {{ deadline.ClosureDate.strftime('%d %b %Y') }}
+                        </td>
+
+                        <td>
+
+                            {% if deadline.DaysRemaining == 0 %}
+
+                                <span class="deadline-badge deadline-today">
+                                    Due Today
+                                </span>
+
+                            {% elif deadline.DaysRemaining <= 7 %}
+
+                                <span class="deadline-badge deadline-urgent">
+                                    {{ deadline.DaysRemaining }} days
+                                </span>
+
+                            {% elif deadline.DaysRemaining <= 14 %}
+
+                                <span class="deadline-badge deadline-soon">
+                                    {{ deadline.DaysRemaining }} days
+                                </span>
+
+                            {% else %}
+
+                                <span class="deadline-badge deadline-later">
+                                    {{ deadline.DaysRemaining }} days
+                                </span>
+
+                            {% endif %}
+
+                        </td>
+
+                        <td>
+                            {{ deadline.Status or '-' }}
+                        </td>
+
+                        <td>
+                            {{ deadline.NextAction or '-' }}
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="6" class="empty-message">
+                            No upcoming deadlines in the next 7 days.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+    </div>
+
+
+    <!-- =========================
+         OVERDUE PIPELINES
+    ========================= -->
+
+    <div class="table-card mb-4">
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Overdue Pipelines
+
+                <span class="overdue-count">
+                    {{ overdue_pipelines|length }}
+                </span>
+            </h2>
+
+            <div class="deadline-section-meta">
+                Active pipelines past their expected closure date
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="table pipeline-table">
+
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Product</th>
+                        <th>Closure Date</th>
+                        <th>Days Overdue</th>
+                        <th>Status</th>
+                        <th>Next Action</th>
+                    </tr>
+                </thead>
+
+                <tbody id="overduePipelineBody">
+
+                    {% for p in overdue_pipelines %}
+
+                    <tr
+                        class="overdue-pipeline-row"
+                        {% if loop.index > 5 %}
+                            style="display:none;"
+                        {% endif %}
+                    >
+
+                        <td class="account-name">
+                            {{ p.AccountName }}
+                        </td>
+
+                        <td>
+                            {{ p.Product or '-' }}
+                        </td>
+
+                        <td>
+                            {{ p.ClosureDate.strftime('%d %b %Y') }}
+                        </td>
+
+                        <td class="overdue-text">
+                            {{ p.DaysOverdue }} days
+                        </td>
+
+                        <td>
+                            {{ p.Status or '-' }}
+                        </td>
+
+                        <td>
+                            {{ p.NextAction or '-' }}
+                        </td>
+
+                    </tr>
+
+                    {% else %}
+
+                    <tr>
+                        <td colspan="6" class="empty-message">
+                            No overdue pipelines.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if overdue_pipelines|length > 5 %}
+
+        <div
+            style="
+                padding: 14px 20px;
+                text-align: center;
+                border-top: 1px solid #292929;
+            "
+        >
+            <button
+                type="button"
+                id="toggleOverduePipelines"
+                class="show-more-button"
+            >
+                Show 5 More
+            </button>
+        </div>
+
+        {% endif %}
+
+    </div>
+
+
     <!-- =========================
          PIPELINE TABLE
     ========================= -->
@@ -744,6 +1045,13 @@
                 <div class="pipeline-count">
                     {{ pipelines|length }} Pipelines
                 </div>
+
+                <a
+                    href="{{ url_for('export_pipeline_overview') }}"
+                    class="btn-add-pipeline"
+                >
+                    Download Excel
+                </a>
 
                 <a href="{{ url_for('add_pipeline') }}" class="btn-add-pipeline">
                     + Add Pipeline
@@ -905,15 +1213,6 @@
                         <th
                             class="sortable"
                             data-column="11"
-                            data-type="text"
-                        >
-                            Estimated Closure Month
-                            <span class="sort-icon"></span>
-                        </th>
-
-                        <th
-                            class="sortable"
-                            data-column="12"
                             data-type="status"
                         >
                             Sales Cycle Status
@@ -922,7 +1221,7 @@
 
                         <th
                             class="sortable"
-                            data-column="13"
+                            data-column="12"
                             data-type="text"
                         >
                             Next Action
@@ -943,8 +1242,8 @@
                         data-account="{{ p[2] or '' }}"
                         data-product="{{ p[3] or '' }}"
                         data-region="{{ p[4] or '' }}"
-                        data-status="{{ p[12] or '' }}"
-                        data-next-action="{{ p[14] or '' }}"
+                        data-status="{{ p[11] or '' }}"
+                        data-next-action="{{ p[13] or '' }}"
                     >
 
                         <!-- EDIT -->
@@ -997,7 +1296,11 @@
                         </td>
 
                         <td>
-                            {{ p[10] }}
+                            {% if p[10] %}
+                                {{ p[10].strftime('%d %b %Y') }}
+                            {% else %}
+                                -
+                            {% endif %}
                         </td>
 
                         <td>
@@ -1005,11 +1308,7 @@
                         </td>
 
                         <td>
-                            {{ p[12] }}
-                        </td>
-
-                        <td>
-                            {{ p[14] }}
+                            {{ p[13] }}
                         </td>
 
                     </tr>
@@ -1530,6 +1829,68 @@
         );
 
     });
+
+
+
+    /* =========================
+       OVERDUE SHOW MORE
+    ========================= */
+
+    const toggleOverduePipelines =
+        document.getElementById(
+            'toggleOverduePipelines'
+        );
+
+    if (toggleOverduePipelines) {
+
+        toggleOverduePipelines.addEventListener(
+            'click',
+            function () {
+
+                const hiddenRows =
+                    Array.from(
+                        document.querySelectorAll(
+                            '.overdue-pipeline-row'
+                        )
+                    )
+                    .filter(
+                        row =>
+                            row.style.display === 'none'
+                    );
+
+                hiddenRows
+                    .slice(0, 5)
+                    .forEach(
+                        row => {
+                            row.style.display = '';
+                        }
+                    );
+
+                const remainingRows =
+                    Array.from(
+                        document.querySelectorAll(
+                            '.overdue-pipeline-row'
+                        )
+                    )
+                    .filter(
+                        row =>
+                            row.style.display === 'none'
+                    );
+
+                if (remainingRows.length === 0) {
+                    this.style.display = 'none';
+                }
+
+                else {
+                    this.textContent =
+                        `Show ${Math.min(
+                            5,
+                            remainingRows.length
+                        )} More`;
+                }
+            }
+        );
+    }
 
 </script>
 
