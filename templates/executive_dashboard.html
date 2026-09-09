@@ -1538,6 +1538,80 @@
             overflow-wrap: anywhere;
         }
 
+        /* =========================
+           REPEATED DATE EXTENSION ALERT
+           ========================= */
+
+        .history-alert-row td {
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.16
+                ) !important;
+        }
+
+        .history-alert-row:nth-child(even) td {
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.18
+                ) !important;
+        }
+
+        .history-alert-row:hover td {
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.26
+                ) !important;
+        }
+
+        .history-extension-badge {
+
+            display: inline-block;
+
+            margin-left: 7px;
+
+            padding: 4px 7px;
+
+            border-radius: 5px;
+
+            background: #c62828;
+
+            color: #ffffff;
+
+            font-size: 10px;
+
+            font-weight: 700;
+
+            white-space: nowrap;
+        }
+
+        .history-reason {
+
+            min-width: 220px;
+
+            max-width: 360px;
+
+            white-space: normal !important;
+
+            overflow-wrap: anywhere;
+        }
+
+        .history-alert-row .history-reason {
+
+            color: #ffb3ad;
+
+            font-weight: 600;
+        }
+
+
         .history-date-sort {
             cursor: pointer;
             user-select: none;
@@ -3402,6 +3476,10 @@
                                     Edited By
                                 </th>
 
+                                <th>
+                                    Reason
+                                </th>
+
                                 <th
                                     id="historyDateHeader"
                                     class="history-date-sort"
@@ -3427,6 +3505,7 @@
                             {% for item in history %}
 
                                 <tr
+                                    class="{% if item.IsRepeatedExtension %}history-alert-row{% endif %}"
                                     data-history-user="{{ item.EditedBy or '' }}"
                                     data-history-account="{{ item.AccountName or '' }}"
                                     data-history-field="{{ item.FieldName or '' }}"
@@ -3451,6 +3530,12 @@
                                             {{ item.FieldName or '-' }}
                                         </span>
 
+                                        {% if item.IsRepeatedExtension %}
+                                            <span class="history-extension-badge">
+                                                Extension {{ item.ExtensionCount }}
+                                            </span>
+                                        {% endif %}
+
                                     </td>
 
                                     <td class="history-value">
@@ -3463,6 +3548,14 @@
 
                                     <td>
                                         {{ item.EditedBy or '-' }}
+                                    </td>
+
+                                    <td class="history-reason">
+                                        {% if item.IsRepeatedExtension %}
+                                            {{ item.ExtensionReason or '-' }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
                                     </td>
 
                                     <td>
@@ -3490,7 +3583,7 @@
                                 <tr>
 
                                     <td
-                                        colspan="7"
+                                        colspan="8"
                                         class="empty-message"
                                     >
                                         No edit history available.

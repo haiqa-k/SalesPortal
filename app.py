@@ -928,60 +928,269 @@ def my_pipelines():
 def edit_pipeline(pipeline_id):
     cursor = conn.cursor()
 
+    statuses = [
+        "Customer Visit (20%)",
+        "Ask for Proposal (40%)",
+        "Negotiations (60%)",
+        "Documentation/Acceptance/Processing (80%)",
+        "System Entry/Revenue Locked (100%)",
+        "Lost to Competitor",
+        "Retired - No Decision"
+    ]
+
     try:
 
+        # ========================================================
+        # LOAD CURRENT PIPELINE
+        #
+        # Existing indices remain unchanged:
+        #   pipeline[1] = Account Name
+        #   pipeline[4] = Next Action
+        #   pipeline[5] = Sales Cycle Status
+        #
+        # Full closure date is appended at pipeline[6].
+        # ========================================================
+
+        cursor.execute("""
+            SELECT
+                PipelineID,
+                [Account Name],
+                [Estimated Closure Date],
+                [Estimated Closure Month],
+                [Next Action],
+                [Sales Cycle Status],
+                EstimatedClosureDateFull
+
+            FROM Pipelines
+
+            WHERE PipelineID = ?
+        """, (pipeline_id,))
+
+        pipeline = cursor.fetchone()
+
+        if not pipeline:
+            return "Pipeline not found.", 404
+
+        original_status = pipeline[5]
+        original_closure_date = pipeline[6]
+
+
+        # ========================================================
+        # COUNT FORWARD DATE EXTENSIONS SINCE LAST STATUS CHANGE
+        #
+        # Only forward moves count.
+        # A Sales Cycle Status change resets the effective count.
+        # ========================================================
+
+        cursor.execute("""
+            SELECT COUNT(*)
+
+            FROM dbo.History h
+
+            WHERE
+                h.PipelineID = ?
+                AND h.FieldName = 'Closure Date'
+
+                AND TRY_CONVERT(DATE, h.NewValue)
+                    >
+                    TRY_CONVERT(DATE, h.OldValue)
+
+                AND h.EditedOn > COALESCE(
+                    (
+                        SELECT MAX(h2.EditedOn)
+
+                        FROM dbo.History h2
+
+                        WHERE
+                            h2.PipelineID = ?
+                            AND h2.FieldName =
+                                'Sales Cycle Status'
+                    ),
+                    CONVERT(DATETIME2, '1900-01-01')
+                )
+        """, (
+            pipeline_id,
+            pipeline_id
+        ))
+
+        previous_extension_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
+
+        is_edo = (
+            (session.get("role") or "").strip()
+            == "EDO"
+        )
+
+
+        # ========================================================
+        # POST
+        # ========================================================
+
         if request.method == "POST":
-            closure_date_input = request.form.get("closure_date")
-            next_action = request.form.get("next_action")
-            status = request.form.get("status")
+
+            closure_date_input = (
+                request.form.get("closure_date")
+                or ""
+            ).strip()
+
+            next_action = request.form.get(
+                "next_action"
+            )
+
+            status = request.form.get(
+                "status"
+            )
+
+            extension_reason = (
+                request.form.get("extension_reason")
+                or ""
+            ).strip()
+
+
+            new_closure_date = None
+
+            if closure_date_input:
+
+                import datetime
+
+                new_closure_date = (
+                    datetime.datetime.strptime(
+                        closure_date_input,
+                        "%Y-%m-%d"
+                    ).date()
+                )
+
+
+            effective_new_status = (
+                status
+                if status
+                else original_status
+            )
+
+            status_changed = (
+                effective_new_status
+                != original_status
+            )
+
+            date_was_pushed = (
+                original_closure_date is not None
+                and new_closure_date is not None
+                and new_closure_date
+                    > original_closure_date
+            )
+
+
+            extension_count = None
+
+            if (
+                date_was_pushed
+                and not status_changed
+            ):
+                extension_count = (
+                    previous_extension_count + 1
+                )
+
+
+            # Extension 1, 2 and 3 = normal.
+            # Extension 4 onward = reason required for EDO.
+            repeated_extension = (
+                is_edo
+                and extension_count is not None
+                and extension_count >= 3
+            )
+
+
+            # ====================================================
+            # SERVER-SIDE ENFORCEMENT
+            #
+            # The popup is UX only. This prevents bypassing the
+            # requirement by disabling JavaScript.
+            # ====================================================
+
+            if (
+                repeated_extension
+                and not extension_reason
+            ):
+
+                return (
+                    "A reason is required because this "
+                    "pipeline's closure date has already "
+                    "been extended 3 times without a "
+                    "Sales Cycle Status change.",
+                    400
+                )
+
 
             updates = []
             params = []
 
-            # Only update date/month if user picked a date
-            if closure_date_input:
-                import datetime
-                dt = datetime.datetime.strptime(
-                    closure_date_input,
-                    "%Y-%m-%d"
-                )
+
+            # ====================================================
+            # CLOSURE DATE
+            # ====================================================
+
+            if new_closure_date is not None:
 
                 updates.append(
                     "EstimatedClosureDateFull = ?"
                 )
-                params.append(dt.date())
+                params.append(
+                    new_closure_date
+                )
 
                 updates.append(
                     "[Estimated Closure Date] = ?"
                 )
-                params.append(int(dt.day))
+                params.append(
+                    int(new_closure_date.day)
+                )
 
                 updates.append(
                     "[Estimated Closure Month] = ?"
                 )
-                params.append(dt.strftime("%B"))
+                params.append(
+                    new_closure_date.strftime("%B")
+                )
 
-            # Only update Next Action if provided
+
+            # ====================================================
+            # NEXT ACTION
+            # ====================================================
+
             if next_action:
+
                 updates.append(
                     "[Next Action] = ?"
                 )
-                params.append(next_action)
 
-            # Only update Sales Cycle Status if provided
+                params.append(
+                    next_action
+                )
+
+
+            # ====================================================
+            # SALES CYCLE STATUS
+            # ====================================================
+
             if status:
+
                 updates.append(
                     "[Sales Cycle Status] = ?"
                 )
-                params.append(status)
+
+                params.append(
+                    status
+                )
+
 
             # ====================================================
-            # AUDIT USER
+            # AUDIT CONTEXT
             #
-            # SESSION_CONTEXT is connection-specific.
-            # It must be set during the POST request, on the SAME
-            # SQL Server connection that performs the UPDATE.
-            # The history trigger reads this value.
+            # All values are set on the SAME SQL Server request
+            # connection immediately before UPDATE so the trigger
+            # can store them in dbo.History.
             # ====================================================
 
             if updates:
@@ -992,6 +1201,7 @@ def edit_pipeline(pipeline_id):
                     or "Unknown User"
                 )
 
+
                 cursor.execute(
                     """
                     EXEC sys.sp_set_session_context
@@ -1001,13 +1211,50 @@ def edit_pipeline(pipeline_id):
                     edited_by
                 )
 
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'IsRepeatedExtension',
+                        @value = ?
+                    """,
+                    1 if repeated_extension else 0
+                )
+
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'ExtensionCount',
+                        @value = ?
+                    """,
+                    extension_count
+                )
+
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'ExtensionReason',
+                        @value = ?
+                    """,
+                    (
+                        extension_reason
+                        if repeated_extension
+                        else None
+                    )
+                )
+
+
                 sql = (
                     f"UPDATE Pipelines "
                     f"SET {', '.join(updates)} "
                     f"WHERE PipelineID = ?"
                 )
 
-                params.append(pipeline_id)
+                params.append(
+                    pipeline_id
+                )
 
                 cursor.execute(
                     sql,
@@ -1016,45 +1263,38 @@ def edit_pipeline(pipeline_id):
 
                 conn.commit()
 
+
             return redirect(
                 url_for("my_pipelines")
             )
 
 
         # ========================================================
-        # GET - LOAD PIPELINE FOR EDITING
+        # GET
         # ========================================================
-
-        cursor.execute("""
-            SELECT
-                PipelineID,
-                [Account Name],
-                [Estimated Closure Date],
-                [Estimated Closure Month],
-                [Next Action],
-                [Sales Cycle Status]
-
-            FROM Pipelines
-
-            WHERE PipelineID = ?
-        """, (pipeline_id,))
-
-        pipeline = cursor.fetchone()
-
-        statuses = [
-            "Customer Visit (20%)",
-            "Ask for Proposal (40%)",
-            "Negotiations (60%)",
-            "Documentation/Acceptance/Processing (80%)",
-            "System Entry/Revenue Locked (100%)",
-            "Lost to Competitor",
-            "Retired - No Decision"
-        ]
 
         return render_template(
             "edit_pipeline.html",
+
             pipeline=pipeline,
-            statuses=statuses
+            statuses=statuses,
+
+            original_closure_date=(
+                original_closure_date.isoformat()
+                if original_closure_date
+                else ""
+            ),
+
+            original_status=(
+                original_status
+                or ""
+            ),
+
+            previous_extension_count=(
+                previous_extension_count
+            ),
+
+            is_edo=is_edo
         )
 
     finally:
@@ -3651,7 +3891,10 @@ def regional_head_dashboard():
             OldValue,
             NewValue,
             EditedBy,
-            EditedOn
+            EditedOn,
+            IsRepeatedExtension,
+            ExtensionReason,
+            ExtensionCount
         FROM dbo.History
         ORDER BY EditedOn DESC
     """)
@@ -3665,7 +3908,10 @@ def regional_head_dashboard():
             "OldValue": row[4],
             "NewValue": row[5],
             "EditedBy": row[6],
-            "EditedOn": row[7]
+            "EditedOn": row[7],
+            "IsRepeatedExtension": bool(row[8]),
+            "ExtensionReason": row[9],
+            "ExtensionCount": row[10]
         }
         for row in history_cursor.fetchall()
     ]
@@ -4469,7 +4715,10 @@ def executive_dashboard():
                 OldValue,
                 NewValue,
                 EditedBy,
-                EditedOn
+                EditedOn,
+                IsRepeatedExtension,
+                ExtensionReason,
+                ExtensionCount
             FROM dbo.History
             ORDER BY EditedOn DESC
         """)
@@ -4483,7 +4732,10 @@ def executive_dashboard():
                 "OldValue": row[4],
                 "NewValue": row[5],
                 "EditedBy": row[6],
-                "EditedOn": row[7]
+                "EditedOn": row[7],
+                "IsRepeatedExtension": bool(row[8]),
+                "ExtensionReason": row[9],
+                "ExtensionCount": row[10]
             }
             for row in history_cursor.fetchall()
         ]
