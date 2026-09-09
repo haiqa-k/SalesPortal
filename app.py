@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session
+from flask import Flask, render_template, request, redirect, url_for, session, g
 import pyodbc
 import bcrypt
 from datetime import datetime
@@ -25,7 +25,66 @@ conn_str = (
     "Database=Sales;"
     "Trusted_Connection=yes;"
 )
-conn = pyodbc.connect(conn_str)
+
+
+# ============================================================
+# DATABASE CONNECTION HANDLING
+#
+# A fresh SQL Server connection is created for each Flask
+# request and automatically closed when that request finishes.
+#
+# This prevents stale global pyodbc connections from causing
+# intermittent 08S01 / communication link failure errors.
+# ============================================================
+
+def get_db_connection():
+    if "db_conn" not in g:
+        g.db_conn = pyodbc.connect(
+            conn_str,
+            timeout=10
+        )
+
+    return g.db_conn
+
+
+class RequestConnectionProxy:
+    """
+    Keeps the existing conn.cursor() / conn.commit() calls
+    throughout the application working, while routing them
+    to the current request's database connection.
+    """
+
+    def cursor(self):
+        return get_db_connection().cursor()
+
+    def commit(self):
+        return get_db_connection().commit()
+
+    def rollback(self):
+        return get_db_connection().rollback()
+
+
+conn = RequestConnectionProxy()
+
+
+@app.teardown_appcontext
+def close_db_connection(exception=None):
+
+    db_conn = g.pop("db_conn", None)
+
+    if db_conn is None:
+        return
+
+    try:
+        if exception is not None:
+            db_conn.rollback()
+    except pyodbc.Error:
+        pass
+
+    try:
+        db_conn.close()
+    except pyodbc.Error:
+        pass
 
 @app.route("/", methods=["GET", "POST"])
 def login():
@@ -869,74 +928,137 @@ def my_pipelines():
 def edit_pipeline(pipeline_id):
     cursor = conn.cursor()
 
-    if request.method == "POST":
-        closure_date_input = request.form.get("closure_date")
-        next_action = request.form.get("next_action")
-        status = request.form.get("status")
+    try:
 
-        updates = []
-        params = []
+        if request.method == "POST":
+            closure_date_input = request.form.get("closure_date")
+            next_action = request.form.get("next_action")
+            status = request.form.get("status")
 
-        # Only update date/month if user picked a date
-        if closure_date_input:
-            import datetime
-            dt = datetime.datetime.strptime(closure_date_input, "%Y-%m-%d")
-            updates.append("EstimatedClosureDateFull = ?")
-            params.append(dt.date())
-            updates.append("[Estimated Closure Date] = ?")
-            params.append(int(dt.day))
-            updates.append("[Estimated Closure Month] = ?")
-            params.append(dt.strftime("%B"))
+            updates = []
+            params = []
 
-        # Only update Next Action if provided
-        if next_action:
-            updates.append("[Next Action] = ?")
-            params.append(next_action)
+            # Only update date/month if user picked a date
+            if closure_date_input:
+                import datetime
+                dt = datetime.datetime.strptime(
+                    closure_date_input,
+                    "%Y-%m-%d"
+                )
 
-        # Only update Sales Cycle Status if provided
-        if status:
-            updates.append("[Sales Cycle Status] = ?")
-            params.append(status)
+                updates.append(
+                    "EstimatedClosureDateFull = ?"
+                )
+                params.append(dt.date())
 
-        # Build dynamic SQL
-        if updates:  # only run update if something changed
-            sql = f"UPDATE Pipelines SET {', '.join(updates)} WHERE PipelineID = ?"
-            params.append(pipeline_id)
-            cursor.execute(sql, params)
-            conn.commit()
+                updates.append(
+                    "[Estimated Closure Date] = ?"
+                )
+                params.append(int(dt.day))
 
-        return redirect(url_for("my_pipelines"))
+                updates.append(
+                    "[Estimated Closure Month] = ?"
+                )
+                params.append(dt.strftime("%B"))
 
-    
-    cursor.execute(
-        """
-        EXEC sys.sp_set_session_context
-            @key = N'EditedBy',
-            @value = ?
-        """,
-        session.get("employee_name")
-    )
-    # Load pipeline for editing
-    cursor.execute("""
-        SELECT PipelineID, [Account Name], [Estimated Closure Date], 
-               [Estimated Closure Month], [Next Action], [Sales Cycle Status]
-        FROM Pipelines
-        WHERE PipelineID = ?
-    """, (pipeline_id,))
-    pipeline = cursor.fetchone()
+            # Only update Next Action if provided
+            if next_action:
+                updates.append(
+                    "[Next Action] = ?"
+                )
+                params.append(next_action)
 
-    statuses = [
-        "Customer Visit (20%)",
-        "Ask for Proposal (40%)",
-        "Negotiations (60%)",
-        "Documentation/Acceptance/Processing (80%)",
-        "System Entry/Revenue Locked (100%)",
-        "Lost to Competitor",
-        "Retired - No Decision"
+            # Only update Sales Cycle Status if provided
+            if status:
+                updates.append(
+                    "[Sales Cycle Status] = ?"
+                )
+                params.append(status)
 
-    ]
+            # ====================================================
+            # AUDIT USER
+            #
+            # SESSION_CONTEXT is connection-specific.
+            # It must be set during the POST request, on the SAME
+            # SQL Server connection that performs the UPDATE.
+            # The history trigger reads this value.
+            # ====================================================
 
-    return render_template("edit_pipeline.html", pipeline=pipeline, statuses=statuses)
+            if updates:
+
+                edited_by = (
+                    session.get("employee_name")
+                    or session.get("username")
+                    or "Unknown User"
+                )
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'EditedBy',
+                        @value = ?
+                    """,
+                    edited_by
+                )
+
+                sql = (
+                    f"UPDATE Pipelines "
+                    f"SET {', '.join(updates)} "
+                    f"WHERE PipelineID = ?"
+                )
+
+                params.append(pipeline_id)
+
+                cursor.execute(
+                    sql,
+                    params
+                )
+
+                conn.commit()
+
+            return redirect(
+                url_for("my_pipelines")
+            )
+
+
+        # ========================================================
+        # GET - LOAD PIPELINE FOR EDITING
+        # ========================================================
+
+        cursor.execute("""
+            SELECT
+                PipelineID,
+                [Account Name],
+                [Estimated Closure Date],
+                [Estimated Closure Month],
+                [Next Action],
+                [Sales Cycle Status]
+
+            FROM Pipelines
+
+            WHERE PipelineID = ?
+        """, (pipeline_id,))
+
+        pipeline = cursor.fetchone()
+
+        statuses = [
+            "Customer Visit (20%)",
+            "Ask for Proposal (40%)",
+            "Negotiations (60%)",
+            "Documentation/Acceptance/Processing (80%)",
+            "System Entry/Revenue Locked (100%)",
+            "Lost to Competitor",
+            "Retired - No Decision"
+        ]
+
+        return render_template(
+            "edit_pipeline.html",
+            pipeline=pipeline,
+            statuses=statuses
+        )
+
+    finally:
+        cursor.close()
 
 
 @app.route("/teamlead", methods=["GET"])

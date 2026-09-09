@@ -850,6 +850,44 @@
 
         .history-filter {
             min-width: 240px;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-filter .form-select {
+            min-width: 190px;
+            height: 38px;
+        }
+
+        .history-field-filter {
+            width: 165px;
+            min-width: 165px;
+
+            background-color: #292929;
+            color: #e5e5e5;
+
+            border: 1px solid #414141;
+            border-radius: 5px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+
+            padding: 6px 28px 6px 9px;
+        }
+
+        .history-field-filter:focus {
+            background-color: #292929;
+            color: #ffffff;
+
+            border-color: #c62828;
+
+            box-shadow:
+                0 0 0 0.15rem rgba(198, 40, 40, 0.2);
         }
 
         .history-table-wrapper {
@@ -2518,6 +2556,19 @@
 
                 </select>
 
+
+                <select
+                    id="historyAccountFilter"
+                    class="form-select"
+                    style="display:none;"
+                >
+
+                    <option value="">
+                        All Accounts
+                    </option>
+
+                </select>
+
             </div>
 
         </div>
@@ -2543,7 +2594,31 @@
                         </th>
 
                         <th>
-                            Edited Field
+
+                            <select
+                                id="historyFieldFilter"
+                                class="history-field-filter"
+                                aria-label="Filter edited field"
+                            >
+
+                                <option value="">
+                                    Edited Field
+                                </option>
+
+                                <option value="Closure Date">
+                                    Closure Date
+                                </option>
+
+                                <option value="Next Action">
+                                    Next Action
+                                </option>
+
+                                <option value="Sales Cycle Status">
+                                    Sales Cycle Status
+                                </option>
+
+                            </select>
+
                         </th>
 
                         <th>
@@ -2584,6 +2659,8 @@
 
                         <tr
                             data-history-user="{{ item.EditedBy or '' }}"
+                            data-history-account="{{ item.AccountName or '' }}"
+                            data-history-field="{{ item.FieldName or '' }}"
                             data-history-date="{{
                                 item.EditedOn.isoformat()
                                 if item.EditedOn
@@ -2678,6 +2755,7 @@
 
 
 </div>
+
 
 
 
@@ -3358,6 +3436,16 @@ const historyUserFilter =
         'historyUserFilter'
     );
 
+const historyAccountFilter =
+    document.getElementById(
+        'historyAccountFilter'
+    );
+
+const historyFieldFilter =
+    document.getElementById(
+        'historyFieldFilter'
+    );
+
 const historyTableBody =
     document.getElementById(
         'historyTableBody'
@@ -3380,6 +3468,16 @@ const historyVisibleCount =
 
 
 let historyDateDescending = true;
+
+
+function normalizeHistoryValue(value) {
+
+    return (
+        value || ''
+    )
+    .trim()
+    .toLowerCase();
+}
 
 
 function updateHistoryVisibleCount() {
@@ -3423,10 +3521,11 @@ function updateHistoryVisibleCount() {
 }
 
 
-function applyHistoryUserFilter() {
+function populateHistoryAccounts() {
 
     if (
         !historyUserFilter ||
+        !historyAccountFilter ||
         !historyTableBody
     ) {
         return;
@@ -3434,7 +3533,28 @@ function applyHistoryUserFilter() {
 
 
     const selectedUser =
-        historyUserFilter.value;
+        normalizeHistoryValue(
+            historyUserFilter.value
+        );
+
+
+    historyAccountFilter.innerHTML =
+        '<option value="">All Accounts</option>';
+
+
+    if (!selectedUser) {
+
+        historyAccountFilter.value = '';
+
+        historyAccountFilter.style.display =
+            'none';
+
+        return;
+    }
+
+
+    const accounts =
+        new Set();
 
 
     const rows =
@@ -3446,16 +3566,131 @@ function applyHistoryUserFilter() {
     rows.forEach(row => {
 
         const rowUser =
-            row.dataset.historyUser || '';
+            normalizeHistoryValue(
+                row.dataset.historyUser
+            );
+
+        const account =
+            (
+                row.dataset.historyAccount ||
+                ''
+            ).trim();
 
 
-        const matches =
-            selectedUser === '' ||
+        if (
+            rowUser === selectedUser &&
+            account
+        ) {
+            accounts.add(account);
+        }
+
+    });
+
+
+    Array.from(accounts)
+        .sort(
+            (a, b) =>
+                a.localeCompare(b)
+        )
+        .forEach(account => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+            option.value =
+                account;
+
+            option.textContent =
+                account;
+
+            historyAccountFilter.appendChild(
+                option
+            );
+
+        });
+
+
+    historyAccountFilter.style.display =
+        '';
+}
+
+
+function applyHistoryFilters() {
+
+    if (
+        !historyTableBody
+    ) {
+        return;
+    }
+
+
+    const selectedUser =
+        normalizeHistoryValue(
+            historyUserFilter
+                ? historyUserFilter.value
+                : ''
+        );
+
+    const selectedAccount =
+        normalizeHistoryValue(
+            historyAccountFilter
+                ? historyAccountFilter.value
+                : ''
+        );
+
+    const selectedField =
+        normalizeHistoryValue(
+            historyFieldFilter
+                ? historyFieldFilter.value
+                : ''
+        );
+
+
+    const rows =
+        historyTableBody.querySelectorAll(
+            'tr[data-history-user]'
+        );
+
+
+    rows.forEach(row => {
+
+        const rowUser =
+            normalizeHistoryValue(
+                row.dataset.historyUser
+            );
+
+        const rowAccount =
+            normalizeHistoryValue(
+                row.dataset.historyAccount
+            );
+
+        const rowField =
+            normalizeHistoryValue(
+                row.dataset.historyField
+            );
+
+
+        const userMatches =
+            !selectedUser ||
             rowUser === selectedUser;
+
+        const accountMatches =
+            !selectedAccount ||
+            rowAccount === selectedAccount;
+
+        const fieldMatches =
+            !selectedField ||
+            rowField === selectedField;
 
 
         row.style.display =
-            matches
+            (
+                userMatches &&
+                accountMatches &&
+                fieldMatches
+            )
                 ? ''
                 : 'none';
 
@@ -3470,7 +3705,30 @@ if (historyUserFilter) {
 
     historyUserFilter.addEventListener(
         'change',
-        applyHistoryUserFilter
+        function () {
+
+            populateHistoryAccounts();
+
+            applyHistoryFilters();
+        }
+    );
+}
+
+
+if (historyAccountFilter) {
+
+    historyAccountFilter.addEventListener(
+        'change',
+        applyHistoryFilters
+    );
+}
+
+
+if (historyFieldFilter) {
+
+    historyFieldFilter.addEventListener(
+        'change',
+        applyHistoryFilters
     );
 }
 
@@ -3482,7 +3740,20 @@ if (
 
     historyDateHeader.addEventListener(
         'click',
-        function () {
+        function (event) {
+
+            /*
+             * Prevent date sorting only if the click
+             * somehow originated from another form control.
+             */
+            if (
+                event.target.closest(
+                    'select, input, button'
+                )
+            ) {
+                return;
+            }
+
 
             historyDateDescending =
                 !historyDateDescending;
@@ -3549,13 +3820,15 @@ if (
             }
 
 
-            applyHistoryUserFilter();
+            applyHistoryFilters();
         }
     );
 }
 
 
-applyHistoryUserFilter();
+populateHistoryAccounts();
+
+applyHistoryFilters();
 
 
 
