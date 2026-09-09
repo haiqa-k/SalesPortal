@@ -600,7 +600,7 @@ def export_pipeline_overview():
 
 
 
-        
+
 
 @app.route("/my-pipelines")
 def my_pipelines():
@@ -3523,6 +3523,7 @@ def regional_head_dashboard():
     history_cursor.execute("""
         SELECT
             HistoryID,
+            PipelineID,
             [Account Name],
             FieldName,
             OldValue,
@@ -3536,12 +3537,13 @@ def regional_head_dashboard():
     history = [
         {
             "HistoryID": row[0],
-            "AccountName": row[1],
-            "FieldName": row[2],
-            "OldValue": row[3],
-            "NewValue": row[4],
-            "EditedBy": row[5],
-            "EditedOn": row[6]
+            "PipelineID": row[1],
+            "AccountName": row[2],
+            "FieldName": row[3],
+            "OldValue": row[4],
+            "NewValue": row[5],
+            "EditedBy": row[6],
+            "EditedOn": row[7]
         }
         for row in history_cursor.fetchall()
     ]
@@ -4339,6 +4341,7 @@ def executive_dashboard():
         history_cursor.execute("""
             SELECT
                 HistoryID,
+                PipelineID,
                 [Account Name],
                 FieldName,
                 OldValue,
@@ -4352,12 +4355,13 @@ def executive_dashboard():
         history = [
             {
                 "HistoryID": row[0],
-                "AccountName": row[1],
-                "FieldName": row[2],
-                "OldValue": row[3],
-                "NewValue": row[4],
-                "EditedBy": row[5],
-                "EditedOn": row[6]
+                "PipelineID": row[1],
+                "AccountName": row[2],
+                "FieldName": row[3],
+                "OldValue": row[4],
+                "NewValue": row[5],
+                "EditedBy": row[6],
+                "EditedOn": row[7]
             }
             for row in history_cursor.fetchall()
         ]
