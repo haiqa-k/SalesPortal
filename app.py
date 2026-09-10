@@ -123,6 +123,8 @@ def login():
                     return redirect(url_for("regional_manager_dashboard"))
                 elif role == "Regional Head":
                     return redirect(url_for("regional_head_dashboard"))
+                elif role == "Super User":
+                    return redirect(url_for("super_user_dashboard"))
                 elif role in app.config.get(
                     "EXECUTIVE_DASHBOARD_ROLES",
                     set()
@@ -304,8 +306,10 @@ def change_password():
     )
 
 
-
-@app.route("/pipeline-overview/export")
+@app.route(
+    "/pipeline-overview/export",
+    methods=["GET", "POST"]
+)
 def export_pipeline_overview():
 
     # ========================================================
@@ -313,7 +317,9 @@ def export_pipeline_overview():
     # ========================================================
 
     if "user_id" not in session:
-        return redirect(url_for("login"))
+        return redirect(
+            url_for("login")
+        )
 
     user_id = session["user_id"]
 
@@ -324,7 +330,10 @@ def export_pipeline_overview():
 
     employee_name = (
         session.get("employee_name")
-        or f"{session.get('first_name', '')} {session.get('last_name', '')}".strip()
+        or (
+            f"{session.get('first_name', '')} "
+            f"{session.get('last_name', '')}"
+        ).strip()
     )
 
 
@@ -339,11 +348,39 @@ def export_pipeline_overview():
         "Regional Head",
         "Head",
         "HOD",
-        "Admin"
+        "Admin",
+        "Super User"
     }
 
     if role not in allowed_roles:
-        return redirect(url_for("login"))
+        return redirect(
+            url_for("login")
+        )
+
+
+    # ========================================================
+    # FILTERED PIPELINE IDS FROM BROWSER
+    #
+    # These are the rows currently visible after filters.
+    # ========================================================
+
+    submitted_ids = []
+
+    if request.method == "POST":
+
+        raw_ids = request.form.getlist(
+            "pipeline_id"
+        )
+
+        for raw_id in raw_ids:
+
+            try:
+                submitted_ids.append(
+                    int(raw_id)
+                )
+
+            except (TypeError, ValueError):
+                pass
 
 
     cursor = conn.cursor()
@@ -352,15 +389,18 @@ def export_pipeline_overview():
     try:
 
         # ====================================================
-        # EXECUTIVE / ADMIN
-        #
-        # HOD and Admin can export all pipelines.
+        # GET PIPELINES USER IS ACTUALLY AUTHORIZED TO EXPORT
         # ====================================================
 
-        if role in {"HOD", "Admin"}:
+        if role in {
+            "HOD",
+            "Admin",
+            "Super User"
+        }:
 
             cursor.execute("""
                 SELECT
+                    p.PipelineID,
                     p.[Account Manager],
                     p.[Vertical],
                     p.[Account Name],
@@ -373,9 +413,10 @@ def export_pipeline_overview():
                     p.[Total Project Revenue],
                     p.EstimatedClosureDateFull,
                     p.[Sales Cycle Status],
-                    p.[Next Action]
+                    p.[Next Action],
+                    p.CreatedAt
 
-                FROM Pipelines p
+                FROM dbo.Pipelines p
 
                 ORDER BY
                     p.[Account Manager],
@@ -383,36 +424,18 @@ def export_pipeline_overview():
             """)
 
 
-        # ====================================================
-        # HIERARCHY-BASED EXPORT
-        #
-        # Works for:
-        # - EDO
-        # - Team Lead
-        # - Regional Manager
-        # - Regional Head
-        # - Head
-        #
-        # Starts from the logged-in user and recursively gets
-        # every active user underneath them.
-        #
-        # For an EDO, there normally won't be anyone underneath,
-        # so this naturally returns only their own pipelines.
-        # ====================================================
-
         else:
 
             cursor.execute("""
-                WITH UserHierarchy AS (
-
-                    -- Logged-in user
+                WITH UserHierarchy AS
+                (
                     SELECT
                         u.EmpID,
                         u.EmployeeName,
                         u.ManagerID,
                         u.Role
 
-                    FROM Users u
+                    FROM dbo.Users u
 
                     WHERE
                         u.EmpID = ?
@@ -422,23 +445,24 @@ def export_pipeline_overview():
                     UNION ALL
 
 
-                    -- Everyone reporting underneath
                     SELECT
                         child.EmpID,
                         child.EmployeeName,
                         child.ManagerID,
                         child.Role
 
-                    FROM Users child
+                    FROM dbo.Users child
 
                     INNER JOIN UserHierarchy parent
-                        ON child.ManagerID = parent.EmpID
+                        ON child.ManagerID =
+                           parent.EmpID
 
                     WHERE
                         child.IsActive = 1
                 )
 
                 SELECT
+                    p.PipelineID,
                     p.[Account Manager],
                     p.[Vertical],
                     p.[Account Name],
@@ -451,14 +475,24 @@ def export_pipeline_overview():
                     p.[Total Project Revenue],
                     p.EstimatedClosureDateFull,
                     p.[Sales Cycle Status],
-                    p.[Next Action]
+                    p.[Next Action],
+                    p.CreatedAt
 
-                FROM Pipelines p
+                FROM dbo.Pipelines p
 
                 INNER JOIN UserHierarchy uh
                     ON
-                        LTRIM(RTRIM(p.[Account Manager])) =
-                        LTRIM(RTRIM(uh.EmployeeName))
+                        LTRIM(
+                            RTRIM(
+                                p.[Account Manager]
+                            )
+                        )
+                        =
+                        LTRIM(
+                            RTRIM(
+                                uh.EmployeeName
+                            )
+                        )
 
                 ORDER BY
                     p.[Account Manager],
@@ -470,7 +504,34 @@ def export_pipeline_overview():
             ))
 
 
-        rows = cursor.fetchall()
+        authorized_rows = (
+            cursor.fetchall()
+        )
+
+
+        # ====================================================
+        # APPLY CURRENT BROWSER FILTER RESULTS
+        #
+        # We only keep submitted IDs that also exist inside the
+        # logged-in user's authorized pipeline dataset.
+        # ====================================================
+
+        if request.method == "POST":
+
+            submitted_id_set = set(
+                submitted_ids
+            )
+
+            rows = [
+                row
+                for row in authorized_rows
+                if row[0] in submitted_id_set
+            ]
+
+        else:
+
+            # Keeps old behavior if route is visited directly.
+            rows = authorized_rows
 
 
         # ====================================================
@@ -480,7 +541,10 @@ def export_pipeline_overview():
         workbook = Workbook()
 
         worksheet = workbook.active
-        worksheet.title = "Pipeline Overview"
+
+        worksheet.title = (
+            "Pipeline Overview"
+        )
 
 
         # ====================================================
@@ -522,6 +586,9 @@ def export_pipeline_overview():
 
         # ====================================================
         # DATA
+        #
+        # row[0] is PipelineID and is used only for filtering.
+        # We don't put it in the Excel file.
         # ====================================================
 
         for row_number, row in enumerate(
@@ -529,8 +596,10 @@ def export_pipeline_overview():
             start=2
         ):
 
+            excel_values = row[1:]
+
             for column_number, value in enumerate(
-                row,
+                excel_values,
                 start=1
             ):
 
@@ -541,21 +610,26 @@ def export_pipeline_overview():
                 )
 
 
-                # EstimatedClosureDateFull column
-                if column_number == 11 and value:
+                # Estimated Closure Date
+                if (
+                    column_number == 11
+                    and value
+                ):
 
-                    cell.number_format = "DD MMM YYYY"
+                    cell.number_format = (
+                        "DD MMM YYYY"
+                    )
 
 
         # ====================================================
-        # FREEZE HEADER ROW
+        # FREEZE HEADER
         # ====================================================
 
         worksheet.freeze_panes = "A2"
 
 
         # ====================================================
-        # EXCEL FILTERS
+        # EXCEL FILTER
         # ====================================================
 
         worksheet.auto_filter.ref = (
@@ -564,15 +638,17 @@ def export_pipeline_overview():
 
 
         # ====================================================
-        # AUTO-SIZE COLUMNS
+        # AUTO-SIZE
         # ====================================================
 
         for column_cells in worksheet.columns:
 
             max_length = 0
 
-            column_letter = get_column_letter(
-                column_cells[0].column
+            column_letter = (
+                get_column_letter(
+                    column_cells[0].column
+                )
             )
 
             for cell in column_cells:
@@ -585,30 +661,32 @@ def export_pipeline_overview():
                         else ""
                     )
 
-                    if len(value) > max_length:
-                        max_length = len(value)
+                    max_length = max(
+                        max_length,
+                        len(value)
+                    )
 
                 except Exception:
                     pass
 
 
-            adjusted_width = min(
+            worksheet.column_dimensions[
+                column_letter
+            ].width = min(
                 max_length + 3,
                 45
             )
 
-            worksheet.column_dimensions[
-                column_letter
-            ].width = adjusted_width
-
 
         # ====================================================
-        # WRITE EXCEL INTO MEMORY
+        # WRITE FILE
         # ====================================================
 
         output = BytesIO()
 
-        workbook.save(output)
+        workbook.save(
+            output
+        )
 
         output.seek(0)
 
@@ -624,7 +702,11 @@ def export_pipeline_overview():
         ).strip("_")
 
 
-        if role in {"HOD", "Admin"}:
+        if role in {
+            "HOD",
+            "Admin",
+            "Super User"
+        }:
 
             filename = (
                 "Sales_Pipeline_Overview.xlsx"
@@ -633,13 +715,10 @@ def export_pipeline_overview():
         else:
 
             filename = (
-                f"{safe_name}_Pipeline_Overview.xlsx"
+                f"{safe_name}_"
+                "Pipeline_Overview.xlsx"
             )
 
-
-        # ====================================================
-        # DOWNLOAD
-        # ====================================================
 
         return send_file(
             output,
@@ -656,7 +735,6 @@ def export_pipeline_overview():
     finally:
 
         cursor.close()
-
 
 
 
@@ -715,7 +793,8 @@ def my_pipelines():
             EstimatedClosureDateFull,
             [Sales Cycle Status],
             [Account Manager],
-            [Next Action]
+            [Next Action],
+            CreatedAt
 
         FROM Pipelines
 
@@ -1566,7 +1645,9 @@ def teamlead_dashboard():
                 p.EstimatedClosureDateFull,
                 p.[Estimated Closure Month],
                 p.[Sales Cycle Status],
-                p.[Next Action]
+                p.[Next Action],
+                p.PipelineID,
+                p.CreatedAt
 
             FROM Pipelines p
 
@@ -1603,7 +1684,9 @@ def teamlead_dashboard():
                 "EstimatedClosureDateFull": row[11],
                 "EstimatedClosureMonth": row[12],
                 "SalesCycleStatus": row[13],
-                "NextAction": row[14]
+                "NextAction": row[14],
+                "PipelineID": row[15],
+                "CreatedAt": row[16]
             }
 
             for row in cursor.fetchall()
@@ -1655,7 +1738,9 @@ def teamlead_dashboard():
                         p.EstimatedClosureDateFull,
                         p.[Estimated Closure Month],
                         p.[Sales Cycle Status],
-                        p.[Next Action]
+                        p.[Next Action],
+                        p.PipelineID,
+                        p.CreatedAt
 
                     FROM Pipelines p
 
@@ -1696,7 +1781,9 @@ def teamlead_dashboard():
                         "EstimatedClosureDateFull": row[11],
                         "EstimatedClosureMonth": row[12],
                         "SalesCycleStatus": row[13],
-                        "NextAction": row[14]
+                        "NextAction": row[14],
+                        "PipelineID": row[15],
+                        "CreatedAt": row[16]
                     }
 
                     for row in cursor.fetchall()
@@ -2550,7 +2637,9 @@ def regional_manager_dashboard():
             p.[Total Project Revenue],
             p.EstimatedClosureDateFull,
             p.[Sales Cycle Status],
-            p.[Next Action]
+            p.[Next Action],
+            p.PipelineID,
+            p.CreatedAt
 
         FROM Pipelines p
 
@@ -2584,7 +2673,9 @@ def regional_manager_dashboard():
             "TotalProjectRevenue": row[12],
             "EstimatedClosureDateFull": row[13],
             "SalesCycleStatus": row[14],
-            "NextAction": row[15]
+            "NextAction": row[15],
+            "PipelineID": row[16],
+            "CreatedAt": row[17]
         }
         for row in cursor.fetchall()
     ]
@@ -3004,7 +3095,9 @@ def regional_manager_team_dashboard(teamlead_id):
             p.[Total Project Revenue],
             p.EstimatedClosureDateFull,
             p.[Sales Cycle Status],
-            p.[Next Action]
+            p.[Next Action],
+            p.PipelineID,
+            p.CreatedAt
 
         FROM Pipelines p
 
@@ -3037,7 +3130,9 @@ def regional_manager_team_dashboard(teamlead_id):
             "TotalProjectRevenue": row[10],
             "EstimatedClosureDateFull": row[11],
             "SalesCycleStatus": row[12],
-            "NextAction": row[13]
+            "NextAction": row[13],
+            "PipelineID": row[14],
+            "CreatedAt": row[15]
         }
         for row in cursor.fetchall()
     ]
@@ -3063,6 +3158,8 @@ def regional_manager_team_dashboard(teamlead_id):
 
         pipelines=pipelines
     )
+
+
 
 
 
@@ -3678,7 +3775,9 @@ def regional_head_dashboard():
                 p.EstimatedClosureDateFull,
                 p.[Estimated Closure Month],
                 p.[Sales Cycle Status],
-                p.[Next Action]
+                p.[Next Action],
+                p.PipelineID,
+                p.CreatedAt
 
             FROM Pipelines p
 
@@ -3717,8 +3816,11 @@ def regional_head_dashboard():
                 "ProjectOTC": row[13],
                 "TotalProjectRevenue": row[14],
                 "EstimatedClosureDateFull": row[15],
-                "SalesCycleStatus": row[16],
-                "NextAction": row[17]
+                "EstimatedClosureMonth": row[16],
+                "SalesCycleStatus": row[17],
+                "NextAction": row[18],
+                "PipelineID": row[19],
+                "CreatedAt": row[20]
             }
 
             for row in cursor.fetchall()
@@ -4028,6 +4130,7 @@ def regional_head_dashboard():
         history=history,
         history_users=history_users,
     )
+
 
 from datetime import date
 
@@ -5457,6 +5560,798 @@ def executive_regional_head_dashboard(regional_head_id):
 
         pipelines=pipelines
     )
+
+# ============================================================
+# SUPER USER DASHBOARD
+#
+# Paste this into your existing app.py.
+#
+# ACCESS:
+#   Role must be exactly "Super User".
+#   Access is restricted to the Super User role only.
+#
+# NOTE:
+#   The Pipeline Creation Date filter uses dbo.Pipelines.CreatedAt.
+#   Run the accompanying SQL migration once if that column does
+#   not already exist.
+# ============================================================
+
+
+def require_super_user():
+    """
+    Returns True only for the dedicated Super User role.
+    """
+
+    return (
+        "user_id" in session
+        and (session.get("role") or "").strip()
+            == "Super User"
+    )
+
+
+@app.route("/super-user")
+def super_user_dashboard():
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    cursor = conn.cursor()
+
+    try:
+
+        # ========================================================
+        # USERS
+        # ========================================================
+
+        cursor.execute("""
+            SELECT
+                EmpID,
+                EmployeeName,
+                PhoneNumber,
+                Email,
+                Region,
+                Role,
+                ManagerID,
+                Username,
+                FirstName,
+                LastName,
+                IsActive,
+                CreatedAt
+
+            FROM dbo.Users
+
+            ORDER BY
+                EmployeeName,
+                EmpID
+        """)
+
+        users = []
+
+        for row in cursor.fetchall():
+
+            users.append({
+                "EmpID": row[0],
+                "EmployeeName": row[1],
+                "PhoneNumber": row[2],
+                "Email": row[3],
+                "Region": row[4],
+                "Role": row[5],
+                "ManagerID": row[6],
+                "Username": row[7],
+                "FirstName": row[8],
+                "LastName": row[9],
+                "IsActive": bool(row[10]),
+                "CreatedAt": row[11]
+            })
+
+
+        manager_lookup = {
+            user["EmpID"]: user["EmployeeName"]
+            for user in users
+        }
+
+
+        # ========================================================
+        # PIPELINES
+        #
+        # Includes every editable dbo.Pipelines field plus
+        # CreatedAt for the From / To creation-date filter.
+        # ========================================================
+
+        cursor.execute("""
+            SELECT
+                p.PipelineID,
+                p.[Vertical],
+                p.[Account Name],
+                p.[Product],
+                p.[Region],
+                p.[MRC],
+                p.[Contract Duration (Months)],
+                p.[ARR],
+                p.[Project OTC],
+                p.[Total Project Revenue],
+                p.[Estimated Closure Date],
+                p.[Estimated Closure Month],
+                p.[Sales Cycle Status],
+                p.[Account Manager],
+                p.[Next Action],
+                p.EstimatedClosureDateFull,
+                p.CreatedAt
+
+            FROM dbo.Pipelines p
+
+            ORDER BY
+                p.[Account Manager],
+                p.[Account Name]
+        """)
+
+        pipelines = []
+
+        for row in cursor.fetchall():
+
+            pipelines.append({
+                "PipelineID": row[0],
+                "Vertical": row[1],
+                "AccountName": row[2],
+                "Product": row[3],
+                "Region": row[4],
+                "MRC": row[5],
+                "ContractDuration": row[6],
+                "ARR": row[7],
+                "ProjectOTC": row[8],
+                "TotalProjectRevenue": row[9],
+                "EstimatedClosureDate": row[10],
+                "EstimatedClosureMonth": row[11],
+                "SalesCycleStatus": row[12],
+                "AccountManager": row[13],
+                "NextAction": row[14],
+                "EstimatedClosureDateFull": row[15],
+                "CreatedAt": row[16]
+            })
+
+
+        # ========================================================
+        # DROPDOWN VALUES
+        # ========================================================
+
+        verticals = [
+            "Commercial",
+            "FinTech",
+            "Healthcare",
+            "Manufacturing",
+            "Telecom",
+            "Others"
+        ]
+
+        products = [
+            "0-365",
+            "Boost",
+            "Business Line",
+            "Cloud",
+            "CMT",
+            "Device GSM",
+            "Device MBB",
+            "Digital Dukan",
+            "FFM",
+            "Fixed",
+            "Group Data",
+            "GSM",
+            "M2M",
+            "SaaS",
+            "SIP",
+            "Other"
+        ]
+
+        regions = [
+            "Central",
+            "CVM",
+            "North",
+            "South",
+            "Others"
+        ]
+
+        statuses = [
+            "Customer Visit (20%)",
+            "Ask for Proposal (40%)",
+            "Negotiations (60%)",
+            "Documentation/Acceptance/Processing (80%)",
+            "System Entry/Revenue Locked (100%)",
+            "Lost to Competitor",
+            "Retired - No Decision"
+        ]
+
+        roles = [
+            "EDO",
+            "Team Lead",
+            "Regional Manager",
+            "Regional Head",
+            "Head",
+            "HOD",
+            "Admin",
+            "Super User"
+        ]
+
+        contract_durations = [
+            3,
+            6,
+            9,
+            12,
+            15,
+            18,
+            21,
+            24
+        ]
+
+
+        return render_template(
+            "super_user_dashboard.html",
+
+            first_name=session.get(
+                "first_name",
+                ""
+            ),
+
+            users=users,
+            pipelines=pipelines,
+            manager_lookup=manager_lookup,
+
+            verticals=verticals,
+            products=products,
+            regions=regions,
+            statuses=statuses,
+            roles=roles,
+            contract_durations=contract_durations
+        )
+
+    finally:
+        cursor.close()
+
+
+# ============================================================
+# SUPER USER - EDIT USER
+# ============================================================
+
+@app.route(
+    "/super-user/user/<int:emp_id>/edit",
+    methods=["POST"]
+)
+def super_user_edit_user(emp_id):
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    cursor = conn.cursor()
+
+    try:
+
+        employee_name = (
+            request.form.get("employee_name")
+            or ""
+        ).strip()
+
+        first_name = (
+            request.form.get("first_name")
+            or ""
+        ).strip()
+
+        last_name = (
+            request.form.get("last_name")
+            or ""
+        ).strip()
+
+        username = (
+            request.form.get("username")
+            or ""
+        ).strip()
+
+        phone_number = (
+            request.form.get("phone_number")
+            or ""
+        ).strip() or None
+
+        email = (
+            request.form.get("email")
+            or ""
+        ).strip() or None
+
+        region = (
+            request.form.get("region")
+            or ""
+        ).strip() or None
+
+        role = (
+            request.form.get("role")
+            or ""
+        ).strip()
+
+        manager_id_input = (
+            request.form.get("manager_id")
+            or ""
+        ).strip()
+
+        is_active = (
+            1
+            if request.form.get("is_active") == "1"
+            else 0
+        )
+
+
+        if not all([
+            employee_name,
+            first_name,
+            last_name,
+            username,
+            role
+        ]):
+            return (
+                "Employee Name, First Name, Last Name, "
+                "Username and Role are required.",
+                400
+            )
+
+
+        manager_id = None
+
+        if manager_id_input:
+
+            try:
+                manager_id = int(
+                    manager_id_input
+                )
+
+            except ValueError:
+                return "Invalid Manager selected.", 400
+
+
+        if manager_id == emp_id:
+            return (
+                "A user cannot be their own manager.",
+                400
+            )
+
+
+        cursor.execute("""
+            UPDATE dbo.Users
+
+            SET
+                EmployeeName = ?,
+                PhoneNumber = ?,
+                Email = ?,
+                Region = ?,
+                Role = ?,
+                ManagerID = ?,
+                Username = ?,
+                FirstName = ?,
+                LastName = ?,
+                IsActive = ?
+
+            WHERE EmpID = ?
+        """, (
+            employee_name,
+            phone_number,
+            email,
+            region,
+            role,
+            manager_id,
+            username,
+            first_name,
+            last_name,
+            is_active,
+            emp_id
+        ))
+
+
+        conn.commit()
+
+
+        return redirect(
+            url_for(
+                "super_user_dashboard",
+                tab="users"
+            )
+        )
+
+    finally:
+        cursor.close()
+
+
+# ============================================================
+# SUPER USER - EDIT PIPELINE
+# ============================================================
+
+@app.route(
+    "/super-user/pipeline/<int:pipeline_id>/edit",
+    methods=["POST"]
+)
+def super_user_edit_pipeline(pipeline_id):
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    cursor = conn.cursor()
+
+    try:
+
+        vertical = (
+            request.form.get("vertical")
+            or ""
+        ).strip()
+
+        account_name = (
+            request.form.get("account_name")
+            or ""
+        ).strip()
+
+        product = (
+            request.form.get("product")
+            or ""
+        ).strip()
+
+        region = (
+            request.form.get("region")
+            or ""
+        ).strip()
+
+        account_manager = (
+            request.form.get("account_manager")
+            or ""
+        ).strip()
+
+        next_action = (
+            request.form.get("next_action")
+            or ""
+        ).strip() or None
+
+        sales_cycle_status = (
+            request.form.get("sales_cycle_status")
+            or ""
+        ).strip()
+
+        closure_date_input = (
+            request.form.get("closure_date")
+            or ""
+        ).strip()
+
+
+        mrc_input = (
+            request.form.get("mrc")
+            or ""
+        ).replace(",", "").strip()
+
+        duration_input = (
+            request.form.get("contract_duration")
+            or ""
+        ).strip()
+
+        project_otc_input = (
+            request.form.get("project_otc")
+            or ""
+        ).replace(",", "").strip()
+
+        total_revenue_input = (
+            request.form.get("total_project_revenue")
+            or ""
+        ).replace(",", "").strip()
+
+
+        # ========================================================
+        # REQUIRED VALUES
+        # ========================================================
+
+        if not all([
+            vertical,
+            account_name,
+            product,
+            region,
+            account_manager,
+            sales_cycle_status,
+            closure_date_input
+        ]):
+            return (
+                "Please fill in all required fields.",
+                400
+            )
+
+
+        allowed_verticals = {
+            "Commercial",
+            "FinTech",
+            "Healthcare",
+            "Manufacturing",
+            "Telecom",
+            "Others"
+        }
+
+        allowed_products = {
+            "0-365",
+            "Boost",
+            "Business Line",
+            "Cloud",
+            "CMT",
+            "Device GSM",
+            "Device MBB",
+            "Digital Dukan",
+            "FFM",
+            "Fixed",
+            "Group Data",
+            "GSM",
+            "M2M",
+            "SaaS",
+            "SIP",
+            "Other"
+        }
+
+        allowed_regions = {
+            "Central",
+            "CVM",
+            "North",
+            "South",
+            "Others"
+        }
+
+        allowed_statuses = {
+            "Customer Visit (20%)",
+            "Ask for Proposal (40%)",
+            "Negotiations (60%)",
+            "Documentation/Acceptance/Processing (80%)",
+            "System Entry/Revenue Locked (100%)",
+            "Lost to Competitor",
+            "Retired - No Decision"
+        }
+
+        allowed_durations = {
+            3,
+            6,
+            9,
+            12,
+            15,
+            18,
+            21,
+            24
+        }
+
+
+        if vertical not in allowed_verticals:
+            return "Invalid Vertical.", 400
+
+        if product not in allowed_products:
+            return "Invalid Product.", 400
+
+        if region not in allowed_regions:
+            return "Invalid Region.", 400
+
+        if sales_cycle_status not in allowed_statuses:
+            return "Invalid Sales Cycle Status.", 400
+
+
+        # ========================================================
+        # ACCOUNT MANAGER
+        # Super User can assign any active user.
+        # ========================================================
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Users
+            WHERE
+                LTRIM(RTRIM(EmployeeName)) =
+                LTRIM(RTRIM(?))
+                AND IsActive = 1
+        """, (account_manager,))
+
+        if (cursor.fetchone()[0] or 0) == 0:
+            return "Invalid Account Manager.", 400
+
+
+        # ========================================================
+        # NUMBERS
+        # ========================================================
+
+        try:
+
+            mrc = (
+                float(mrc_input)
+                if mrc_input
+                else None
+            )
+
+            contract_duration = (
+                int(duration_input)
+                if duration_input
+                else None
+            )
+
+            project_otc = (
+                float(project_otc_input)
+                if project_otc_input
+                else None
+            )
+
+            total_project_revenue = (
+                float(total_revenue_input)
+                if total_revenue_input
+                else None
+            )
+
+        except ValueError:
+
+            return (
+                "One or more numeric values are invalid.",
+                400
+            )
+
+
+        if (
+            contract_duration is not None
+            and contract_duration not in allowed_durations
+        ):
+            return "Invalid Contract Duration.", 400
+
+
+        if (
+            mrc is not None
+            and contract_duration is None
+        ):
+            return (
+                "Contract Duration is required when "
+                "MRC is entered.",
+                400
+            )
+
+
+        # ARR is derived rather than manually entered.
+        arr = None
+
+        if (
+            mrc is not None
+            and contract_duration is not None
+        ):
+            arr = (
+                mrc
+                * contract_duration
+            )
+
+
+        # ========================================================
+        # CLOSURE DATE
+        # ========================================================
+
+        try:
+
+            closure_date_obj = datetime.strptime(
+                closure_date_input,
+                "%Y-%m-%d"
+            )
+
+        except ValueError:
+
+            return (
+                "Invalid Estimated Closure Date.",
+                400
+            )
+
+
+        closure_day = (
+            closure_date_obj.day
+        )
+
+        closure_month = (
+            closure_date_obj.strftime("%B")
+        )
+
+
+        # ========================================================
+        # AUDIT CONTEXT
+        # ========================================================
+
+        edited_by = (
+            session.get("employee_name")
+            or session.get("username")
+            or "Unknown User"
+        )
+
+
+        cursor.execute("""
+            EXEC sys.sp_set_session_context
+                @key = N'EditedBy',
+                @value = ?
+        """, (edited_by,))
+
+
+        cursor.execute("""
+            EXEC sys.sp_set_session_context
+                @key = N'IsRepeatedExtension',
+                @value = 0
+        """)
+
+
+        cursor.execute("""
+            EXEC sys.sp_set_session_context
+                @key = N'ExtensionReason',
+                @value = NULL
+        """)
+
+
+        cursor.execute("""
+            EXEC sys.sp_set_session_context
+                @key = N'ExtensionCount',
+                @value = NULL
+        """)
+
+
+        # ========================================================
+        # UPDATE ALL EDITABLE PIPELINE FIELDS
+        #
+        # Estimated Closure Date + Month stay synchronized with
+        # EstimatedClosureDateFull.
+        # PipelineID and CreatedAt remain read-only.
+        # ========================================================
+
+        cursor.execute("""
+            UPDATE dbo.Pipelines
+
+            SET
+                [Vertical] = ?,
+                [Account Name] = ?,
+                [Product] = ?,
+                [Region] = ?,
+                [MRC] = ?,
+                [Contract Duration (Months)] = ?,
+                [ARR] = ?,
+                [Project OTC] = ?,
+                [Total Project Revenue] = ?,
+                [Estimated Closure Date] = ?,
+                [Estimated Closure Month] = ?,
+                [Sales Cycle Status] = ?,
+                [Account Manager] = ?,
+                [Next Action] = ?,
+                EstimatedClosureDateFull = ?
+
+            WHERE PipelineID = ?
+        """, (
+            vertical,
+            account_name,
+            product,
+            region,
+            mrc,
+            contract_duration,
+            arr,
+            project_otc,
+            total_project_revenue,
+            closure_day,
+            closure_month,
+            sales_cycle_status,
+            account_manager,
+            next_action,
+            closure_date_obj.date(),
+            pipeline_id
+        ))
+
+
+        conn.commit()
+
+
+        return redirect(
+            url_for(
+                "super_user_dashboard",
+                tab="pipelines"
+            )
+        )
+
+    finally:
+        cursor.close()
+
+
+# ============================================================
+# LOGIN ROUTE CHANGE
+#
+# Your existing login redirect should contain:
+#
+# elif role == "Super User":
+#     return redirect(url_for("super_user_dashboard"))
+#
+# Remove any old non-Super-User redirect to this page.
+# ============================================================
+
 
 
 @app.template_filter("comma")

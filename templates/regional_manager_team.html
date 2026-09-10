@@ -514,17 +514,17 @@
 
         .table-card .table-header {
             display: grid !important;
-            grid-template-columns: 260px minmax(0, 1fr) !important;
-            align-items: center !important;
+            grid-template-columns: 240px minmax(0, 1fr) !important;
+            align-items: start !important;
             gap: 18px !important;
         }
 
         .table-card .table-header-controls {
             display: flex !important;
-            align-items: center !important;
-            justify-content: flex-end !important;
-            flex-wrap: nowrap !important;
-            gap: 8px !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            gap: 10px !important;
             min-width: 0 !important;
             width: 100% !important;
         }
@@ -532,11 +532,20 @@
         .table-card .pipeline-filters {
             display: flex !important;
             align-items: center !important;
-            justify-content: flex-end !important;
-            flex-wrap: nowrap !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
             gap: 8px !important;
             min-width: 0 !important;
-            flex: 1 1 auto !important;
+            width: 100% !important;
+        }
+
+        .table-card .pipeline-action-row {
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
         }
 
         .table-card .pipeline-filters .form-select,
@@ -581,6 +590,63 @@
             flex: 0 1 155px !important;
             width: 155px !important;
             min-width: 130px !important;
+        }
+
+
+        .table-card .pipeline-date-filter {
+            flex: 0 0 178px !important;
+            width: 178px !important;
+            min-width: 178px !important;
+            height: 40px !important;
+
+            display: flex !important;
+            align-items: center !important;
+
+            background: #202020 !important;
+            border: 1px solid #3a3a3a !important;
+            border-radius: 6px !important;
+
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        .table-card .pipeline-date-filter label {
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+            padding: 0 8px 0 10px !important;
+
+            color: #9a9a9a !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+        }
+
+        .table-card .pipeline-date-filter input {
+            flex: 1 1 auto !important;
+            width: 0 !important;
+            min-width: 0 !important;
+            height: 38px !important;
+            min-height: 38px !important;
+
+            margin: 0 !important;
+            padding: 0 8px 0 0 !important;
+
+            background: transparent !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 0 !important;
+
+            box-sizing: border-box !important;
+            font-size: 12px !important;
+            color-scheme: dark;
+        }
+
+        .table-card .pipeline-date-filter:focus-within {
+            border-color: #c62828 !important;
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15) !important;
         }
 
         .table-card .active-pipeline-filter {
@@ -633,16 +699,34 @@
             justify-content: center !important;
         }
 
-        @media (max-width: 1450px) {
+
+        .table-card .btn-add-pipeline {
+            flex: 0 0 118px !important;
+            width: 118px !important;
+            min-width: 118px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            padding: 0 12px !important;
+
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            white-space: nowrap !important;
+        }
+
+        @media (max-width: 1650px) {
             .table-card .table-header {
                 grid-template-columns: 1fr !important;
                 align-items: stretch !important;
             }
 
-            .table-card .table-header-controls,
-            .table-card .pipeline-filters {
-                justify-content: flex-start !important;
-                flex-wrap: wrap !important;
+            .table-card .pipeline-action-row {
+                justify-content: flex-end !important;
             }
         }
 
@@ -1031,6 +1115,24 @@
                         </option>
                     </select>
 
+                    <div class="pipeline-date-filter">
+                        <label for="pipelineDateFrom">From</label>
+                        <input
+                            type="date"
+                            id="pipelineDateFrom"
+                            aria-label="Pipeline creation date from"
+                        >
+                    </div>
+
+                    <div class="pipeline-date-filter">
+                        <label for="pipelineDateTo">To</label>
+                        <input
+                            type="date"
+                            id="pipelineDateTo"
+                            aria-label="Pipeline creation date to"
+                        >
+                    </div>
+
                     <label class="active-pipeline-filter">
                         <input
                             type="checkbox"
@@ -1038,6 +1140,10 @@
                         >
                         <span>Active Pipelines</span>
                     </label>
+
+                </div>
+
+                <div class="pipeline-action-row">
 
                     <button
                         type="button"
@@ -1047,42 +1153,50 @@
                         Clear
                     </button>
 
+                    <button
+                        type="button"
+                        id="downloadPipelineExcel"
+                        class="btn-add-pipeline"
+                    >
+                        Download Excel
+                    </button>
+
+                    <form
+                        id="pipelineExportForm"
+                        method="POST"
+                        action="{{ url_for('export_pipeline_overview') }}"
+                        style="display:none;"
+                    ></form>
+
+                    {{ column_selector(
+                        [
+                            ('account-manager', 'Account Manager'),
+                            ('vertical', 'Vertical'),
+                            ('account-name', 'Account Name'),
+                            ('product', 'Product'),
+                            ('region', 'Region'),
+                            ('mrc', 'MRC'),
+                            ('contract-duration', 'Contract Duration'),
+                            ('arr', 'ARR'),
+                            ('project-otc', 'Project OTC'),
+                            ('total-revenue', 'Total Revenue'),
+                            ('closure-date', 'Closure Date'),
+                            ('status', 'Status'),
+                            ('next-action', 'Next Action')
+                        ],
+
+                        [
+                            'account-manager',
+                            'account-name',
+                            'product',
+                            'mrc',
+                            'total-revenue',
+                            'closure-date',
+                            'status'
+                        ]
+                    ) }}
+
                 </div>
-
-                {{ column_selector(
-                    [
-                        ('account-manager', 'Account Manager'),
-                        ('vertical', 'Vertical'),
-                        ('account-name', 'Account Name'),
-                        ('product', 'Product'),
-                        ('region', 'Region'),
-                        ('mrc', 'MRC'),
-                        ('contract-duration', 'Contract Duration'),
-                        ('arr', 'ARR'),
-                        ('project-otc', 'Project OTC'),
-                        ('total-revenue', 'Total Revenue'),
-                        ('closure-date', 'Closure Date'),
-                        ('status', 'Status'),
-                        ('next-action', 'Next Action')
-                    ],
-
-                    [
-                        'account-manager',
-                        'account-name',
-                        'product',
-                        'mrc',
-                        'total-revenue',
-                        'closure-date',
-                        'status'
-                    ]
-                ) }}
-
-                <a
-                    href="{{ url_for('export_pipeline_overview') }}"
-                    class="btn-add-pipeline"
-                >
-                    Download Excel
-                </a>
 
             </div>
 
@@ -1195,6 +1309,12 @@
                     {% for pipeline in pipelines %}
 
                     <tr
+                        data-pipeline-id="{{ pipeline.PipelineID }}"
+                        data-created-date="{{
+                            pipeline.CreatedAt.date().isoformat()
+                            if pipeline.CreatedAt
+                            else ''
+                        }}"
                         data-user-id="{{ pipeline.EmpID }}"
                         data-product="{{ pipeline.Product or '' }}"
                         data-status="{{ pipeline.SalesCycleStatus or '' }}"
@@ -1328,8 +1448,20 @@
     const activePipelineFilter =
         document.getElementById('activePipelineFilter');
 
+    const pipelineDateFrom =
+        document.getElementById('pipelineDateFrom');
+
+    const pipelineDateTo =
+        document.getElementById('pipelineDateTo');
+
     const clearPipelineFilters =
         document.getElementById('clearPipelineFilters');
+
+    const downloadPipelineExcel =
+        document.getElementById('downloadPipelineExcel');
+
+    const pipelineExportForm =
+        document.getElementById('pipelineExportForm');
 
     const activePipelineStatuses =
         new Set([
@@ -1384,6 +1516,12 @@
         const activeOnly =
             activePipelineFilter.checked;
 
+        const fromDate =
+            pipelineDateFrom.value;
+
+        const toDate =
+            pipelineDateTo.value;
+
 
         pipelineRows.forEach(row => {
 
@@ -1416,13 +1554,32 @@
                 !activeOnly ||
                 activePipelineStatuses.has(status);
 
+            const createdDate =
+                row.dataset.createdDate || '';
+
+            const matchesFrom =
+                !fromDate ||
+                (
+                    createdDate &&
+                    createdDate >= fromDate
+                );
+
+            const matchesTo =
+                !toDate ||
+                (
+                    createdDate &&
+                    createdDate <= toDate
+                );
+
 
             row.style.display =
                 (
                     matchesMember &&
                     matchesSearch &&
                     matchesProduct &&
-                    matchesActive
+                    matchesActive &&
+                    matchesFrom &&
+                    matchesTo
                 )
                     ? ''
                     : 'none';
@@ -1433,7 +1590,9 @@
     [
         memberFilter,
         productFilter,
-        activePipelineFilter
+        activePipelineFilter,
+        pipelineDateFrom,
+        pipelineDateTo
     ].forEach(filter => {
 
         filter.addEventListener(
@@ -1457,8 +1616,52 @@
             pipelineSearch.value = '';
             productFilter.value = '';
             activePipelineFilter.checked = false;
+            pipelineDateFrom.value = '';
+            pipelineDateTo.value = '';
 
             applyPipelineFilters();
+        }
+    );
+
+
+    /* =========================
+       DOWNLOAD CURRENT FILTERED VIEW
+    ========================= */
+
+    downloadPipelineExcel.addEventListener(
+        'click',
+        function () {
+
+            pipelineExportForm.innerHTML = '';
+
+            pipelineRows.forEach(row => {
+
+                if (
+                    row.style.display === 'none'
+                ) {
+                    return;
+                }
+
+                const pipelineId =
+                    row.dataset.pipelineId;
+
+                if (!pipelineId) {
+                    return;
+                }
+
+                const input =
+                    document.createElement('input');
+
+                input.type = 'hidden';
+                input.name = 'pipeline_id';
+                input.value = pipelineId;
+
+                pipelineExportForm.appendChild(
+                    input
+                );
+            });
+
+            pipelineExportForm.submit();
         }
     );
 

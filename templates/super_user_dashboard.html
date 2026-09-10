@@ -1,0 +1,2817 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>Super User Dashboard</title>
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1"
+    >
+
+    <link
+        rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='style.css') }}"
+    >
+
+    <style>
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+
+            background:
+                linear-gradient(
+                    to bottom,
+                    #c62828,
+                    #4b0082
+                );
+
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+        }
+
+
+        .topbar {
+            min-height: 100px;
+            padding: 15px 35px;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            background:
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.25
+                );
+
+            border-bottom:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.15
+                );
+        }
+
+
+        .logo {
+            width: 160px;
+            max-height: 75px;
+            object-fit: contain;
+        }
+
+
+        .user-info {
+            font-size: 14px;
+        }
+
+
+        .topbar-right {
+            display: flex;
+
+            align-items: center;
+
+            gap: 18px;
+        }
+
+
+        .logout-button {
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            padding: 8px 16px;
+
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.12
+                );
+
+            color: #ffffff;
+
+            border:
+                1px solid
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.30
+                );
+
+            border-radius: 6px;
+
+            font-size: 13px;
+
+            font-weight: 600;
+
+            text-decoration: none;
+        }
+
+
+        .logout-button:hover {
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.20
+                );
+
+            color: #ffffff;
+        }
+
+
+        .dashboard-container {
+            max-width: 1700px;
+
+            margin: 35px auto;
+
+            padding:
+                0 30px
+                55px;
+        }
+
+
+        .page-title {
+            font-size: 38px;
+            font-weight: 600;
+
+            margin-bottom: 4px;
+        }
+
+
+        .page-subtitle {
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.72
+                );
+
+            font-size: 13px;
+
+            margin-bottom: 25px;
+        }
+
+
+        /* =========================
+           TABS
+           ========================= */
+
+        .admin-tabs {
+            display: inline-flex;
+
+            gap: 8px;
+
+            padding: 0;
+
+            margin-bottom: 18px;
+
+            background: transparent;
+
+            border: none;
+
+            border-radius: 0;
+        }
+
+
+        .admin-tab {
+            min-width: 110px;
+
+            padding: 8px 16px;
+
+            background: transparent;
+
+            color:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.72
+                );
+
+            border: none;
+
+            border-radius: 7px;
+
+            font-size: 14px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+
+        .admin-tab:hover {
+            background:
+                rgba(
+                    255,
+                    255,
+                    255,
+                    0.08
+                );
+
+            color: #ffffff;
+        }
+
+
+        .admin-tab.active {
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.92
+                );
+
+            color: #ffffff;
+        }
+
+
+        .admin-tab-content {
+            display: none;
+        }
+
+
+        .admin-tab-content.active {
+            display: block;
+        }
+
+
+        /* =========================
+           TABLE CARD
+           ========================= */
+
+        .table-card {
+            background: #171717;
+
+            border:
+                1px solid #303030;
+
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 30px
+                rgba(
+                    0,
+                    0,
+                    0,
+                    0.35
+                );
+        }
+
+
+        .table-header {
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom:
+                1px solid #333333;
+
+            display: grid;
+
+            grid-template-columns:
+                auto
+                minmax(0, 1fr);
+
+            align-items: center;
+
+            gap: 20px;
+        }
+
+
+        .table-title {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+
+            white-space: nowrap;
+        }
+
+
+        /* =========================
+           FILTER BARS
+           ========================= */
+
+        .table-controls {
+            width: 100%;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: flex-end;
+
+            gap: 8px;
+
+            flex-wrap: nowrap;
+
+            min-width: 0;
+        }
+
+
+        .table-controls input,
+        .table-controls select,
+        .clear-button {
+            height: 40px;
+            min-height: 40px;
+
+            margin: 0;
+
+            box-sizing: border-box;
+
+            border-radius: 6px;
+
+            font-size: 13px;
+        }
+
+
+        .table-controls input,
+        .table-controls select {
+            background: #202020;
+            color: #ffffff;
+
+            border:
+                1px solid #3a3a3a;
+
+            padding: 0 11px;
+        }
+
+
+        .table-controls input:focus,
+        .table-controls select:focus {
+            outline: none;
+
+            border-color: #777777;
+        }
+
+
+        .table-controls input::placeholder {
+            color: #9a9a9a;
+            opacity: 1;
+        }
+
+
+        .search-box {
+            flex: 1 1 260px;
+
+            width: 260px;
+
+            min-width: 210px;
+
+            max-width: 330px;
+        }
+
+
+        .manager-filter {
+            flex: 0 1 175px;
+
+            width: 175px;
+
+            min-width: 150px;
+        }
+
+
+        .product-filter {
+            flex: 0 1 155px;
+
+            width: 155px;
+
+            min-width: 130px;
+        }
+
+
+        .date-filter {
+            flex: 0 1 145px;
+
+            width: 145px;
+
+            min-width: 130px;
+        }
+
+
+        .date-filter-wrap {
+            display: flex;
+
+            align-items: center;
+
+            gap: 6px;
+
+            flex: 0 0 auto;
+        }
+
+
+        .date-filter-label {
+            color: #a9a9a9;
+
+            font-size: 11px;
+            font-weight: 600;
+
+            white-space: nowrap;
+
+            text-transform: uppercase;
+        }
+
+
+        .clear-button {
+            flex: 0 0 68px;
+
+            width: 68px;
+
+            padding: 0 10px;
+
+            display: inline-flex;
+
+            align-items: center;
+
+            justify-content: center;
+
+            background: #292929;
+
+            color: #ffffff;
+
+            border:
+                1px solid #444444;
+
+            white-space: nowrap;
+        }
+
+
+        .clear-button:hover {
+            background: #353535;
+
+            border-color: #555555;
+        }
+
+
+        @media (
+            max-width: 1450px
+        ) {
+
+            .table-header {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .table-controls {
+                justify-content:
+                    flex-start;
+
+                flex-wrap: wrap;
+            }
+
+            .search-box {
+                flex:
+                    1 1 260px;
+            }
+
+        }
+
+
+        /* =========================
+           TABLE
+           ========================= */
+
+        .table-wrapper {
+            overflow-x: auto;
+
+            max-height: 680px;
+        }
+
+
+        table {
+            width: 100%;
+
+            margin: 0;
+
+            white-space: nowrap;
+
+            border-collapse:
+                separate;
+
+            border-spacing: 0;
+
+            font-size: 13px;
+        }
+
+
+        thead th {
+            position: sticky;
+
+            top: 0;
+
+            z-index: 2;
+
+            background: #292929;
+
+            color: #e5e5e5;
+
+            padding: 14px 15px;
+
+            border-bottom:
+                1px solid #414141;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.4px;
+        }
+
+
+        tbody td {
+            background: #171717;
+
+            color: #d5d5d5;
+
+            padding: 13px 15px;
+
+            border-bottom:
+                1px solid #292929;
+
+            vertical-align: middle;
+        }
+
+
+        tbody tr:nth-child(even) td {
+            background: #1c1c1c;
+        }
+
+
+        tbody tr:hover td {
+            background: #252525;
+        }
+
+
+        .strong-cell {
+            color: #ffffff;
+
+            font-weight: 600;
+        }
+
+
+        .status-active {
+            color: #9ccc65;
+        }
+
+
+        .status-inactive {
+            color: #ef9a9a;
+        }
+
+
+        .btn-edit-row {
+            padding: 6px 12px;
+
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.18
+                );
+
+            color: #ef9a9a;
+
+            border:
+                1px solid
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.35
+                );
+
+            border-radius: 5px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+
+        .btn-edit-row:hover {
+            background:
+                rgba(
+                    198,
+                    40,
+                    40,
+                    0.28
+                );
+
+            color: #ffffff;
+        }
+
+
+        .empty-message {
+            text-align: center;
+
+            padding: 35px !important;
+
+            color: #999999 !important;
+        }
+
+
+        /* =========================
+           MODALS
+           ========================= */
+
+        .modal-content {
+            background: #1b1b1b;
+
+            color: #ffffff;
+
+            border:
+                1px solid #414141;
+
+            border-radius: 10px;
+        }
+
+
+        .modal-header,
+        .modal-footer {
+            border-color: #333333;
+        }
+
+
+        .modal-body {
+            max-height: 72vh;
+
+            overflow-y: auto;
+        }
+
+
+        .modal-grid {
+            display: grid;
+
+            grid-template-columns:
+                1fr 1fr;
+
+            gap: 16px;
+        }
+
+
+        .modal-field {
+            display: flex;
+
+            flex-direction: column;
+        }
+
+
+        .modal-field.full {
+            grid-column:
+                span 2;
+        }
+
+
+        .modal-field label {
+            margin-bottom: 6px;
+
+            color: #cfcfcf;
+
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+
+        .modal-field input,
+        .modal-field select,
+        .modal-field textarea {
+            width: 100%;
+
+            background: #252525;
+
+            color: #ffffff;
+
+            border:
+                1px solid #444444;
+
+            border-radius: 5px;
+
+            padding: 9px 10px;
+
+            font-size: 13px;
+        }
+
+
+        .modal-field textarea {
+            min-height: 95px;
+
+            resize: vertical;
+        }
+
+
+        .modal-field input:disabled {
+            opacity: 0.55;
+        }
+
+
+        .readonly-note {
+            color: #888888;
+
+            font-size: 11px;
+
+            margin-top: 5px;
+        }
+
+
+        .btn-modal-save {
+            background:
+                linear-gradient(
+                    to bottom,
+                    rgba(
+                        229,
+                        46,
+                        46,
+                        0.60
+                    ),
+                    #4b0082
+                );
+
+            color: #ffffff;
+
+            border: none;
+
+            border-radius: 5px;
+
+            padding: 8px 16px;
+
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+
+        @media (
+            max-width: 900px
+        ) {
+
+            .modal-grid {
+                grid-template-columns:
+                    1fr;
+            }
+
+            .modal-field.full {
+                grid-column:
+                    span 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+<div class="topbar">
+
+    <img
+        src="{{ url_for('static', filename='jazz-logo.png') }}"
+        alt="Company Logo"
+        class="logo"
+    >
+
+    <div class="topbar-right">
+
+        <div class="user-info">
+
+            Logged in as
+            <strong>
+                {{ first_name }}
+            </strong>
+
+        </div>
+
+        <a
+            href="{{ url_for('login') }}"
+            class="logout-button"
+        >
+            Logout
+        </a>
+
+    </div>
+
+</div>
+
+
+<div class="dashboard-container">
+
+
+    <div class="page-title">
+        Administration
+    </div>
+
+
+    <div class="page-subtitle">
+
+        Manage users and all sales pipelines.
+
+    </div>
+
+
+    <div class="admin-tabs">
+
+        <button
+            type="button"
+            class="admin-tab active"
+            data-target="usersTab"
+        >
+            Users
+        </button>
+
+        <button
+            type="button"
+            class="admin-tab"
+            data-target="pipelinesTab"
+        >
+            Pipelines
+        </button>
+
+    </div>
+
+
+    <!-- =====================================================
+         USERS TAB
+         ===================================================== -->
+
+    <div
+        id="usersTab"
+        class="admin-tab-content active"
+    >
+
+        <div class="table-card">
+
+            <div class="table-header">
+
+                <div class="table-title">
+                    Users
+                </div>
+
+
+                <div class="table-controls">
+
+                    <input
+                        type="text"
+                        id="userSearch"
+                        class="search-box"
+                        placeholder="Search user, role, region..."
+                    >
+
+
+                    <select
+                        id="userRoleFilter"
+                        class="filter-select"
+                    >
+
+                        <option value="">
+                            All Roles
+                        </option>
+
+                        {% for role in roles %}
+
+                            <option value="{{ role }}">
+                                {{ role }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+                    <button
+                        type="button"
+                        id="clearUserFilters"
+                        class="clear-button"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>Emp ID</th>
+                            <th>Edit</th>
+                            <th>Employee Name</th>
+                            <th>First Name</th>
+                            <th>Last Name</th>
+                            <th>Username</th>
+                            <th>Role</th>
+                            <th>Region</th>
+                            <th>Manager</th>
+                            <th>Email</th>
+                            <th>Phone</th>
+                            <th>Active</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="usersBody">
+
+                        {% for user in users %}
+
+                        <tr
+                            data-role="{{ user.Role or '' }}"
+                            data-search="{{
+                                (
+                                    (user.EmployeeName or '') ~ ' ' ~
+                                    (user.FirstName or '') ~ ' ' ~
+                                    (user.LastName or '') ~ ' ' ~
+                                    (user.Username or '') ~ ' ' ~
+                                    (user.Role or '') ~ ' ' ~
+                                    (user.Region or '') ~ ' ' ~
+                                    (user.Email or '')
+                                ) | lower
+                            }}"
+                        >
+
+                            <td>
+                                {{ user.EmpID }}
+                            </td>
+
+
+
+
+                            <td>
+
+                                <button
+                                    type="button"
+                                    class="btn-edit-row edit-user-button"
+                                    data-emp-id="{{ user.EmpID }}"
+                                    data-employee-name="{{ user.EmployeeName or '' }}"
+                                    data-first-name="{{ user.FirstName or '' }}"
+                                    data-last-name="{{ user.LastName or '' }}"
+                                    data-username="{{ user.Username or '' }}"
+                                    data-role="{{ user.Role or '' }}"
+                                    data-region="{{ user.Region or '' }}"
+                                    data-manager-id="{{ user.ManagerID or '' }}"
+                                    data-email="{{ user.Email or '' }}"
+                                    data-phone="{{ user.PhoneNumber or '' }}"
+                                    data-active="{{ 1 if user.IsActive else 0 }}"
+                                >
+                                    Edit
+                                </button>
+
+                            </td>
+                            <td class="strong-cell">
+                                {{ user.EmployeeName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.FirstName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.LastName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.Username or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.Role or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.Region or '-' }}
+                            </td>
+
+                            <td>
+                                {{
+                                    manager_lookup.get(
+                                        user.ManagerID,
+                                        '-'
+                                    )
+                                    if user.ManagerID
+                                    else '-'
+                                }}
+                            </td>
+
+                            <td>
+                                {{ user.Email or '-' }}
+                            </td>
+
+                            <td>
+                                {{ user.PhoneNumber or '-' }}
+                            </td>
+
+                            <td>
+
+                                {% if user.IsActive %}
+
+                                    <span class="status-active">
+                                        Active
+                                    </span>
+
+                                {% else %}
+
+                                    <span class="status-inactive">
+                                        Inactive
+                                    </span>
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="12"
+                                class="empty-message"
+                            >
+                                No users found.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+         PIPELINES TAB
+         ===================================================== -->
+
+    <div
+        id="pipelinesTab"
+        class="admin-tab-content"
+    >
+
+        <div class="table-card">
+
+            <div class="table-header">
+
+                <div class="table-title">
+                    Pipeline Overview
+                </div>
+
+
+                <div class="table-controls">
+
+                    <input
+                        type="text"
+                        id="pipelineSearch"
+                        class="search-box"
+                        placeholder="Search account, status, product, manager..."
+                    >
+
+
+                    <select
+                        id="pipelineManagerFilter"
+                        class="manager-filter"
+                    >
+
+                        <option value="">
+                            All Account Managers
+                        </option>
+
+                        {% for user in users %}
+
+                            <option value="{{ user.EmployeeName }}">
+                                {{ user.EmployeeName }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+                    <select
+                        id="pipelineProductFilter"
+                        class="product-filter"
+                    >
+
+                        <option value="">
+                            All Products
+                        </option>
+
+                        {% for product in products %}
+
+                            <option value="{{ product }}">
+                                {{ product }}
+                            </option>
+
+                        {% endfor %}
+
+                    </select>
+
+
+                    <div class="date-filter-wrap">
+
+                        <span class="date-filter-label">
+                            From
+                        </span>
+
+                        <input
+                            type="date"
+                            id="pipelineDateFrom"
+                            class="date-filter"
+                            aria-label="Created from date"
+                        >
+
+                    </div>
+
+
+                    <div class="date-filter-wrap">
+
+                        <span class="date-filter-label">
+                            To
+                        </span>
+
+                        <input
+                            type="date"
+                            id="pipelineDateTo"
+                            class="date-filter"
+                            aria-label="Created to date"
+                        >
+
+                    </div>
+
+
+                    <button
+                        type="button"
+                        id="clearPipelineFilters"
+                        class="clear-button"
+                    >
+                        Clear
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <div class="table-wrapper">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+                            <th>ID</th>
+                            <th>Edit</th>
+                            <th>Account Manager</th>
+                            <th>Vertical</th>
+                            <th>Account Name</th>
+                            <th>Product</th>
+                            <th>Region</th>
+                            <th>MRC</th>
+                            <th>Contract Duration</th>
+                            <th>ARR</th>
+                            <th>Project OTC</th>
+                            <th>Total Project Revenue</th>
+                            <th>Closure Date</th>
+                            <th>Status</th>
+                            <th>Next Action</th>
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="pipelinesBody">
+
+                        {% for pipeline in pipelines %}
+
+                        <tr
+                            data-manager="{{ pipeline.AccountManager or '' }}"
+                            data-product="{{ pipeline.Product or '' }}"
+                            data-created-date="{{
+                                pipeline.CreatedAt.strftime('%Y-%m-%d')
+                                if pipeline.CreatedAt
+                                else ''
+                            }}"
+                            data-search="{{
+                                (
+                                    (pipeline.AccountManager or '') ~ ' ' ~
+                                    (pipeline.AccountName or '') ~ ' ' ~
+                                    (pipeline.Product or '') ~ ' ' ~
+                                    (pipeline.Region or '') ~ ' ' ~
+                                    (pipeline.SalesCycleStatus or '') ~ ' ' ~
+                                    (pipeline.NextAction or '')
+                                ) | lower
+                            }}"
+                        >
+
+                            <td>
+                                {{ pipeline.PipelineID }}
+                            </td>
+
+
+
+
+                            <td>
+
+                                <button
+                                    type="button"
+                                    class="btn-edit-row edit-pipeline-button"
+
+                                    data-pipeline-id="{{ pipeline.PipelineID }}"
+                                    data-account-manager="{{ pipeline.AccountManager or '' }}"
+                                    data-vertical="{{ pipeline.Vertical or '' }}"
+                                    data-account-name="{{ pipeline.AccountName or '' }}"
+                                    data-product="{{ pipeline.Product or '' }}"
+                                    data-region="{{ pipeline.Region or '' }}"
+
+                                    data-mrc="{{
+                                        pipeline.MRC
+                                        if pipeline.MRC is not none
+                                        else ''
+                                    }}"
+
+                                    data-contract-duration="{{
+                                        pipeline.ContractDuration
+                                        if pipeline.ContractDuration is not none
+                                        else ''
+                                    }}"
+
+                                    data-project-otc="{{
+                                        pipeline.ProjectOTC
+                                        if pipeline.ProjectOTC is not none
+                                        else ''
+                                    }}"
+
+                                    data-total-revenue="{{
+                                        pipeline.TotalProjectRevenue
+                                        if pipeline.TotalProjectRevenue is not none
+                                        else ''
+                                    }}"
+
+                                    data-closure-date="{{
+                                        pipeline.EstimatedClosureDateFull.strftime('%Y-%m-%d')
+                                        if pipeline.EstimatedClosureDateFull
+                                        else ''
+                                    }}"
+
+                                    data-status="{{ pipeline.SalesCycleStatus or '' }}"
+                                    data-next-action="{{ pipeline.NextAction or '' }}"
+                                >
+                                    Edit
+                                </button>
+
+                            </td>
+                            <td class="strong-cell">
+                                {{ pipeline.AccountManager or '-' }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.Vertical or '-' }}
+                            </td>
+
+                            <td class="strong-cell">
+                                {{ pipeline.AccountName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.Product or '-' }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.Region or '-' }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.MRC | comma }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.ContractDuration | comma }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.ARR | comma }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.ProjectOTC | comma }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.TotalProjectRevenue | comma }}
+                            </td>
+
+                            <td>
+
+                                {% if pipeline.EstimatedClosureDateFull %}
+
+                                    {{
+                                        pipeline.EstimatedClosureDateFull.strftime(
+                                            '%d %b %Y'
+                                        )
+                                    }}
+
+                                {% else %}
+                                    -
+                                {% endif %}
+
+                            </td>
+
+                            <td>
+                                {{ pipeline.SalesCycleStatus or '-' }}
+                            </td>
+
+                            <td>
+                                {{ pipeline.NextAction or '-' }}
+                            </td>
+
+                        </tr>
+
+                        {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="15"
+                                class="empty-message"
+                            >
+                                No pipelines found.
+                            </td>
+
+                        </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     USER EDIT MODAL
+     ========================================================= -->
+
+<div
+    class="modal fade"
+    id="userEditModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-dialog modal-lg modal-dialog-centered"
+    >
+
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                id="userEditForm"
+            >
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Edit User
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="modal-grid">
+
+                        <div class="modal-field">
+
+                            <label>
+                                Emp ID
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editUserEmpID"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Employee Name *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editEmployeeName"
+                                name="employee_name"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                First Name *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editFirstName"
+                                name="first_name"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Last Name *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editLastName"
+                                name="last_name"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Username *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editUsername"
+                                name="username"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Role *
+                            </label>
+
+                            <select
+                                id="editRole"
+                                name="role"
+                                required
+                            >
+
+                                {% for role in roles %}
+
+                                    <option value="{{ role }}">
+                                        {{ role }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Region
+                            </label>
+
+                            <select
+                                id="editUserRegion"
+                                name="region"
+                            >
+
+                                <option value="">
+                                    No Region
+                                </option>
+
+                                {% for region in regions %}
+
+                                    <option value="{{ region }}">
+                                        {{ region }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Manager
+                            </label>
+
+                            <select
+                                id="editManagerID"
+                                name="manager_id"
+                            >
+
+                                <option value="">
+                                    No Manager
+                                </option>
+
+                                {% for manager in users %}
+
+                                    <option
+                                        value="{{ manager.EmpID }}"
+                                    >
+                                        {{ manager.EmployeeName }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Email
+                            </label>
+
+                            <input
+                                type="email"
+                                id="editEmail"
+                                name="email"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Phone Number
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPhone"
+                                name="phone_number"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Active
+                            </label>
+
+                            <select
+                                id="editIsActive"
+                                name="is_active"
+                            >
+
+                                <option value="1">
+                                    Active
+                                </option>
+
+                                <option value="0">
+                                    Inactive
+                                </option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn-modal-save"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- =========================================================
+     PIPELINE EDIT MODAL
+     ========================================================= -->
+
+<div
+    class="modal fade"
+    id="pipelineEditModal"
+    tabindex="-1"
+    aria-hidden="true"
+>
+
+    <div
+        class="modal-dialog modal-xl modal-dialog-centered"
+    >
+
+        <div class="modal-content">
+
+            <form
+                method="POST"
+                id="pipelineEditForm"
+            >
+
+                <div class="modal-header">
+
+                    <h5 class="modal-title">
+                        Edit Pipeline
+                    </h5>
+
+                    <button
+                        type="button"
+                        class="btn-close btn-close-white"
+                        data-bs-dismiss="modal"
+                    ></button>
+
+                </div>
+
+
+                <div class="modal-body">
+
+                    <div class="modal-grid">
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Pipeline ID
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineID"
+                                disabled
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Account Manager *
+                            </label>
+
+                            <select
+                                id="editPipelineManager"
+                                name="account_manager"
+                                required
+                            >
+
+                                {% for user in users %}
+
+                                    <option
+                                        value="{{ user.EmployeeName }}"
+                                    >
+                                        {{ user.EmployeeName }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Vertical *
+                            </label>
+
+                            <select
+                                id="editPipelineVertical"
+                                name="vertical"
+                                required
+                            >
+
+                                {% for vertical in verticals %}
+
+                                    <option value="{{ vertical }}">
+                                        {{ vertical }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Account Name *
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineAccount"
+                                name="account_name"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Product *
+                            </label>
+
+                            <select
+                                id="editPipelineProduct"
+                                name="product"
+                                required
+                            >
+
+                                {% for product in products %}
+
+                                    <option value="{{ product }}">
+                                        {{ product }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Region *
+                            </label>
+
+                            <select
+                                id="editPipelineRegion"
+                                name="region"
+                                required
+                            >
+
+                                {% for region in regions %}
+
+                                    <option value="{{ region }}">
+                                        {{ region }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                MRC
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineMRC"
+                                name="mrc"
+                                inputmode="decimal"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Contract Duration (Months)
+                            </label>
+
+                            <select
+                                id="editPipelineDuration"
+                                name="contract_duration"
+                            >
+
+                                <option value="">
+                                    No Duration
+                                </option>
+
+                                {% for months in contract_durations %}
+
+                                    <option value="{{ months }}">
+                                        {{ months }} Months
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                ARR
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineARR"
+                                readonly
+                            >
+
+                            <div class="readonly-note">
+                                Auto-calculated as MRC × Contract Duration.
+                            </div>
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Project OTC
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineOTC"
+                                name="project_otc"
+                                inputmode="decimal"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Total Project Revenue
+                            </label>
+
+                            <input
+                                type="text"
+                                id="editPipelineRevenue"
+                                name="total_project_revenue"
+                                inputmode="decimal"
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field">
+
+                            <label>
+                                Estimated Closure Date *
+                            </label>
+
+                            <input
+                                type="date"
+                                id="editPipelineClosureDate"
+                                name="closure_date"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="modal-field full">
+
+                            <label>
+                                Sales Cycle Status *
+                            </label>
+
+                            <select
+                                id="editPipelineStatus"
+                                name="sales_cycle_status"
+                                required
+                            >
+
+                                {% for status in statuses %}
+
+                                    <option value="{{ status }}">
+                                        {{ status }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="modal-field full">
+
+                            <label>
+                                Next Action
+                            </label>
+
+                            <textarea
+                                id="editPipelineNextAction"
+                                name="next_action"
+                            ></textarea>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <div class="modal-footer">
+
+                    <button
+                        type="button"
+                        class="btn btn-secondary"
+                        data-bs-dismiss="modal"
+                    >
+                        Cancel
+                    </button>
+
+                    <button
+                        type="submit"
+                        class="btn-modal-save"
+                    >
+                        Save Changes
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+<script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+</script>
+
+
+<script>
+
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+
+        /* =========================
+           TABS
+           ========================= */
+
+        const tabButtons =
+            document.querySelectorAll(
+                '.admin-tab'
+            );
+
+        const tabContents =
+            document.querySelectorAll(
+                '.admin-tab-content'
+            );
+
+
+        function activateTab(
+            targetId
+        ) {
+
+            tabButtons.forEach(
+                function (button) {
+
+                    button.classList.toggle(
+                        'active',
+                        button.dataset.target ===
+                            targetId
+                    );
+                }
+            );
+
+
+            tabContents.forEach(
+                function (content) {
+
+                    content.classList.toggle(
+                        'active',
+                        content.id === targetId
+                    );
+                }
+            );
+        }
+
+
+        tabButtons.forEach(
+            function (button) {
+
+                button.addEventListener(
+                    'click',
+                    function () {
+
+                        activateTab(
+                            button.dataset.target
+                        );
+                    }
+                );
+            }
+        );
+
+
+        const params =
+            new URLSearchParams(
+                window.location.search
+            );
+
+
+        if (
+            params.get('tab') ===
+            'pipelines'
+        ) {
+
+            activateTab(
+                'pipelinesTab'
+            );
+        }
+
+
+        /* =========================
+           USERS FILTERS
+           ========================= */
+
+        const userSearch =
+            document.getElementById(
+                'userSearch'
+            );
+
+        const userRoleFilter =
+            document.getElementById(
+                'userRoleFilter'
+            );
+
+        const clearUserFilters =
+            document.getElementById(
+                'clearUserFilters'
+            );
+
+
+        function applyUserFilters() {
+
+            const search =
+                userSearch.value
+                    .trim()
+                    .toLowerCase();
+
+            const role =
+                userRoleFilter.value;
+
+
+            document
+                .querySelectorAll(
+                    '#usersBody tr[data-search]'
+                )
+                .forEach(
+                    function (row) {
+
+                        const matchesSearch =
+                            !search ||
+                            row.dataset.search.includes(
+                                search
+                            );
+
+                        const matchesRole =
+                            !role ||
+                            row.dataset.role === role;
+
+
+                        row.style.display =
+                            (
+                                matchesSearch &&
+                                matchesRole
+                            )
+                            ? ''
+                            : 'none';
+                    }
+                );
+        }
+
+
+        userSearch.addEventListener(
+            'input',
+            applyUserFilters
+        );
+
+
+        userRoleFilter.addEventListener(
+            'change',
+            applyUserFilters
+        );
+
+
+        clearUserFilters.addEventListener(
+            'click',
+            function () {
+
+                userSearch.value = '';
+
+                userRoleFilter.value = '';
+
+                applyUserFilters();
+            }
+        );
+
+
+        /* =========================
+           PIPELINE FILTERS
+           ========================= */
+
+        const pipelineSearch =
+            document.getElementById(
+                'pipelineSearch'
+            );
+
+        const pipelineManagerFilter =
+            document.getElementById(
+                'pipelineManagerFilter'
+            );
+
+        const pipelineProductFilter =
+            document.getElementById(
+                'pipelineProductFilter'
+            );
+
+        const pipelineDateFrom =
+            document.getElementById(
+                'pipelineDateFrom'
+            );
+
+        const pipelineDateTo =
+            document.getElementById(
+                'pipelineDateTo'
+            );
+
+        const clearPipelineFilters =
+            document.getElementById(
+                'clearPipelineFilters'
+            );
+
+
+        function applyPipelineFilters() {
+
+            const search =
+                pipelineSearch.value
+                    .trim()
+                    .toLowerCase();
+
+            const manager =
+                pipelineManagerFilter.value;
+
+            const product =
+                pipelineProductFilter.value;
+
+            const fromDate =
+                pipelineDateFrom.value;
+
+            const toDate =
+                pipelineDateTo.value;
+
+
+            document
+                .querySelectorAll(
+                    '#pipelinesBody tr[data-search]'
+                )
+                .forEach(
+                    function (row) {
+
+                        const createdDate =
+                            row.dataset.createdDate ||
+                            '';
+
+
+                        const matchesSearch =
+                            !search ||
+                            row.dataset.search.includes(
+                                search
+                            );
+
+
+                        const matchesManager =
+                            !manager ||
+                            row.dataset.manager ===
+                                manager;
+
+
+                        const matchesProduct =
+                            !product ||
+                            row.dataset.product ===
+                                product;
+
+
+                        const matchesFrom =
+                            !fromDate ||
+                            (
+                                createdDate &&
+                                createdDate >=
+                                    fromDate
+                            );
+
+
+                        const matchesTo =
+                            !toDate ||
+                            (
+                                createdDate &&
+                                createdDate <=
+                                    toDate
+                            );
+
+
+                        row.style.display =
+                            (
+                                matchesSearch &&
+                                matchesManager &&
+                                matchesProduct &&
+                                matchesFrom &&
+                                matchesTo
+                            )
+                            ? ''
+                            : 'none';
+                    }
+                );
+        }
+
+
+        pipelineSearch.addEventListener(
+            'input',
+            applyPipelineFilters
+        );
+
+
+        pipelineManagerFilter.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+
+
+        pipelineProductFilter.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+
+
+        pipelineDateFrom.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+
+
+        pipelineDateTo.addEventListener(
+            'change',
+            applyPipelineFilters
+        );
+
+
+        clearPipelineFilters.addEventListener(
+            'click',
+            function () {
+
+                pipelineSearch.value = '';
+
+                pipelineManagerFilter.value = '';
+
+                pipelineProductFilter.value = '';
+
+                pipelineDateFrom.value = '';
+
+                pipelineDateTo.value = '';
+
+                applyPipelineFilters();
+            }
+        );
+
+
+        /* =========================
+           USER EDIT MODAL
+           ========================= */
+
+        const userModal =
+            new bootstrap.Modal(
+                document.getElementById(
+                    'userEditModal'
+                )
+            );
+
+        const userForm =
+            document.getElementById(
+                'userEditForm'
+            );
+
+
+        document
+            .querySelectorAll(
+                '.edit-user-button'
+            )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            const empId =
+                                button.dataset.empId;
+
+
+                            userForm.action =
+                                '/super-user/user/' +
+                                empId +
+                                '/edit';
+
+
+                            document.getElementById(
+                                'editUserEmpID'
+                            ).value =
+                                empId;
+
+
+                            document.getElementById(
+                                'editEmployeeName'
+                            ).value =
+                                button.dataset.employeeName;
+
+
+                            document.getElementById(
+                                'editFirstName'
+                            ).value =
+                                button.dataset.firstName;
+
+
+                            document.getElementById(
+                                'editLastName'
+                            ).value =
+                                button.dataset.lastName;
+
+
+                            document.getElementById(
+                                'editUsername'
+                            ).value =
+                                button.dataset.username;
+
+
+                            document.getElementById(
+                                'editRole'
+                            ).value =
+                                button.dataset.role;
+
+
+                            document.getElementById(
+                                'editUserRegion'
+                            ).value =
+                                button.dataset.region;
+
+
+                            document.getElementById(
+                                'editManagerID'
+                            ).value =
+                                button.dataset.managerId;
+
+
+                            document.getElementById(
+                                'editEmail'
+                            ).value =
+                                button.dataset.email;
+
+
+                            document.getElementById(
+                                'editPhone'
+                            ).value =
+                                button.dataset.phone;
+
+
+                            document.getElementById(
+                                'editIsActive'
+                            ).value =
+                                button.dataset.active;
+
+
+                            userModal.show();
+                        }
+                    );
+                }
+            );
+
+
+        /* =========================
+           NUMBER HELPERS
+           ========================= */
+
+        function cleanNumber(
+            value
+        ) {
+
+            return String(
+                value || ''
+            )
+            .replace(
+                /,/g,
+                ''
+            )
+            .replace(
+                /[^\d.]/g,
+                ''
+            );
+        }
+
+
+        function formatNumber(
+            value
+        ) {
+
+            const cleaned =
+                cleanNumber(
+                    value
+                );
+
+
+            if (!cleaned) {
+                return '';
+            }
+
+
+            const number =
+                Number(
+                    cleaned
+                );
+
+
+            if (
+                Number.isNaN(
+                    number
+                )
+            ) {
+                return '';
+            }
+
+
+            return number.toLocaleString(
+                'en-US',
+                {
+                    maximumFractionDigits: 2
+                }
+            );
+        }
+
+
+        function bindCommaInput(
+            input
+        ) {
+
+            input.addEventListener(
+                'input',
+                function () {
+
+                    input.value =
+                        formatNumber(
+                            input.value
+                        );
+                }
+            );
+        }
+
+
+        /* =========================
+           PIPELINE EDIT MODAL
+           ========================= */
+
+        const pipelineModal =
+            new bootstrap.Modal(
+                document.getElementById(
+                    'pipelineEditModal'
+                )
+            );
+
+        const pipelineForm =
+            document.getElementById(
+                'pipelineEditForm'
+            );
+
+        const editMRC =
+            document.getElementById(
+                'editPipelineMRC'
+            );
+
+        const editDuration =
+            document.getElementById(
+                'editPipelineDuration'
+            );
+
+        const editARR =
+            document.getElementById(
+                'editPipelineARR'
+            );
+
+        const editOTC =
+            document.getElementById(
+                'editPipelineOTC'
+            );
+
+        const editRevenue =
+            document.getElementById(
+                'editPipelineRevenue'
+            );
+
+
+        bindCommaInput(
+            editMRC
+        );
+
+        bindCommaInput(
+            editOTC
+        );
+
+        bindCommaInput(
+            editRevenue
+        );
+
+
+        function calculatePipelineARR() {
+
+            const mrc =
+                parseFloat(
+                    cleanNumber(
+                        editMRC.value
+                    )
+                );
+
+            const months =
+                parseInt(
+                    editDuration.value,
+                    10
+                );
+
+
+            const hasMRC =
+                cleanNumber(
+                    editMRC.value
+                ) !== '';
+
+
+            editDuration.required =
+                hasMRC;
+
+
+            if (
+                !Number.isNaN(mrc) &&
+                !Number.isNaN(months)
+            ) {
+
+                editARR.value =
+                    formatNumber(
+                        mrc * months
+                    );
+
+            } else {
+
+                editARR.value = '';
+            }
+        }
+
+
+        editMRC.addEventListener(
+            'input',
+            calculatePipelineARR
+        );
+
+
+        editDuration.addEventListener(
+            'change',
+            calculatePipelineARR
+        );
+
+
+        pipelineForm.addEventListener(
+            'submit',
+            function () {
+
+                editMRC.value =
+                    cleanNumber(
+                        editMRC.value
+                    );
+
+                editOTC.value =
+                    cleanNumber(
+                        editOTC.value
+                    );
+
+                editRevenue.value =
+                    cleanNumber(
+                        editRevenue.value
+                    );
+            }
+        );
+
+
+        document
+            .querySelectorAll(
+                '.edit-pipeline-button'
+            )
+            .forEach(
+                function (button) {
+
+                    button.addEventListener(
+                        'click',
+                        function () {
+
+                            const pipelineId =
+                                button.dataset.pipelineId;
+
+
+                            pipelineForm.action =
+                                '/super-user/pipeline/' +
+                                pipelineId +
+                                '/edit';
+
+
+                            document.getElementById(
+                                'editPipelineID'
+                            ).value =
+                                pipelineId;
+
+
+                            document.getElementById(
+                                'editPipelineManager'
+                            ).value =
+                                button.dataset.accountManager;
+
+
+                            document.getElementById(
+                                'editPipelineVertical'
+                            ).value =
+                                button.dataset.vertical;
+
+
+                            document.getElementById(
+                                'editPipelineAccount'
+                            ).value =
+                                button.dataset.accountName;
+
+
+                            document.getElementById(
+                                'editPipelineProduct'
+                            ).value =
+                                button.dataset.product;
+
+
+                            document.getElementById(
+                                'editPipelineRegion'
+                            ).value =
+                                button.dataset.region;
+
+
+                            editMRC.value =
+                                formatNumber(
+                                    button.dataset.mrc
+                                );
+
+
+                            editDuration.value =
+                                button.dataset.contractDuration;
+
+
+                            editOTC.value =
+                                formatNumber(
+                                    button.dataset.projectOtc
+                                );
+
+
+                            editRevenue.value =
+                                formatNumber(
+                                    button.dataset.totalRevenue
+                                );
+
+
+                            document.getElementById(
+                                'editPipelineClosureDate'
+                            ).value =
+                                button.dataset.closureDate;
+
+
+                            document.getElementById(
+                                'editPipelineStatus'
+                            ).value =
+                                button.dataset.status;
+
+
+                            document.getElementById(
+                                'editPipelineNextAction'
+                            ).value =
+                                button.dataset.nextAction;
+
+
+                            calculatePipelineARR();
+
+
+                            pipelineModal.show();
+                        }
+                    );
+                }
+            );
+
+    }
+);
+
+</script>
+
+
+</body>
+</html>

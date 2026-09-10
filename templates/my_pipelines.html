@@ -211,10 +211,47 @@
             display: grid;
             grid-template-columns:
                 minmax(220px, 1.5fr)
-                repeat(3, minmax(160px, 1fr))
+                repeat(3, minmax(150px, 1fr))
+                minmax(150px, 0.9fr)
+                minmax(150px, 0.9fr)
                 auto;
             gap: 10px;
-            align-items: center;
+            align-items: end;
+        }
+
+        .pipeline-date-filter {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .pipeline-date-filter label {
+            color: #9a9a9a;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin: 0;
+        }
+
+        .pipeline-date-filter input {
+            width: 100%;
+            height: 40px;
+            background: #242424;
+            color: #ffffff;
+            border: 1px solid #3a3a3a;
+            border-radius: 6px;
+            padding: 0 11px;
+            font-size: 13px;
+            color-scheme: dark;
+        }
+
+        .pipeline-date-filter input:focus {
+            outline: none;
+            border-color: #c62828;
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15);
         }
 
         .pipeline-filter-input,
@@ -623,6 +660,8 @@
 
             .pipeline-filter-input,
             .pipeline-filter-select,
+            .pipeline-date-filter,
+            .pipeline-date-filter input,
             .clear-filters-btn {
                 width: 100%;
             }
@@ -1046,12 +1085,20 @@
                     {{ pipelines|length }} Pipelines
                 </div>
 
-                <a
-                    href="{{ url_for('export_pipeline_overview') }}"
+                <button
+                    type="button"
+                    id="downloadPipelineExcel"
                     class="btn-add-pipeline"
                 >
                     Download Excel
-                </a>
+                </button>
+
+                <form
+                    id="pipelineExportForm"
+                    method="POST"
+                    action="{{ url_for('export_pipeline_overview') }}"
+                    style="display:none;"
+                ></form>
 
                 <a href="{{ url_for('add_pipeline') }}" class="btn-add-pipeline">
                     + Add Pipeline
@@ -1091,6 +1138,36 @@
             >
                 <option value="">All Statuses</option>
             </select>
+
+            <div class="pipeline-date-filter">
+
+                <label for="pipelineDateFrom">
+                    From
+                </label>
+
+                <input
+                    type="date"
+                    id="pipelineDateFrom"
+                    aria-label="Pipeline creation date from"
+                >
+
+            </div>
+
+
+            <div class="pipeline-date-filter">
+
+                <label for="pipelineDateTo">
+                    To
+                </label>
+
+                <input
+                    type="date"
+                    id="pipelineDateTo"
+                    aria-label="Pipeline creation date to"
+                >
+
+            </div>
+
 
             <button
                 type="button"
@@ -1238,6 +1315,12 @@
                     {% for p in pipelines %}
 
                     <tr
+                        data-pipeline-id="{{ p[0] }}"
+                        data-created-date="{{
+                            p[14].strftime('%Y-%m-%d')
+                            if p[14]
+                            else ''
+                        }}"
                         data-vertical="{{ p[1] or '' }}"
                         data-account="{{ p[2] or '' }}"
                         data-product="{{ p[3] or '' }}"
@@ -1365,6 +1448,26 @@
             'clearPipelineFilters'
         );
 
+    const pipelineDateFrom =
+        document.getElementById(
+            'pipelineDateFrom'
+        );
+
+    const pipelineDateTo =
+        document.getElementById(
+            'pipelineDateTo'
+        );
+
+    const downloadPipelineExcel =
+        document.getElementById(
+            'downloadPipelineExcel'
+        );
+
+    const pipelineExportForm =
+        document.getElementById(
+            'pipelineExportForm'
+        );
+
     const filteredCount =
         document.getElementById(
             'filteredPipelineCount'
@@ -1471,6 +1574,12 @@
                 statusFilter.value
             );
 
+        const fromDate =
+            pipelineDateFrom.value;
+
+        const toDate =
+            pipelineDateTo.value;
+
 
         let visibleCount = 0;
 
@@ -1514,12 +1623,31 @@
                     row.dataset.status
                 ) === selectedStatus;
 
+            const createdDate =
+                row.dataset.createdDate || '';
+
+            const matchesFrom =
+                !fromDate ||
+                (
+                    createdDate &&
+                    createdDate >= fromDate
+                );
+
+            const matchesTo =
+                !toDate ||
+                (
+                    createdDate &&
+                    createdDate <= toDate
+                );
+
 
             const shouldShow =
                 matchesSearch &&
                 matchesVertical &&
                 matchesProduct &&
-                matchesStatus;
+                matchesStatus &&
+                matchesFrom &&
+                matchesTo;
 
 
             row.style.display =
@@ -1544,7 +1672,9 @@
     [
         verticalFilter,
         productFilter,
-        statusFilter
+        statusFilter,
+        pipelineDateFrom,
+        pipelineDateTo
     ].forEach(filter => {
 
         filter.addEventListener(
@@ -1569,8 +1699,56 @@
             verticalFilter.value = '';
             productFilter.value = '';
             statusFilter.value = '';
+            pipelineDateFrom.value = '';
+            pipelineDateTo.value = '';
 
             applyPipelineFilters();
+
+        }
+    );
+
+
+    /* =========================
+       DOWNLOAD CURRENT FILTERED VIEW
+    ========================= */
+
+    downloadPipelineExcel.addEventListener(
+        'click',
+        function () {
+
+            pipelineExportForm.innerHTML = '';
+
+            pipelineRows.forEach(row => {
+
+                if (
+                    row.style.display === 'none'
+                ) {
+                    return;
+                }
+
+                const pipelineId =
+                    row.dataset.pipelineId;
+
+                if (!pipelineId) {
+                    return;
+                }
+
+                const input =
+                    document.createElement(
+                        'input'
+                    );
+
+                input.type = 'hidden';
+                input.name = 'pipeline_id';
+                input.value = pipelineId;
+
+                pipelineExportForm.appendChild(
+                    input
+                );
+
+            });
+
+            pipelineExportForm.submit();
 
         }
     );
