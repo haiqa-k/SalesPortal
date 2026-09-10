@@ -1730,8 +1730,6 @@ def teamlead_dashboard():
         all_statuses=all_statuses
     )
 
-
-
 @app.route("/add_pipeline", methods=["GET", "POST"])
 def add_pipeline():
 
@@ -1782,6 +1780,17 @@ def add_pipeline():
         "Retired - No Decision"
     ]
 
+    contract_durations = [
+        3,
+        6,
+        9,
+        12,
+        15,
+        18,
+        21,
+        24
+    ]
+
     # Logged-in Account Manager
     edo_name = (
         session.get("employee_name")
@@ -1800,7 +1809,8 @@ def add_pipeline():
             verticals=verticals,
             products=products,
             regions=regions,
-            statuses=statuses
+            statuses=statuses,
+            contract_durations=contract_durations
         )
 
 
@@ -1813,14 +1823,25 @@ def add_pipeline():
     product = request.form.get("product")
     region = request.form.get("region")
 
-    mrc = request.form.get("mrc")
-    contract_duration = request.form.get("contract_duration")
-    arr = request.form.get("arr")
+    mrc_input = (
+        request.form.get("mrc")
+        or ""
+    ).strip()
+
+    contract_duration_input = (
+        request.form.get("contract_duration")
+        or ""
+    ).strip()
+
     project_otc = request.form.get("project_otc")
-    total_project_revenue = request.form.get("total_project_revenue")
+    total_project_revenue = request.form.get(
+        "total_project_revenue"
+    )
 
     closure_date = request.form.get("closure_date")
-    sales_cycle_status = request.form.get("sales_cycle_status")
+    sales_cycle_status = request.form.get(
+        "sales_cycle_status"
+    )
     next_action = request.form.get("next_action")
 
 
@@ -1857,13 +1878,60 @@ def add_pipeline():
 
 
     # =========================
-    # CONVERT NUMBERS
+    # MRC + CONTRACT DURATION
     # =========================
 
-    mrc = float(mrc) if mrc else None
-    contract_duration = float(contract_duration) if contract_duration else None
-    arr = float(arr) if arr else None
-    project_otc = float(project_otc) if project_otc else None
+    mrc = (
+        float(mrc_input)
+        if mrc_input
+        else None
+    )
+
+    contract_duration = None
+
+    if contract_duration_input:
+        try:
+            contract_duration = int(
+                contract_duration_input
+            )
+        except ValueError:
+            return "Invalid Contract Duration selected.", 400
+
+        if contract_duration not in contract_durations:
+            return "Invalid Contract Duration selected.", 400
+
+
+    # Contract Duration becomes mandatory if MRC is entered
+    if (
+        mrc is not None
+        and contract_duration is None
+    ):
+        return (
+            "Contract Duration is required when MRC is entered.",
+            400
+        )
+
+
+    # ARR is calculated server-side
+    arr = None
+
+    if (
+        mrc is not None
+        and contract_duration is not None
+    ):
+        arr = mrc * contract_duration
+
+
+    # =========================
+    # OTHER NUMBER FIELDS
+    # =========================
+
+    project_otc = (
+        float(project_otc)
+        if project_otc
+        else None
+    )
+
     total_project_revenue = (
         float(total_project_revenue)
         if total_project_revenue
@@ -1875,7 +1943,6 @@ def add_pipeline():
     # CLOSURE DATE
     # =========================
 
-    # Keep all three date columns populated for now
     closure_date_obj = datetime.strptime(
         closure_date,
         "%Y-%m-%d"
@@ -1944,7 +2011,6 @@ def add_pipeline():
     cursor.close()
 
     return redirect(url_for("my_pipelines"))
-
 
 
 @app.route("/regional-manager")
@@ -5409,6 +5475,6 @@ def comma_format(value):
     except (ValueError, TypeError):
         return value
 
-        
+
 if __name__ == "__main__":
     app.run(debug=True)

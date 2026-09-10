@@ -426,11 +426,17 @@
                     </label>
 
                     <input
-                        type="number"
+                        type="text"
+                        id="mrc_display"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="0"
+                    >
+
+                    <input
+                        type="hidden"
                         id="mrc"
                         name="mrc"
-                        step="0.01"
-                        min="0"
                     >
 
                 </div>
@@ -444,13 +450,20 @@
                         Contract Duration (Months)
                     </label>
 
-                    <input
-                        type="number"
+                    <select
                         id="contract_duration"
                         name="contract_duration"
-                        step="0.01"
-                        min="0"
                     >
+                        <option value="">
+                            Select Duration
+                        </option>
+
+                        {% for months in contract_durations %}
+                            <option value="{{ months }}">
+                                {{ months }} Months
+                            </option>
+                        {% endfor %}
+                    </select>
 
                 </div>
 
@@ -464,11 +477,16 @@
                     </label>
 
                     <input
-                        type="number"
+                        type="text"
+                        id="arr_display"
+                        readonly
+                        placeholder="0"
+                    >
+
+                    <input
+                        type="hidden"
                         id="arr"
                         name="arr"
-                        step="0.01"
-                        min="0"
                     >
 
                 </div>
@@ -483,11 +501,17 @@
                     </label>
 
                     <input
-                        type="number"
+                        type="text"
+                        id="project_otc_display"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="0"
+                    >
+
+                    <input
+                        type="hidden"
                         id="project_otc"
                         name="project_otc"
-                        step="0.01"
-                        min="0"
                     >
 
                 </div>
@@ -502,11 +526,17 @@
                     </label>
 
                     <input
-                        type="number"
+                        type="text"
+                        id="total_project_revenue_display"
+                        inputmode="decimal"
+                        autocomplete="off"
+                        placeholder="0"
+                    >
+
+                    <input
+                        type="hidden"
                         id="total_project_revenue"
                         name="total_project_revenue"
-                        step="0.01"
-                        min="0"
                     >
 
                 </div>
@@ -623,6 +653,237 @@
     </div>
 
 </div>
+
+
+<script>
+document.addEventListener(
+    'DOMContentLoaded',
+    function () {
+
+        const mrcDisplay =
+            document.getElementById(
+                'mrc_display'
+            );
+
+        const mrcInput =
+            document.getElementById(
+                'mrc'
+            );
+
+        const contractDuration =
+            document.getElementById(
+                'contract_duration'
+            );
+
+        const arrDisplay =
+            document.getElementById(
+                'arr_display'
+            );
+
+        const arrInput =
+            document.getElementById(
+                'arr'
+            );
+
+        const projectOtcDisplay =
+            document.getElementById(
+                'project_otc_display'
+            );
+
+        const projectOtcInput =
+            document.getElementById(
+                'project_otc'
+            );
+
+        const totalRevenueDisplay =
+            document.getElementById(
+                'total_project_revenue_display'
+            );
+
+        const totalRevenueInput =
+            document.getElementById(
+                'total_project_revenue'
+            );
+
+
+        function cleanNumber(value) {
+
+            return (
+                value
+                    .replace(/,/g, '')
+                    .replace(/[^\d.]/g, '')
+            );
+        }
+
+
+        function formatNumber(value) {
+
+            if (
+                value === '' ||
+                value === null ||
+                value === undefined
+            ) {
+                return '';
+            }
+
+            const cleanValue =
+                cleanNumber(
+                    String(value)
+                );
+
+            if (cleanValue === '') {
+                return '';
+            }
+
+            const parts =
+                cleanValue.split('.');
+
+            const integerPart =
+                parts[0] || '0';
+
+            const decimalPart =
+                parts.length > 1
+                    ? parts[1]
+                    : null;
+
+            const formattedInteger =
+                Number(integerPart)
+                    .toLocaleString('en-US');
+
+            return (
+                decimalPart !== null
+                    ? formattedInteger +
+                      '.' +
+                      decimalPart
+                    : formattedInteger
+            );
+        }
+
+
+        function bindFormattedNumber(
+            displayInput,
+            hiddenInput
+        ) {
+
+            displayInput.addEventListener(
+                'input',
+                function () {
+
+                    const cleaned =
+                        cleanNumber(
+                            displayInput.value
+                        );
+
+                    hiddenInput.value =
+                        cleaned;
+
+                    displayInput.value =
+                        formatNumber(
+                            cleaned
+                        );
+                }
+            );
+        }
+
+
+        bindFormattedNumber(
+            mrcDisplay,
+            mrcInput
+        );
+
+        bindFormattedNumber(
+            projectOtcDisplay,
+            projectOtcInput
+        );
+
+        bindFormattedNumber(
+            totalRevenueDisplay,
+            totalRevenueInput
+        );
+
+
+        function updateMrcRequirements() {
+
+            const hasMrc =
+                mrcInput.value.trim() !== '';
+
+            contractDuration.required =
+                hasMrc;
+
+            if (!hasMrc) {
+
+                arrInput.value = '';
+
+                arrDisplay.value = '';
+            }
+        }
+
+
+        function calculateArr() {
+
+            const mrc =
+                parseFloat(
+                    mrcInput.value
+                );
+
+            const months =
+                parseInt(
+                    contractDuration.value,
+                    10
+                );
+
+            if (
+                !Number.isNaN(mrc) &&
+                !Number.isNaN(months)
+            ) {
+
+                const arr =
+                    mrc * months;
+
+                arrInput.value =
+                    arr.toFixed(2);
+
+                arrDisplay.value =
+                    arr.toLocaleString(
+                        'en-US',
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+            } else {
+
+                arrInput.value = '';
+
+                arrDisplay.value = '';
+            }
+        }
+
+
+        mrcDisplay.addEventListener(
+            'input',
+            function () {
+
+                updateMrcRequirements();
+
+                calculateArr();
+            }
+        );
+
+
+        contractDuration.addEventListener(
+            'change',
+            calculateArr
+        );
+
+
+        updateMrcRequirements();
+
+        calculateArr();
+    }
+);
+</script>
 
 </body>
 </html>
