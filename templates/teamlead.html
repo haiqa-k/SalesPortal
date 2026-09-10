@@ -1098,6 +1098,7 @@
 
                 </div>
 
+
                 {{ column_selector(
                     [
                         ('account-manager', 'Account Manager'),
@@ -1125,6 +1126,13 @@
                         'status'
                     ]
                 ) }}
+                    
+                <a
+                    href="{{ url_for('export_pipeline_overview') }}"
+                    class="btn-add-pipeline"
+                >
+                    Download Excel
+                </a>
 
             </div>
 
