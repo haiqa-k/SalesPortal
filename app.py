@@ -5393,6 +5393,22 @@ def executive_regional_head_dashboard(regional_head_id):
     )
 
 
+@app.template_filter("comma")
+def comma_format(value):
+    if value is None:
+        return "0"
 
+    try:
+        number = float(value)
+
+        if number.is_integer():
+            return f"{int(number):,}"
+
+        return f"{number:,.2f}"
+
+    except (ValueError, TypeError):
+        return value
+
+        
 if __name__ == "__main__":
     app.run(debug=True)

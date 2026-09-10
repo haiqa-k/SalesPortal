@@ -1426,7 +1426,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalMRC }}
+                        {{ summary.TotalMRC | comma }}
                     </p>
 
                 </div>
@@ -1448,7 +1448,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalOTC }}
+                        {{ summary.TotalOTC | comma }}
                     </p>
 
                 </div>
@@ -1470,7 +1470,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalRevenue }}
+                        {{ summary.TotalRevenue | comma }}
                     </p>
 
                 </div>
@@ -2500,7 +2500,7 @@
                         <td
                             data-col="mrc"
                         >
-                            {{ pipeline.MRC or 0 }}
+                            {{ pipeline.MRC | comma or 0 }}
                         </td>
 
 
@@ -2514,21 +2514,21 @@
                         <td
                             data-col="arr"
                         >
-                            {{ pipeline.ARR or 0 }}
+                            {{ pipeline.ARR | comma or 0 }}
                         </td>
 
 
                         <td
                             data-col="project-otc"
                         >
-                            {{ pipeline.ProjectOTC or 0 }}
+                            {{ pipeline.ProjectOTC | comma or 0 }}
                         </td>
 
 
                         <td
                             data-col="total-revenue"
                         >
-                            {{ pipeline.TotalProjectRevenue or 0 }}
+                            {{ pipeline.TotalProjectRevenue | comma or 0 }}
                         </td>
 
 

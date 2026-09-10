@@ -729,7 +729,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalRevenue }}
+                        {{ summary.TotalRevenue | comma }}
                     </p>
 
                 </div>
@@ -750,7 +750,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalMRC }}
+                        {{ summary.TotalMRC | comma }}
                     </p>
 
                 </div>
@@ -771,7 +771,7 @@
                     </div>
 
                     <p class="summary-value">
-                        {{ summary.TotalOTC }}
+                        {{ summary.TotalOTC | comma }}
                     </p>
 
                 </div>
@@ -1276,7 +1276,7 @@
                         </td>
 
                         <td>
-                            {{ p[5] }}
+                            {{ p[5] | comma }}
                         </td>
 
                         <td>
@@ -1284,15 +1284,15 @@
                         </td>
 
                         <td>
-                            {{ p[7] }}
+                            {{ p[7] | comma }}
                         </td>
 
                         <td>
-                            {{ p[8] }}
+                            {{ p[8] | comma }}
                         </td>
 
                         <td>
-                            {{ p[9] }}
+                            {{ p[9] | comma }}
                         </td>
 
                         <td>
