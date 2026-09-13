@@ -4254,8 +4254,21 @@ def executive_dashboard():
     def find_ancestor(user, required_role):
 
         current = user
+        visited = set()
 
         while current:
+
+            emp_id = current["EmpID"]
+
+            if emp_id in visited:
+                print(
+                    "[HIERARCHY CYCLE DETECTED]",
+                    current["EmployeeName"],
+                    emp_id
+                )
+                return None
+
+            visited.add(emp_id)
 
             if current["Role"] == required_role:
                 return current
