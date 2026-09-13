@@ -699,6 +699,148 @@
         }
 
 
+        /* =============================================
+           PIPELINE OVERVIEW FILTER LAYOUT
+        ============================================= */
+
+        #pipelineFilters {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        #pipelineFilters select,
+        #pipelineFilters input[type="text"],
+        #pipelineFilters .active-pipeline-filter,
+        #pipelineFilters .pipeline-date-filter {
+            height: 40px;
+            min-height: 40px;
+            box-sizing: border-box;
+            margin: 0;
+        }
+
+        #pipelineFilters input[type="text"] {
+            min-width: 260px;
+            flex: 1 1 280px;
+            max-width: 340px;
+        }
+
+        #pipelineFilters select {
+            min-width: 150px;
+        }
+
+        #pipelineFilters #statusFilter {
+            width: 125px;
+            min-width: 125px;
+            max-width: 125px;
+        }
+
+        #pipelineFilters .pipeline-date-filter {
+            width: 178px;
+            min-width: 178px;
+            height: 40px;
+
+            display: inline-flex;
+            align-items: center;
+
+            background: #242424;
+            border: 1px solid #444444;
+            border-radius: 6px;
+
+            overflow: hidden;
+            box-sizing: border-box;
+        }
+
+        #pipelineFilters .pipeline-date-filter label {
+            margin: 0;
+            padding: 0 8px 0 10px;
+
+            color: #9a9a9a;
+            font-size: 11px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        #pipelineFilters .pipeline-date-filter input {
+            flex: 1 1 auto;
+            width: 0;
+            min-width: 0;
+
+            height: 38px;
+            min-height: 38px;
+
+            margin: 0;
+            padding: 0 8px 0 0;
+
+            background: transparent;
+            color: #ffffff;
+
+            border: none;
+            border-radius: 0;
+
+            box-sizing: border-box;
+            font-size: 12px;
+            color-scheme: dark;
+        }
+
+        #pipelineFilters .pipeline-date-filter:focus-within {
+            border-color: #c62828;
+
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15);
+        }
+
+        .pipeline-filter-inline-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+
+            margin-left: auto;
+        }
+
+        .pipeline-clear-button {
+            width: 68px;
+            min-width: 68px;
+            height: 40px;
+            min-height: 40px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            background: #292929;
+            color: #ffffff;
+
+            border: 1px solid #444444;
+            border-radius: 6px;
+
+            font-size: 13px;
+            white-space: nowrap;
+        }
+
+        .pipeline-filter-inline-actions .btn-add-pipeline {
+            width: 118px;
+            min-width: 118px;
+            height: 40px;
+            min-height: 40px;
+
+            margin: 0;
+            padding: 0 12px;
+
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+
+            box-sizing: border-box;
+            white-space: nowrap;
+        }
+
+
         .active-pipeline-filter {
 
             display: inline-flex;
@@ -2940,7 +3082,7 @@
 
         <!-- FILTERS -->
 
-        <div class="filters">
+        <div class="filters" id="pipelineFilters">
 
 
             <input
@@ -3072,6 +3214,36 @@
             </select>
 
 
+            <div class="pipeline-date-filter">
+
+                <label for="pipelineDateFrom">
+                    From
+                </label>
+
+                <input
+                    type="date"
+                    id="pipelineDateFrom"
+                    aria-label="Pipeline creation date from"
+                >
+
+            </div>
+
+
+            <div class="pipeline-date-filter">
+
+                <label for="pipelineDateTo">
+                    To
+                </label>
+
+                <input
+                    type="date"
+                    id="pipelineDateTo"
+                    aria-label="Pipeline creation date to"
+                >
+
+            </div>
+
+
             <label class="active-pipeline-filter">
 
                 <input
@@ -3135,12 +3307,33 @@
                 </option>
 
             </select>
-            <a
-                href="{{ url_for('export_pipeline_overview') }}"
-                class="btn-add-pipeline"
-            >
-                Download Excel
-            </a>
+
+            <div class="pipeline-filter-inline-actions">
+
+                <button
+                    type="button"
+                    id="clearPipelineFilters"
+                    class="pipeline-clear-button"
+                >
+                    Clear
+                </button>
+
+                <button
+                    type="button"
+                    id="downloadPipelineExcel"
+                    class="btn-add-pipeline"
+                >
+                    Download Excel
+                </button>
+
+                <form
+                    id="pipelineExportForm"
+                    method="POST"
+                    action="{{ url_for('export_pipeline_overview') }}"
+                    style="display:none;"
+                ></form>
+
+            </div>
 
         </div>
 
@@ -3239,6 +3432,12 @@
                     {% for p in pipelines %}
 
                         <tr
+                            data-pipeline-id="{{ p.PipelineID }}"
+                            data-created-date="{{
+                                p.CreatedAt.strftime('%Y-%m-%d')
+                                if p.CreatedAt
+                                else ''
+                            }}"
                             data-rh="{{ p.RegionalHead }}"
                             data-rm="{{ p.RegionalManager }}"
                             data-tl="{{ p.TeamLead }}"
@@ -5228,7 +5427,9 @@ if (productMixCanvas) {
         "edoFilter",
         "regionFilter",
         "productFilter",
-        "statusFilter"
+        "statusFilter",
+        "pipelineDateFrom",
+        "pipelineDateTo"
     ];
 
 
@@ -5307,6 +5508,16 @@ if (productMixCanvas) {
         const status =
             getPipelineFilterValue(
                 "statusFilter"
+            );
+
+        const fromDate =
+            getPipelineFilterValue(
+                "pipelineDateFrom"
+            );
+
+        const toDate =
+            getPipelineFilterValue(
+                "pipelineDateTo"
             );
 
 
@@ -5392,6 +5603,28 @@ if (productMixCanvas) {
                         &&
 
                         (
+                            !fromDate ||
+                            (
+                                row.dataset.createdDate &&
+                                row.dataset.createdDate >=
+                                    fromDate
+                            )
+                        )
+
+                        &&
+
+                        (
+                            !toDate ||
+                            (
+                                row.dataset.createdDate &&
+                                row.dataset.createdDate <=
+                                    toDate
+                            )
+                        )
+
+                        &&
+
+                        (
                             !activeOnly ||
 
                             activePipelineStatuses.includes(
@@ -5411,8 +5644,20 @@ if (productMixCanvas) {
         rows.forEach(
             function (row) {
 
+                row.dataset.filterMatch =
+                    "false";
+
                 row.style.display =
                     "none";
+            }
+        );
+
+
+        matchingRows.forEach(
+            function (row) {
+
+                row.dataset.filterMatch =
+                    "true";
             }
         );
 
@@ -5548,6 +5793,116 @@ if (productMixCanvas) {
                     false;
 
                 updatePipelineTable();
+            }
+        );
+    }
+
+
+    const clearPipelineFilters =
+        document.getElementById(
+            "clearPipelineFilters"
+        );
+
+
+    if (clearPipelineFilters) {
+
+        clearPipelineFilters.addEventListener(
+            "click",
+            function () {
+
+                filters.forEach(
+                    function (id) {
+
+                        const element =
+                            document.getElementById(id);
+
+                        if (element) {
+                            element.value = "";
+                        }
+                    }
+                );
+
+                if (pipelineSearch) {
+                    pipelineSearch.value = "";
+                }
+
+                if (activePipelineFilter) {
+                    activePipelineFilter.checked = false;
+                }
+
+                showAllPipelines = false;
+
+                updatePipelineTable();
+            }
+        );
+    }
+
+
+    const downloadPipelineExcel =
+        document.getElementById(
+            "downloadPipelineExcel"
+        );
+
+    const pipelineExportForm =
+        document.getElementById(
+            "pipelineExportForm"
+        );
+
+
+    if (
+        downloadPipelineExcel &&
+        pipelineExportForm
+    ) {
+
+        downloadPipelineExcel.addEventListener(
+            "click",
+            function () {
+
+                updatePipelineTable();
+
+                pipelineExportForm.innerHTML =
+                    "";
+
+                const exportRows =
+                    Array.from(
+                        document.querySelectorAll(
+                            "#pipelineTable tbody tr[data-pipeline-id]"
+                        )
+                    );
+
+                exportRows.forEach(
+                    function (row) {
+
+                        if (
+                            row.dataset.filterMatch !==
+                            "true"
+                        ) {
+                            return;
+                        }
+
+                        const pipelineId =
+                            row.dataset.pipelineId;
+
+                        if (!pipelineId) {
+                            return;
+                        }
+
+                        const input =
+                            document.createElement(
+                                "input"
+                            );
+
+                        input.type = "hidden";
+                        input.name = "pipeline_id";
+                        input.value = pipelineId;
+
+                        pipelineExportForm.appendChild(
+                            input
+                        );
+                    }
+                );
+
+                pipelineExportForm.submit();
             }
         );
     }

@@ -4307,7 +4307,8 @@ def executive_dashboard():
             p.[Estimated Closure Month],     -- 12
             p.EstimatedClosureDateFull,      -- 13
             p.[Sales Cycle Status],          -- 14
-            p.[Next Action]                  -- 15
+            p.[Next Action],                 -- 15
+            p.CreatedAt                      -- 16
 
         FROM Pipelines p
 
@@ -4714,6 +4715,8 @@ def executive_dashboard():
             "Status": status,
 
             "NextAction": row[15],
+
+            "CreatedAt": row[16],
 
             "DaysRemaining": days_remaining
         })
@@ -5510,7 +5513,9 @@ def executive_regional_head_dashboard(regional_head_id):
             p.[Total Project Revenue],
             p.EstimatedClosureDateFull,
             p.[Sales Cycle Status],
-            p.[Next Action]
+            p.[Next Action],
+            p.PipelineID,
+            p.CreatedAt
 
         FROM Pipelines p
 
@@ -5543,7 +5548,9 @@ def executive_regional_head_dashboard(regional_head_id):
             "TotalProjectRevenue": row[12],
             "EstimatedClosureDateFull": row[13],
             "SalesCycleStatus": row[14],
-            "NextAction": row[15]
+            "NextAction": row[15],
+            "PipelineID": row[16],
+            "CreatedAt": row[17]
         }
         for row in cursor.fetchall()
     ]
