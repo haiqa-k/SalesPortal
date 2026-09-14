@@ -94,11 +94,9 @@ def login():
         row = cursor.fetchone()
 
         if row:
-            # Unpack all values properly
             user_id, employee_name, first_name, last_name, stored_hash, role = row
 
             if bcrypt.checkpw(password.encode("utf-8"), stored_hash.encode("utf-8")):
-                # Store both names in session
                 session["user_id"] = user_id
                 session["username"] = username
                 session["employee_name"] = employee_name
@@ -379,9 +377,6 @@ def export_pipeline_overview():
 
     try:
 
-        # ====================================================
-        # GET PIPELINES USER IS ACTUALLY AUTHORIZED TO EXPORT
-        # ====================================================
 
         if role in {
             "HOD",
@@ -500,12 +495,6 @@ def export_pipeline_overview():
         )
 
 
-        # ====================================================
-        # APPLY CURRENT BROWSER FILTER RESULTS
-        #
-        # We only keep submitted IDs that also exist inside the
-        # logged-in user's authorized pipeline dataset.
-        # ====================================================
 
         if request.method == "POST":
 
@@ -579,7 +568,7 @@ def export_pipeline_overview():
         # DATA
         #
         # row[0] is PipelineID and is used only for filtering.
-        # We don't put it in the Excel file.
+        # Not added in excel file.
         # ====================================================
 
         for row_number, row in enumerate(
@@ -746,14 +735,6 @@ def my_pipelines():
     cursor = conn.cursor()
 
 
-    # ========================================================
-    # ACTIVE PIPELINE STATUSES
-    #
-    # Only these are considered active for:
-    # - Upcoming Deadlines
-    # - Overdue Pipelines
-    # ========================================================
-
     active_statuses = (
         "Customer Visit (20%)",
         "Ask for Proposal (40%)",
@@ -764,9 +745,6 @@ def my_pipelines():
 
     # ========================================================
     # PIPELINES FOR THIS USER
-    #
-    # Uses EstimatedClosureDateFull instead of the old
-    # separate day/month fields.
     # ========================================================
 
     cursor.execute("""
@@ -1010,16 +988,6 @@ def edit_pipeline(pipeline_id):
 
     try:
 
-        # ========================================================
-        # LOAD CURRENT PIPELINE
-        #
-        # Existing indices remain unchanged:
-        #   pipeline[1] = Account Name
-        #   pipeline[4] = Next Action
-        #   pipeline[5] = Sales Cycle Status
-        #
-        # Full closure date is appended at pipeline[6].
-        # ========================================================
 
         cursor.execute("""
             SELECT
@@ -1045,12 +1013,6 @@ def edit_pipeline(pipeline_id):
         original_closure_date = pipeline[6]
 
 
-        # ========================================================
-        # COUNT FORWARD DATE EXTENSIONS SINCE LAST STATUS CHANGE
-        #
-        # Only forward moves count.
-        # A Sales Cycle Status change resets the effective count.
-        # ========================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -1171,13 +1133,6 @@ def edit_pipeline(pipeline_id):
                 and extension_count >= 3
             )
 
-
-            # ====================================================
-            # SERVER-SIDE ENFORCEMENT
-            #
-            # The popup is UX only. This prevents bypassing the
-            # requirement by disabling JavaScript.
-            # ====================================================
 
             if (
                 repeated_extension
@@ -2029,11 +1984,6 @@ def add_pipeline():
     closure_day = closure_date_obj.day
     closure_month = closure_date_obj.strftime("%B")
 
-
-    # =========================
-    # ACCOUNT MANAGER
-    # =========================
-
     account_manager = edo_name
 
 
@@ -2381,9 +2331,6 @@ def regional_manager_dashboard():
     # Filter options:
     # - Team Leads
     # - EDOs
-    #
-    # Used by client-side chart filter so the page does NOT
-    # reload when a person is selected.
     # ========================================================
 
     status_users = [
@@ -2520,9 +2467,6 @@ def regional_manager_dashboard():
     # - RM
     # - Team Leads
     # - EDOs
-    #
-    # IMPORTANT:
-    # EmpID is now included so HTML can filter by individual.
     # ========================================================
 
     cursor.execute("""
@@ -3511,9 +3455,6 @@ def regional_head_dashboard():
     # Regional Head view:
     # - All Team Leads
     # - All EDOs
-    #
-    # Used by client-side chart filter so selecting a person
-    # updates only the pie chart and does not reload the page.
     # ========================================================
 
     status_users = [
@@ -4038,24 +3979,42 @@ def regional_head_dashboard():
 
     history = []
     history_users = []
+    history_fields = []
 
     history_cursor = conn.cursor()
 
     history_cursor.execute("""
         SELECT
-            HistoryID,
-            PipelineID,
-            [Account Name],
-            FieldName,
-            OldValue,
-            NewValue,
-            EditedBy,
-            EditedOn,
-            IsRepeatedExtension,
-            ExtensionReason,
-            ExtensionCount
-        FROM dbo.History
-        ORDER BY EditedOn DESC
+            h.HistoryID,
+            h.PipelineID,
+            h.[Account Name],
+            h.FieldName,
+            h.OldValue,
+            h.NewValue,
+            h.EditedBy,
+            h.EditedOn,
+            h.IsRepeatedExtension,
+            h.ExtensionReason,
+            h.ExtensionCount,
+
+            CASE
+                WHEN h.FieldName = 'Account Manager'
+                    THEN COALESCE(
+                        NULLIF(
+                            LTRIM(RTRIM(h.OldValue)),
+                            ''
+                        ),
+                        p.[Account Manager]
+                    )
+                ELSE p.[Account Manager]
+            END AS AccountManager
+
+        FROM dbo.History h
+
+        LEFT JOIN dbo.Pipelines p
+            ON h.PipelineID = p.PipelineID
+
+        ORDER BY h.EditedOn DESC
     """)
 
     history = [
@@ -4070,10 +4029,18 @@ def regional_head_dashboard():
             "EditedOn": row[7],
             "IsRepeatedExtension": bool(row[8]),
             "ExtensionReason": row[9],
-            "ExtensionCount": row[10]
+            "ExtensionCount": row[10],
+            "AccountManager": row[11]
         }
         for row in history_cursor.fetchall()
     ]
+
+
+    history_fields = sorted({
+        item["FieldName"]
+        for item in history
+        if item["FieldName"]
+    })
 
 
     history_cursor.execute("""
@@ -4092,9 +4059,7 @@ def regional_head_dashboard():
     ]
 
     history_cursor.close()
-    # ========================================================
-    # RENDER
-    # ========================================================
+
 
     return render_template(
         "regional_head.html",
@@ -4120,6 +4085,7 @@ def regional_head_dashboard():
         overdue_pipelines=overdue_pipelines,
         history=history,
         history_users=history_users,
+        history_fields=history_fields,
     )
 
 
@@ -4128,10 +4094,6 @@ from datetime import date
 
 @app.route("/executive-dashboard")
 def executive_dashboard():
-
-    # =====================================================
-    # SECURITY
-    # =====================================================
 
     if "user_id" not in session:
         return redirect(url_for("login"))
@@ -4186,10 +4148,6 @@ def executive_dashboard():
             "ManagerID": row[5]
         }
 
-
-    # =====================================================
-    # USERS BY ROLE
-    # =====================================================
 
     regional_heads = [
         u for u in users.values()
@@ -4267,13 +4225,6 @@ def executive_dashboard():
 
         return None
 
-
-    # =====================================================
-    # GET PIPELINES
-    #
-    # IMPORTANT:
-    # Uses canonical EmployeeName matching.
-    # =====================================================
 
     cursor.execute("""
         SELECT
@@ -4871,6 +4822,7 @@ def executive_dashboard():
 
     history = []
     history_users = []
+    history_fields = []
 
     if role in ["Admin", "HOD"]:
 
@@ -4878,19 +4830,36 @@ def executive_dashboard():
 
         history_cursor.execute("""
             SELECT
-                HistoryID,
-                PipelineID,
-                [Account Name],
-                FieldName,
-                OldValue,
-                NewValue,
-                EditedBy,
-                EditedOn,
-                IsRepeatedExtension,
-                ExtensionReason,
-                ExtensionCount
-            FROM dbo.History
-            ORDER BY EditedOn DESC
+                h.HistoryID,
+                h.PipelineID,
+                h.[Account Name],
+                h.FieldName,
+                h.OldValue,
+                h.NewValue,
+                h.EditedBy,
+                h.EditedOn,
+                h.IsRepeatedExtension,
+                h.ExtensionReason,
+                h.ExtensionCount,
+
+                CASE
+                    WHEN h.FieldName = 'Account Manager'
+                        THEN COALESCE(
+                            NULLIF(
+                                LTRIM(RTRIM(h.OldValue)),
+                                ''
+                            ),
+                            p.[Account Manager]
+                        )
+                    ELSE p.[Account Manager]
+                END AS AccountManager
+
+            FROM dbo.History h
+
+            LEFT JOIN dbo.Pipelines p
+                ON h.PipelineID = p.PipelineID
+
+            ORDER BY h.EditedOn DESC
         """)
 
         history = [
@@ -4905,10 +4874,18 @@ def executive_dashboard():
                 "EditedOn": row[7],
                 "IsRepeatedExtension": bool(row[8]),
                 "ExtensionReason": row[9],
-                "ExtensionCount": row[10]
+                "ExtensionCount": row[10],
+                "AccountManager": row[11]
             }
             for row in history_cursor.fetchall()
         ]
+
+
+        history_fields = sorted({
+            item["FieldName"]
+            for item in history
+            if item["FieldName"]
+        })
 
 
         history_cursor.execute("""
@@ -4988,20 +4965,17 @@ def executive_dashboard():
             history,
 
         history_users=
-            history_users
+            history_users,
+
+        history_fields=
+            history_fields
     )
 
 
-# ============================================================
-# EXECUTIVE -> REGIONAL HEAD DRILL-DOWN
-# ============================================================
 
 @app.route("/executive-dashboard/regional-head/<int:regional_head_id>")
 def executive_regional_head_dashboard(regional_head_id):
 
-    # -------------------------
-    # ACCESS CHECK
-    # -------------------------
 
     if "user_id" not in session:
         return redirect(url_for("login"))
@@ -5024,10 +4998,6 @@ def executive_regional_head_dashboard(regional_head_id):
 
     cursor = conn.cursor()
 
-
-    # ========================================================
-    # REGIONAL HEAD
-    # ========================================================
 
     cursor.execute("""
         SELECT
@@ -5052,10 +5022,6 @@ def executive_regional_head_dashboard(regional_head_id):
 
     regional_head_name = regional_head_row[1]
 
-
-    # ========================================================
-    # USERS IN THIS REGIONAL HEAD ORGANIZATION
-    # ========================================================
 
     cursor.execute("""
         WITH UserHierarchy AS (
@@ -5131,9 +5097,6 @@ def executive_regional_head_dashboard(regional_head_id):
     ]
 
 
-    # ========================================================
-    # SUMMARY
-    # ========================================================
 
     cursor.execute("""
         WITH UserHierarchy AS (
@@ -5221,10 +5184,6 @@ def executive_regional_head_dashboard(regional_head_id):
     }
 
 
-    # ========================================================
-    # REVENUE BY REGIONAL MANAGER
-    # ========================================================
-
     cursor.execute("""
         WITH RMHierarchy AS (
 
@@ -5297,10 +5256,6 @@ def executive_regional_head_dashboard(regional_head_id):
         manager_names.append(row[1])
         manager_revenues.append(row[2] or 0)
 
-
-    # ========================================================
-    # PIPELINE STATUS BY PERSON
-    # ========================================================
 
     cursor.execute("""
         WITH UserHierarchy AS (
@@ -5585,10 +5540,6 @@ def super_user_dashboard():
 
     try:
 
-        # ========================================================
-        # USERS
-        # ========================================================
-
         cursor.execute("""
             SELECT
                 EmpID,
@@ -5793,11 +5744,6 @@ def super_user_dashboard():
 
 
 
-
-# ============================================================
-# SUPER USER - ADD USER
-# ============================================================
-
 @app.route(
     "/super-user/user/add",
     methods=["POST"]
@@ -5873,9 +5819,9 @@ def super_user_add_user():
         )
 
 
-        # --------------------------------------------------------
+        # ====================================================
         # REQUIRED VALUES
-        # --------------------------------------------------------
+        # ====================================================
 
         if not all([
             emp_id_input,
@@ -5906,10 +5852,6 @@ def super_user_add_user():
             )
 
 
-        # --------------------------------------------------------
-        # VALID ROLE
-        # --------------------------------------------------------
-
         allowed_roles = {
             "EDO",
             "Team Lead",
@@ -5924,10 +5866,6 @@ def super_user_add_user():
         if role not in allowed_roles:
             return "Invalid Role.", 400
 
-
-        # --------------------------------------------------------
-        # MANAGER
-        # --------------------------------------------------------
 
         manager_id = None
 
@@ -5954,9 +5892,9 @@ def super_user_add_user():
                 return "Selected Manager does not exist.", 400
 
 
-        # --------------------------------------------------------
+        # ====================================================
         # DUPLICATE CHECKS
-        # --------------------------------------------------------
+        # ====================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -5999,9 +5937,9 @@ def super_user_add_user():
             )
 
 
-        # --------------------------------------------------------
+        # ====================================================
         # PASSWORD HASH
-        # --------------------------------------------------------
+        # ====================================================
 
         password_hash = bcrypt.hashpw(
             password.encode("utf-8"),
@@ -6009,9 +5947,9 @@ def super_user_add_user():
         ).decode("utf-8")
 
 
-        # --------------------------------------------------------
+        # ====================================================
         # INSERT USER
-        # --------------------------------------------------------
+        # ====================================================
 
         cursor.execute("""
             INSERT INTO dbo.Users (
@@ -6291,10 +6229,6 @@ def super_user_edit_pipeline(pipeline_id):
         ).replace(",", "").strip()
 
 
-        # ========================================================
-        # REQUIRED VALUES
-        # ========================================================
-
         if not all([
             vertical,
             account_name,
@@ -6380,12 +6314,6 @@ def super_user_edit_pipeline(pipeline_id):
         if sales_cycle_status not in allowed_statuses:
             return "Invalid Sales Cycle Status.", 400
 
-
-        # ========================================================
-        # ACCOUNT MANAGER
-        # Super User can assign any active user.
-        # ========================================================
-
         cursor.execute("""
             SELECT COUNT(*)
             FROM dbo.Users
@@ -6397,11 +6325,6 @@ def super_user_edit_pipeline(pipeline_id):
 
         if (cursor.fetchone()[0] or 0) == 0:
             return "Invalid Account Manager.", 400
-
-
-        # ========================================================
-        # NUMBERS
-        # ========================================================
 
         try:
 
@@ -6468,10 +6391,6 @@ def super_user_edit_pipeline(pipeline_id):
             )
 
 
-        # ========================================================
-        # CLOSURE DATE
-        # ========================================================
-
         try:
 
             closure_date_obj = datetime.strptime(
@@ -6535,13 +6454,6 @@ def super_user_edit_pipeline(pipeline_id):
         """)
 
 
-        # ========================================================
-        # UPDATE ALL EDITABLE PIPELINE FIELDS
-        #
-        # Estimated Closure Date + Month stay synchronized with
-        # EstimatedClosureDateFull.
-        # PipelineID and CreatedAt remain read-only.
-        # ========================================================
 
         cursor.execute("""
             UPDATE dbo.Pipelines
@@ -6621,9 +6533,9 @@ def super_user_delete_user(emp_id):
 
     try:
 
-        # --------------------------------------------------------
+        # ========================================================
         # CONFIRM USER EXISTS
-        # --------------------------------------------------------
+        # ========================================================
 
         cursor.execute("""
             SELECT
@@ -6640,9 +6552,9 @@ def super_user_delete_user(emp_id):
         employee_name = user_row[0]
 
 
-        # --------------------------------------------------------
+        # ========================================================
         # BLOCK DELETE IF USER MANAGES OTHER USERS
-        # --------------------------------------------------------
+        # ========================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -6664,9 +6576,9 @@ def super_user_delete_user(emp_id):
             )
 
 
-        # --------------------------------------------------------
+        # ========================================================
         # BLOCK DELETE IF USER OWNS PIPELINES
-        # --------------------------------------------------------
+        # ========================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -6690,9 +6602,9 @@ def super_user_delete_user(emp_id):
             )
 
 
-        # --------------------------------------------------------
+        # ========================================================
         # DELETE USER
-        # --------------------------------------------------------
+        # ========================================================
 
         cursor.execute("""
             DELETE FROM dbo.Users

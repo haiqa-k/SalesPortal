@@ -3664,6 +3664,10 @@
                                 </th>
 
                                 <th>
+                                    Account Manager
+                                </th>
+
+                                <th>
 
                                     <div class="history-field-dropdown" id="historyFieldDropdown">
 
@@ -3686,17 +3690,16 @@
                                                 All
                                             </button>
 
-                                            <button type="button" data-history-field-value="Closure Date">
-                                                Closure Date
-                                            </button>
+                                            {% for field in history_fields %}
 
-                                            <button type="button" data-history-field-value="Next Action">
-                                                Next Action
-                                            </button>
+                                                <button
+                                                    type="button"
+                                                    data-history-field-value="{{ field }}"
+                                                >
+                                                    {{ field }}
+                                                </button>
 
-                                            <button type="button" data-history-field-value="Sales Cycle Status">
-                                                Sales Cycle Status
-                                            </button>
+                                            {% endfor %}
                                         </div>
 
                                     </div>
@@ -3747,6 +3750,7 @@
                                     class="{% if item.IsRepeatedExtension %}history-alert-row{% endif %}"
                                     data-history-user="{{ item.EditedBy or '' }}"
                                     data-history-account="{{ item.AccountName or '' }}"
+                                    data-history-manager="{{ item.AccountManager or '' }}"
                                     data-history-field="{{ item.FieldName or '' }}"
                                     data-history-date="{{
                                         item.EditedOn.isoformat()
@@ -3761,6 +3765,10 @@
 
                                     <td class="history-account">
                                         {{ item.AccountName or '-' }}
+                                    </td>
+
+                                    <td>
+                                        {{ item.AccountManager or '-' }}
                                     </td>
 
                                     <td>

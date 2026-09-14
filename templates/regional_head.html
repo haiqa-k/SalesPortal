@@ -2828,6 +2828,10 @@
                         </th>
 
                         <th>
+                            Account Manager
+                        </th>
+
+                        <th>
 
                             <select
                                 id="historyFieldFilter"
@@ -2839,17 +2843,13 @@
                                     Edited Field
                                 </option>
 
-                                <option value="Closure Date">
-                                    Closure Date
-                                </option>
+                                {% for field in history_fields %}
 
-                                <option value="Next Action">
-                                    Next Action
-                                </option>
+                                    <option value="{{ field }}">
+                                        {{ field }}
+                                    </option>
 
-                                <option value="Sales Cycle Status">
-                                    Sales Cycle Status
-                                </option>
+                                {% endfor %}
 
                             </select>
 
@@ -2899,6 +2899,7 @@
                             class="{% if item.IsRepeatedExtension %}history-alert-row{% endif %}"
                             data-history-user="{{ item.EditedBy or '' }}"
                             data-history-account="{{ item.AccountName or '' }}"
+                            data-history-manager="{{ item.AccountManager or '' }}"
                             data-history-field="{{ item.FieldName or '' }}"
                             data-history-date="{{
                                 item.EditedOn.isoformat()
@@ -2913,6 +2914,10 @@
 
                             <td class="history-account">
                                 {{ item.AccountName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ item.AccountManager or '-' }}
                             </td>
 
                             <td>
