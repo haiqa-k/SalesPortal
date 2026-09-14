@@ -627,6 +627,62 @@
         }
 
 
+        .row-actions {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+
+        .row-actions form {
+            margin: 0;
+        }
+
+
+        .btn-delete-row {
+            padding: 6px 12px;
+
+            background:
+                rgba(
+                    220,
+                    53,
+                    69,
+                    0.16
+                );
+
+            color: #ff9da8;
+
+            border:
+                1px solid
+                rgba(
+                    220,
+                    53,
+                    69,
+                    0.42
+                );
+
+            border-radius: 5px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            cursor: pointer;
+        }
+
+
+        .btn-delete-row:hover {
+            background:
+                rgba(
+                    220,
+                    53,
+                    69,
+                    0.30
+                );
+
+            color: #ffffff;
+        }
+
+
         .empty-message {
             text-align: center;
 
@@ -925,7 +981,7 @@
 
                         <tr>
                             <th>Emp ID</th>
-                            <th>Edit</th>
+                            <th>Actions</th>
                             <th>Employee Name</th>
                             <th>First Name</th>
                             <th>Last Name</th>
@@ -963,13 +1019,11 @@
                             <td>
                                 {{ user.EmpID }}
                             </td>
-
-
-
-
                             <td>
 
-                                <button
+                                <div class="row-actions">
+
+                                    <button
                                     type="button"
                                     class="btn-edit-row edit-user-button"
                                     data-emp-id="{{ user.EmpID }}"
@@ -986,6 +1040,28 @@
                                 >
                                     Edit
                                 </button>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for(
+                                            'super_user_delete_user',
+                                            emp_id=user.EmpID
+                                        ) }}"
+                                        onsubmit="
+                                            return confirm(
+                                                'Delete this user? This action cannot be undone.'
+                                            );
+                                        "
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="btn-delete-row"
+                                        >
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </div>
 
                             </td>
                             <td class="strong-cell">
@@ -1198,7 +1274,7 @@
 
                         <tr>
                             <th>ID</th>
-                            <th>Edit</th>
+                            <th>Actions</th>
                             <th>Account Manager</th>
                             <th>Vertical</th>
                             <th>Account Name</th>
@@ -1244,13 +1320,11 @@
                             <td>
                                 {{ pipeline.PipelineID }}
                             </td>
-
-
-
-
                             <td>
 
-                                <button
+                                <div class="row-actions">
+
+                                    <button
                                     type="button"
                                     class="btn-edit-row edit-pipeline-button"
 
@@ -1296,6 +1370,28 @@
                                 >
                                     Edit
                                 </button>
+
+                                    <form
+                                        method="POST"
+                                        action="{{ url_for(
+                                            'super_user_delete_pipeline',
+                                            pipeline_id=pipeline.PipelineID
+                                        ) }}"
+                                        onsubmit="
+                                            return confirm(
+                                                'Delete this pipeline? This action cannot be undone.'
+                                            );
+                                        "
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="btn-delete-row"
+                                        >
+                                            Delete
+                                        </button>
+                                    </form>
+
+                                </div>
 
                             </td>
                             <td class="strong-cell">

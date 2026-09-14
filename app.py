@@ -27,15 +27,6 @@ conn_str = (
 )
 
 
-# ============================================================
-# DATABASE CONNECTION HANDLING
-#
-# A fresh SQL Server connection is created for each Flask
-# request and automatically closed when that request finishes.
-#
-# This prevents stale global pyodbc connections from causing
-# intermittent 08S01 / communication link failure errors.
-# ============================================================
 
 def get_db_connection():
     if "db_conn" not in g:
@@ -5581,20 +5572,7 @@ def executive_regional_head_dashboard(regional_head_id):
         pipelines=pipelines
     )
 
-# ============================================================
-# SUPER USER DASHBOARD
-#
-# Paste this into your existing app.py.
-#
-# ACCESS:
-#   Role must be exactly "Super User".
-#   Access is restricted to the Super User role only.
-#
-# NOTE:
-#   The Pipeline Creation Date filter uses dbo.Pipelines.CreatedAt.
-#   Run the accompanying SQL migration once if that column does
-#   not already exist.
-# ============================================================
+
 
 
 def require_super_user():
@@ -6356,6 +6334,182 @@ def super_user_edit_pipeline(pipeline_id):
                 tab="pipelines"
             )
         )
+
+    finally:
+        cursor.close()
+
+# ============================================================
+# SUPER USER - DELETE USER
+# ============================================================
+
+@app.route(
+    "/super-user/user/<int:emp_id>/delete",
+    methods=["POST"]
+)
+def super_user_delete_user(emp_id):
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    # Prevent the logged-in Super User from deleting themselves.
+    if emp_id == session.get("user_id"):
+        return (
+            "You cannot delete your own account.",
+            400
+        )
+
+    cursor = conn.cursor()
+
+    try:
+
+        # --------------------------------------------------------
+        # CONFIRM USER EXISTS
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            SELECT
+                EmployeeName
+            FROM dbo.Users
+            WHERE EmpID = ?
+        """, (emp_id,))
+
+        user_row = cursor.fetchone()
+
+        if not user_row:
+            return "User not found.", 404
+
+        employee_name = user_row[0]
+
+
+        # --------------------------------------------------------
+        # BLOCK DELETE IF USER MANAGES OTHER USERS
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Users
+            WHERE ManagerID = ?
+        """, (emp_id,))
+
+        subordinate_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
+
+        if subordinate_count > 0:
+            return (
+                "This user cannot be deleted because "
+                "other users are still assigned to them. "
+                "Please reassign those users first.",
+                400
+            )
+
+
+        # --------------------------------------------------------
+        # BLOCK DELETE IF USER OWNS PIPELINES
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Pipelines
+            WHERE
+                LTRIM(RTRIM([Account Manager])) =
+                LTRIM(RTRIM(?))
+        """, (employee_name,))
+
+        pipeline_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
+
+        if pipeline_count > 0:
+            return (
+                "This user cannot be deleted because "
+                "pipelines are still assigned to them. "
+                "Please reassign those pipelines first.",
+                400
+            )
+
+
+        # --------------------------------------------------------
+        # DELETE USER
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            DELETE FROM dbo.Users
+            WHERE EmpID = ?
+        """, (emp_id,))
+
+        conn.commit()
+
+        return redirect(
+            url_for(
+                "super_user_dashboard",
+                tab="users"
+            )
+        )
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        cursor.close()
+
+
+# ============================================================
+# SUPER USER - DELETE PIPELINE
+# ============================================================
+
+@app.route(
+    "/super-user/pipeline/<int:pipeline_id>/delete",
+    methods=["POST"]
+)
+def super_user_delete_pipeline(pipeline_id):
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    cursor = conn.cursor()
+
+    try:
+
+        # Confirm the pipeline exists.
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Pipelines
+            WHERE PipelineID = ?
+        """, (pipeline_id,))
+
+        if (cursor.fetchone()[0] or 0) == 0:
+            return "Pipeline not found.", 404
+
+
+        # Remove linked audit records first so a foreign-key
+        # relationship cannot block the pipeline deletion.
+        cursor.execute("""
+            DELETE FROM dbo.History
+            WHERE PipelineID = ?
+        """, (pipeline_id,))
+
+
+        cursor.execute("""
+            DELETE FROM dbo.Pipelines
+            WHERE PipelineID = ?
+        """, (pipeline_id,))
+
+        conn.commit()
+
+        return redirect(
+            url_for(
+                "super_user_dashboard",
+                tab="pipelines"
+            )
+        )
+
+    except Exception:
+        conn.rollback()
+        raise
 
     finally:
         cursor.close()
