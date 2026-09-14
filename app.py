@@ -4151,12 +4151,6 @@ def executive_dashboard():
     cursor = conn.cursor()
 
 
-    # =====================================================
-    # GET SALES ORGANIZATION
-    #
-    # We load the sales hierarchy globally rather than
-    # tying the dashboard to a specific HOD.
-    # =====================================================
 
     cursor.execute("""
         SELECT
@@ -5574,16 +5568,10 @@ def executive_regional_head_dashboard(regional_head_id):
 
 
 
-
 def require_super_user():
-    """
-    Returns True only for the dedicated Super User role.
-    """
-
     return (
         "user_id" in session
-        and (session.get("role") or "").strip()
-            == "Super User"
+        and (session.get("role") or "").strip() == "Super User"
     )
 
 
@@ -5763,7 +5751,6 @@ def super_user_dashboard():
             "Team Lead",
             "Regional Manager",
             "Regional Head",
-            "Head",
             "HOD",
             "Admin",
             "Super User"
@@ -5800,6 +5787,278 @@ def super_user_dashboard():
             roles=roles,
             contract_durations=contract_durations
         )
+
+    finally:
+        cursor.close()
+
+
+
+
+# ============================================================
+# SUPER USER - ADD USER
+# ============================================================
+
+@app.route(
+    "/super-user/user/add",
+    methods=["POST"]
+)
+def super_user_add_user():
+
+    if not require_super_user():
+        return "Access denied.", 403
+
+    cursor = conn.cursor()
+
+    try:
+
+        emp_id_input = (
+            request.form.get("emp_id")
+            or ""
+        ).strip()
+
+        employee_name = (
+            request.form.get("employee_name")
+            or ""
+        ).strip()
+
+        first_name = (
+            request.form.get("first_name")
+            or ""
+        ).strip()
+
+        last_name = (
+            request.form.get("last_name")
+            or ""
+        ).strip()
+
+        username = (
+            request.form.get("username")
+            or ""
+        ).strip()
+
+        password = (
+            request.form.get("password")
+            or ""
+        )
+
+        phone_number = (
+            request.form.get("phone_number")
+            or ""
+        ).strip() or None
+
+        email = (
+            request.form.get("email")
+            or ""
+        ).strip() or None
+
+        region = (
+            request.form.get("region")
+            or ""
+        ).strip() or None
+
+        role = (
+            request.form.get("role")
+            or ""
+        ).strip()
+
+        manager_id_input = (
+            request.form.get("manager_id")
+            or ""
+        ).strip()
+
+        is_active = (
+            1
+            if request.form.get("is_active") == "1"
+            else 0
+        )
+
+
+        # --------------------------------------------------------
+        # REQUIRED VALUES
+        # --------------------------------------------------------
+
+        if not all([
+            emp_id_input,
+            employee_name,
+            first_name,
+            last_name,
+            username,
+            password,
+            role
+        ]):
+            return (
+                "Emp ID, Employee Name, First Name, Last Name, "
+                "Username, Password and Role are required.",
+                400
+            )
+
+
+        try:
+            emp_id = int(emp_id_input)
+        except ValueError:
+            return "Emp ID must be a number.", 400
+
+
+        if len(password) < 8:
+            return (
+                "Password must be at least 8 characters.",
+                400
+            )
+
+
+        # --------------------------------------------------------
+        # VALID ROLE
+        # --------------------------------------------------------
+
+        allowed_roles = {
+            "EDO",
+            "Team Lead",
+            "Regional Manager",
+            "Regional Head",
+            "Head",
+            "HOD",
+            "Admin",
+            "Super User"
+        }
+
+        if role not in allowed_roles:
+            return "Invalid Role.", 400
+
+
+        # --------------------------------------------------------
+        # MANAGER
+        # --------------------------------------------------------
+
+        manager_id = None
+
+        if manager_id_input:
+
+            try:
+                manager_id = int(manager_id_input)
+            except ValueError:
+                return "Invalid Manager selected.", 400
+
+            if manager_id == emp_id:
+                return (
+                    "A user cannot be their own manager.",
+                    400
+                )
+
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM dbo.Users
+                WHERE EmpID = ?
+            """, (manager_id,))
+
+            if (cursor.fetchone()[0] or 0) == 0:
+                return "Selected Manager does not exist.", 400
+
+
+        # --------------------------------------------------------
+        # DUPLICATE CHECKS
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Users
+            WHERE EmpID = ?
+        """, (emp_id,))
+
+        if (cursor.fetchone()[0] or 0) > 0:
+            return (
+                "A user with this Emp ID already exists.",
+                400
+            )
+
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Users
+            WHERE LOWER(LTRIM(RTRIM(Username))) =
+                  LOWER(LTRIM(RTRIM(?)))
+        """, (username,))
+
+        if (cursor.fetchone()[0] or 0) > 0:
+            return (
+                "A user with this Username already exists.",
+                400
+            )
+
+
+        cursor.execute("""
+            SELECT COUNT(*)
+            FROM dbo.Users
+            WHERE LOWER(LTRIM(RTRIM(EmployeeName))) =
+                  LOWER(LTRIM(RTRIM(?)))
+        """, (employee_name,))
+
+        if (cursor.fetchone()[0] or 0) > 0:
+            return (
+                "A user with this Employee Name already exists.",
+                400
+            )
+
+
+        # --------------------------------------------------------
+        # PASSWORD HASH
+        # --------------------------------------------------------
+
+        password_hash = bcrypt.hashpw(
+            password.encode("utf-8"),
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+
+        # --------------------------------------------------------
+        # INSERT USER
+        # --------------------------------------------------------
+
+        cursor.execute("""
+            INSERT INTO dbo.Users (
+                EmpID,
+                EmployeeName,
+                PhoneNumber,
+                Email,
+                Region,
+                Role,
+                ManagerID,
+                Username,
+                PasswordHash,
+                FirstName,
+                LastName,
+                IsActive,
+                CreatedAt
+            )
+            VALUES (
+                ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, SYSDATETIME()
+            )
+        """, (
+            emp_id,
+            employee_name,
+            phone_number,
+            email,
+            region,
+            role,
+            manager_id,
+            username,
+            password_hash,
+            first_name,
+            last_name,
+            is_active
+        ))
+
+        conn.commit()
+
+        return redirect(
+            url_for(
+                "super_user_dashboard",
+                tab="users"
+            )
+        )
+
+    except Exception:
+        conn.rollback()
+        raise
 
     finally:
         cursor.close()
@@ -6515,16 +6774,6 @@ def super_user_delete_pipeline(pipeline_id):
         cursor.close()
 
 
-# ============================================================
-# LOGIN ROUTE CHANGE
-#
-# Your existing login redirect should contain:
-#
-# elif role == "Super User":
-#     return redirect(url_for("super_user_dashboard"))
-#
-# Remove any old non-Super-User redirect to this page.
-# ============================================================
 
 
 
