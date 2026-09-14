@@ -971,6 +971,18 @@ def my_pipelines():
         overdue_pipelines=overdue_pipelines
     )
 
+    
+# ============================================================
+# EDO PIPELINE EDIT LIMITS
+#
+# Change these two values in one place if policy changes later.
+# The value means how many updates are allowed BEFORE a popup /
+# additional confirmation is required.
+# ============================================================
+
+EDO_CLOSURE_DATE_FREE_UPDATES = 2
+EDO_MRC_FREE_UPDATES = 2
+
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
 def edit_pipeline(pipeline_id):
@@ -988,16 +1000,18 @@ def edit_pipeline(pipeline_id):
 
     try:
 
-
         cursor.execute("""
             SELECT
-                PipelineID,
-                [Account Name],
-                [Estimated Closure Date],
-                [Estimated Closure Month],
-                [Next Action],
-                [Sales Cycle Status],
-                EstimatedClosureDateFull
+                PipelineID,                         -- 0
+                [Account Name],                     -- 1
+                [Estimated Closure Date],           -- 2
+                [Estimated Closure Month],          -- 3
+                [Next Action],                      -- 4
+                [Sales Cycle Status],               -- 5
+                EstimatedClosureDateFull,           -- 6
+                [MRC],                              -- 7
+                [Contract Duration (Months)],       -- 8
+                [ARR]                               -- 9
 
             FROM Pipelines
 
@@ -1011,8 +1025,14 @@ def edit_pipeline(pipeline_id):
 
         original_status = pipeline[5]
         original_closure_date = pipeline[6]
+        original_mrc = pipeline[7]
+        contract_duration = pipeline[8] or 0
 
 
+        # ========================================================
+        # HOW MANY FORWARD CLOSURE-DATE EXTENSIONS HAVE HAPPENED
+        # SINCE THE LAST SALES CYCLE STATUS CHANGE?
+        # ========================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -1050,6 +1070,58 @@ def edit_pipeline(pipeline_id):
             or 0
         )
 
+
+        # ========================================================
+        # HOW MANY MRC CHANGES HAVE HAPPENED
+        # SINCE THE LAST SALES CYCLE STATUS CHANGE?
+        #
+        # This mirrors the closure-date rule: a status change
+        # starts a fresh count.
+        # ========================================================
+
+        cursor.execute("""
+            SELECT COUNT(*)
+
+            FROM dbo.History h
+
+            WHERE
+                h.PipelineID = ?
+                AND h.FieldName = 'MRC'
+
+                AND ISNULL(
+                    LTRIM(RTRIM(h.OldValue)),
+                    ''
+                )
+                <>
+                ISNULL(
+                    LTRIM(RTRIM(h.NewValue)),
+                    ''
+                )
+
+                AND h.EditedOn > COALESCE(
+                    (
+                        SELECT MAX(h2.EditedOn)
+
+                        FROM dbo.History h2
+
+                        WHERE
+                            h2.PipelineID = ?
+                            AND h2.FieldName =
+                                'Sales Cycle Status'
+                    ),
+                    CONVERT(DATETIME2, '1900-01-01')
+                )
+        """, (
+            pipeline_id,
+            pipeline_id
+        ))
+
+        previous_mrc_change_count = (
+            cursor.fetchone()[0]
+            or 0
+        )
+
+
         is_edo = (
             (session.get("role") or "").strip()
             == "EDO"
@@ -1080,6 +1152,20 @@ def edit_pipeline(pipeline_id):
                 or ""
             ).strip()
 
+            mrc_reason = (
+                request.form.get("mrc_reason")
+                or ""
+            ).strip()
+
+            mrc_input = (
+                request.form.get("mrc")
+                or ""
+            ).strip()
+
+
+            # ====================================================
+            # CLOSURE DATE PARSING
+            # ====================================================
 
             new_closure_date = None
 
@@ -1094,6 +1180,10 @@ def edit_pipeline(pipeline_id):
                     ).date()
                 )
 
+
+            # ====================================================
+            # STATUS / DATE CHANGE DETECTION
+            # ====================================================
 
             effective_new_status = (
                 status
@@ -1125,12 +1215,13 @@ def edit_pipeline(pipeline_id):
                 )
 
 
-            # Extension 1, 2 and 3 = normal.
-            # Extension 4 onward = reason required for EDO.
+            # A popup/reason is required only AFTER the configured
+            # number of free date extensions has been used.
             repeated_extension = (
                 is_edo
                 and extension_count is not None
-                and extension_count >= 3
+                and extension_count
+                    > EDO_CLOSURE_DATE_FREE_UPDATES
             )
 
 
@@ -1142,8 +1233,74 @@ def edit_pipeline(pipeline_id):
                 return (
                     "A reason is required because this "
                     "pipeline's closure date has already "
-                    "been extended 3 times without a "
-                    "Sales Cycle Status change.",
+                    f"been extended "
+                    f"{EDO_CLOSURE_DATE_FREE_UPDATES} "
+                    "times without a Sales Cycle Status "
+                    "change.",
+                    400
+                )
+
+
+            # ====================================================
+            # MRC PARSING / CHANGE DETECTION
+            # ====================================================
+
+            new_mrc = None
+            mrc_changed = False
+            mrc_change_number = None
+
+            if is_edo and mrc_input:
+
+                try:
+                    new_mrc = float(
+                        mrc_input.replace(",", "")
+                    )
+                except ValueError:
+                    return "MRC must be a valid number.", 400
+
+                if new_mrc < 0:
+                    return "MRC cannot be negative.", 400
+
+                original_mrc_number = float(
+                    original_mrc or 0
+                )
+
+                mrc_changed = (
+                    abs(
+                        new_mrc
+                        - original_mrc_number
+                    )
+                    > 0.000001
+                )
+
+                if (
+                    mrc_changed
+                    and not status_changed
+                ):
+                    mrc_change_number = (
+                        previous_mrc_change_count + 1
+                    )
+
+
+            mrc_requires_confirmation = (
+                is_edo
+                and mrc_change_number is not None
+                and mrc_change_number
+                    > EDO_MRC_FREE_UPDATES
+            )
+
+
+            if (
+                mrc_requires_confirmation
+                and not mrc_reason
+            ):
+
+                return (
+                    "A reason is required because this "
+                    "pipeline's MRC has already been "
+                    f"updated {EDO_MRC_FREE_UPDATES} "
+                    "times without a Sales Cycle Status "
+                    "change.",
                     400
                 )
 
@@ -1211,6 +1368,39 @@ def edit_pipeline(pipeline_id):
 
 
             # ====================================================
+            # MRC + ARR
+            #
+            # ARR follows the existing formula:
+            # MRC x Contract Duration (Months)
+            # ====================================================
+
+            if (
+                is_edo
+                and mrc_changed
+                and new_mrc is not None
+            ):
+
+                new_arr = (
+                    new_mrc
+                    * float(contract_duration)
+                )
+
+                updates.append(
+                    "[MRC] = ?"
+                )
+                params.append(
+                    new_mrc
+                )
+
+                updates.append(
+                    "[ARR] = ?"
+                )
+                params.append(
+                    new_arr
+                )
+
+
+            # ====================================================
             # AUDIT CONTEXT
             #
             # All values are set on the SAME SQL Server request
@@ -1271,6 +1461,40 @@ def edit_pipeline(pipeline_id):
                 )
 
 
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'IsRepeatedMRCUpdate',
+                        @value = ?
+                    """,
+                    1 if mrc_requires_confirmation else 0
+                )
+
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'MRCChangeCount',
+                        @value = ?
+                    """,
+                    mrc_change_number
+                )
+
+
+                cursor.execute(
+                    """
+                    EXEC sys.sp_set_session_context
+                        @key = N'MRCChangeReason',
+                        @value = ?
+                    """,
+                    (
+                        mrc_reason
+                        if mrc_requires_confirmation
+                        else None
+                    )
+                )
+
+
                 sql = (
                     f"UPDATE Pipelines "
                     f"SET {', '.join(updates)} "
@@ -1315,8 +1539,26 @@ def edit_pipeline(pipeline_id):
                 or ""
             ),
 
+            original_mrc=(
+                float(original_mrc)
+                if original_mrc is not None
+                else 0
+            ),
+
             previous_extension_count=(
                 previous_extension_count
+            ),
+
+            previous_mrc_change_count=(
+                previous_mrc_change_count
+            ),
+
+            closure_date_free_updates=(
+                EDO_CLOSURE_DATE_FREE_UPDATES
+            ),
+
+            mrc_free_updates=(
+                EDO_MRC_FREE_UPDATES
             ),
 
             is_edo=is_edo
@@ -1324,7 +1566,6 @@ def edit_pipeline(pipeline_id):
 
     finally:
         cursor.close()
-
 
 @app.route("/teamlead", methods=["GET"])
 def teamlead_dashboard():

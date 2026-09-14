@@ -2928,7 +2928,11 @@
 
                                 {% if item.IsRepeatedExtension %}
                                     <span class="history-extension-badge">
-                                        Extension {{ item.ExtensionCount }}
+                                        {% if item.FieldName == 'MRC' %}
+    MRC Update {{ item.ExtensionCount }}
+{% else %}
+    Extension {{ item.ExtensionCount }}
+{% endif %}
                                     </span>
                                 {% endif %}
 
