@@ -647,14 +647,14 @@
            PIPELINE FILTER BAR
         ========================= */
 
-        .table-card .table-header {
+        .pipeline-overview-card .table-header {
             display: grid !important;
             grid-template-columns: 240px minmax(0, 1fr) !important;
             align-items: start !important;
             gap: 18px !important;
         }
 
-        .table-card .table-header-controls {
+        .pipeline-overview-card .table-header-controls {
             display: flex !important;
             flex-direction: column !important;
             align-items: stretch !important;
@@ -664,7 +664,7 @@
             width: 100% !important;
         }
 
-        .table-card .pipeline-filters {
+        .pipeline-overview-card .pipeline-filters {
             display: flex !important;
             align-items: center !important;
             justify-content: flex-start !important;
@@ -674,7 +674,7 @@
             width: 100% !important;
         }
 
-        .table-card .pipeline-action-row {
+        .pipeline-overview-card .pipeline-action-row {
             width: 100% !important;
             display: flex !important;
             align-items: center !important;
@@ -683,11 +683,11 @@
             flex-wrap: nowrap !important;
         }
 
-        .table-card .pipeline-filters .form-select,
-        .table-card .pipeline-filters .form-control,
-        .table-card .active-pipeline-filter,
-        .table-card .btn-clear-filters,
-        .table-card .column-selector .dropdown-toggle {
+        .pipeline-overview-card .pipeline-filters .form-select,
+        .pipeline-overview-card .pipeline-filters .form-control,
+        .pipeline-overview-card .active-pipeline-filter,
+        .pipeline-overview-card .btn-clear-filters,
+        .pipeline-overview-card .column-selector .dropdown-toggle {
             height: 40px !important;
             min-height: 40px !important;
             margin: 0 !important;
@@ -696,39 +696,39 @@
             font-size: 13px !important;
         }
 
-        .table-card .pipeline-filters .form-select,
-        .table-card .pipeline-filters .form-control {
+        .pipeline-overview-card .pipeline-filters .form-select,
+        .pipeline-overview-card .pipeline-filters .form-control {
             background-color: #202020 !important;
             color: #ffffff !important;
             border: 1px solid #3a3a3a !important;
         }
 
-        .table-card #pipelineSearch::placeholder {
+        .pipeline-overview-card #pipelineSearch::placeholder {
             color: #9a9a9a !important;
             opacity: 1 !important;
         }
 
-        .table-card .filter-search {
+        .pipeline-overview-card .filter-search {
             flex: 1 1 260px !important;
             width: 260px !important;
             min-width: 220px !important;
             max-width: 330px !important;
         }
 
-        .table-card .filter-team {
+        .pipeline-overview-card .filter-team {
             flex: 0 1 170px !important;
             width: 170px !important;
             min-width: 145px !important;
         }
 
-        .table-card .filter-product {
+        .pipeline-overview-card .filter-product {
             flex: 0 1 155px !important;
             width: 155px !important;
             min-width: 130px !important;
         }
 
 
-        .table-card .pipeline-date-filter {
+        .pipeline-overview-card .pipeline-date-filter {
             flex: 0 0 178px !important;
             width: 178px !important;
             min-width: 178px !important;
@@ -745,7 +745,7 @@
             box-sizing: border-box !important;
         }
 
-        .table-card .pipeline-date-filter label {
+        .pipeline-overview-card .pipeline-date-filter label {
             flex: 0 0 auto !important;
             margin: 0 !important;
             padding: 0 8px 0 10px !important;
@@ -757,7 +757,7 @@
             white-space: nowrap !important;
         }
 
-        .table-card .pipeline-date-filter input {
+        .pipeline-overview-card .pipeline-date-filter input {
             flex: 1 1 auto !important;
             width: 0 !important;
             min-width: 0 !important;
@@ -777,14 +777,14 @@
             color-scheme: dark;
         }
 
-        .table-card .pipeline-date-filter:focus-within {
+        .pipeline-overview-card .pipeline-date-filter:focus-within {
             border-color: #c62828 !important;
             box-shadow:
                 0 0 0 0.2rem
                 rgba(198, 40, 40, 0.15) !important;
         }
 
-        .table-card .active-pipeline-filter {
+        .pipeline-overview-card .active-pipeline-filter {
             flex: 0 0 auto !important;
             min-width: 152px !important;
             padding: 0 12px !important;
@@ -798,14 +798,14 @@
             white-space: nowrap !important;
         }
 
-        .table-card .active-pipeline-filter input {
+        .pipeline-overview-card .active-pipeline-filter input {
             margin: 0 !important;
             width: 15px !important;
             height: 15px !important;
             flex: 0 0 auto !important;
         }
 
-        .table-card .btn-clear-filters {
+        .pipeline-overview-card .btn-clear-filters {
             flex: 0 0 68px !important;
             width: 85px !important;
             min-width: 85px !important;
@@ -819,13 +819,13 @@
             white-space: nowrap !important;
         }
 
-        .table-card .column-selector {
+        .pipeline-overview-card .column-selector {
             flex: 0 0 auto !important;
             width: auto !important;
             margin: 0 !important;
         }
 
-        .table-card .column-selector .dropdown-toggle {
+        .pipeline-overview-card .column-selector .dropdown-toggle {
             width: 105px !important;
             min-width: 105px !important;
             padding: 0 12px !important;
@@ -835,7 +835,7 @@
         }
 
 
-        .table-card .btn-add-pipeline {
+        .pipeline-overview-card .btn-add-pipeline {
             flex: 0 0 118px !important;
             width: 118px !important;
             min-width: 118px !important;
@@ -855,12 +855,12 @@
         }
 
         @media (max-width: 1650px) {
-            .table-card .table-header {
+            .pipeline-overview-card .table-header {
                 grid-template-columns: 1fr !important;
                 align-items: stretch !important;
             }
 
-            .table-card .pipeline-action-row {
+            .pipeline-overview-card .pipeline-action-row {
                 justify-content: flex-end !important;
             }
         }
@@ -919,6 +919,989 @@
             .status-metrics {
                 width: 100%;
                 flex: 0 0 auto;
+            }
+        }
+
+        /* =========================
+           OVERDUE PIPELINES
+        ========================= */
+
+        .overdue-count {
+            display: inline-block;
+            min-width: 26px;
+            padding: 3px 8px;
+            margin-left: 6px;
+            border-radius: 15px;
+            background: #333333;
+            color: #ffffff;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .overdue-text {
+            color: #ff8a80 !important;
+            font-weight: 600;
+        }
+
+        .show-more-button {
+            background: #2b2b2b;
+            color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 999px;
+            padding: 9px 22px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition:
+                background 0.2s ease,
+                border-color 0.2s ease,
+                transform 0.2s ease;
+        }
+
+        .show-more-button:hover {
+            background: #3a3a3a;
+            border-color: #5a5a5a;
+            transform: translateY(-1px);
+        }
+
+        .show-more-button:active {
+            transform: translateY(0);
+        }
+
+
+
+        /* =========================
+           PIPELINE FILTER BAR
+        ========================= */
+
+        .pipeline-overview-card .table-header {
+            display: grid !important;
+            grid-template-columns: 220px minmax(0, 1fr) !important;
+            align-items: start !important;
+            gap: 18px !important;
+        }
+
+        .pipeline-overview-card .table-controls {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            justify-content: flex-start !important;
+            gap: 10px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .pipeline-overview-card .pipeline-filters {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            width: 100% !important;
+            min-width: 0 !important;
+        }
+
+        .pipeline-overview-card .pipeline-action-row {
+            width: 100% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .pipeline-overview-card .pipeline-filters .form-control,
+        .pipeline-overview-card .pipeline-filters .form-select,
+        .pipeline-overview-card .active-pipeline-filter,
+        .pipeline-overview-card .btn-clear-filters,
+        .pipeline-overview-card .column-button {
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+        }
+
+        .pipeline-overview-card .pipeline-filters .form-control,
+        .pipeline-overview-card .pipeline-filters .form-select {
+            background-color: #202020 !important;
+            color: #ffffff !important;
+            border: 1px solid #3a3a3a !important;
+        }
+
+        .pipeline-overview-card #pipelineSearch::placeholder {
+            color: #9a9a9a !important;
+            opacity: 1 !important;
+        }
+
+        .pipeline-overview-card .filter-search {
+            flex: 1 1 260px !important;
+            width: 260px !important;
+            min-width: 220px !important;
+            max-width: 330px !important;
+        }
+
+        .pipeline-overview-card .filter-individual {
+            flex: 0 1 170px !important;
+            width: 170px !important;
+            min-width: 145px !important;
+        }
+
+        .pipeline-overview-card .filter-product {
+            flex: 0 1 155px !important;
+            width: 155px !important;
+            min-width: 130px !important;
+        }
+
+        .pipeline-overview-card .pipeline-date-filter {
+            flex: 0 0 178px !important;
+            width: 178px !important;
+            min-width: 178px !important;
+            height: 40px !important;
+
+            display: flex !important;
+            align-items: center !important;
+
+            background: #202020 !important;
+            border: 1px solid #3a3a3a !important;
+            border-radius: 6px !important;
+
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+
+        .pipeline-overview-card .pipeline-date-filter label {
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+            padding: 0 8px 0 10px !important;
+
+            color: #9a9a9a !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            text-transform: uppercase !important;
+            white-space: nowrap !important;
+        }
+
+        .pipeline-overview-card .pipeline-date-filter input {
+            flex: 1 1 auto !important;
+            width: 0 !important;
+            min-width: 0 !important;
+            height: 38px !important;
+            min-height: 38px !important;
+
+            margin: 0 !important;
+            padding: 0 8px 0 0 !important;
+
+            background: transparent !important;
+            color: #ffffff !important;
+            border: none !important;
+            border-radius: 0 !important;
+
+            box-sizing: border-box !important;
+            font-size: 12px !important;
+            color-scheme: dark;
+        }
+
+        .pipeline-overview-card .pipeline-date-filter:focus-within {
+            border-color: #c62828 !important;
+            box-shadow:
+                0 0 0 0.2rem
+                rgba(198, 40, 40, 0.15) !important;
+        }
+
+        .pipeline-overview-card .active-pipeline-filter {
+            flex: 0 0 auto !important;
+            min-width: 152px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 8px !important;
+            background: #202020 !important;
+            border: 1px solid #3a3a3a !important;
+            color: #ffffff !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+        }
+
+        .pipeline-overview-card .active-pipeline-filter input {
+            width: 15px !important;
+            height: 15px !important;
+            min-width: 15px !important;
+            margin: 0 !important;
+            accent-color: #c62828;
+            cursor: pointer;
+        }
+
+        .pipeline-overview-card .btn-clear-filters {
+            flex: 0 0 68px !important;
+            width: 68px !important;
+            min-width: 68px !important;
+            padding: 0 10px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            background: #292929 !important;
+            color: #ffffff !important;
+            border: 1px solid #444444 !important;
+            white-space: nowrap !important;
+        }
+
+        .pipeline-overview-card .dropdown {
+            flex: 0 0 auto !important;
+            margin: 0 !important;
+        }
+
+        .pipeline-overview-card .column-button {
+            min-width: 105px !important;
+            padding: 0 12px !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+
+        @media (max-width: 1650px) {
+            .pipeline-overview-card .table-header {
+                grid-template-columns: 1fr !important;
+                align-items: stretch !important;
+            }
+
+            .pipeline-overview-card .pipeline-action-row {
+                justify-content: flex-end !important;
+            }
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+
+        @media (max-width: 768px) {
+
+            .topbar {
+                min-height: 65px;
+
+                padding: 10px 20px;
+
+                flex-wrap: wrap;
+
+                gap: 10px;
+            }
+
+            .logo {
+                width: 100px;
+            }
+
+            .topbar-title {
+                font-size: 24px;
+            }
+
+            .dashboard-container {
+                padding: 25px 20px;
+            }
+
+            .dashboard-title {
+                font-size: 28px;
+            }
+
+            .user-info {
+                font-size: 12px;
+            }
+
+            .table-header,
+            .teams-header,
+            .history-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+
+            .table-controls,
+            .table-filter,
+            .teams-filter,
+            .history-filter,
+            .form-select {
+                width: 100%;
+            }
+
+            .column-button {
+                width: 100%;
+            }
+
+            .status-chart-layout {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .status-metrics {
+                width: 100%;
+                flex: 0 0 auto;
+            }
+        }
+
+        /* =========================
+        Download Excel
+        ========================= */
+               .btn-add-pipeline {
+            display: inline-block;
+
+            background: linear-gradient(
+                to bottom,
+                rgba(229, 46, 46, 0.6),
+                #4b0082
+            );
+
+            color: #ffffff;
+
+            border: none;
+
+            padding: 8px 16px;
+
+            border-radius: 5px;
+
+            text-decoration: none;
+
+            font-size: 13px;
+            font-weight: 600;
+
+            transition: all 0.2s ease;
+        }
+
+        .btn-add-pipeline:hover {
+            color: #ffffff;
+
+            transform: scale(1.03);
+
+            box-shadow:
+                0 4px 12px
+                rgba(0, 0, 0, 0.4);
+        }
+
+        .table-card .btn-add-pipeline {
+            width: 118px !important;
+            min-width: 118px !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            padding: 0 12px !important;
+
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            white-space: nowrap !important;
+        }
+
+
+
+        /* =========================
+           ACTIVITY & MONITORING TABS
+        ========================= */
+        .activity-section { margin-top: 28px; }
+        .activity-heading { margin: 0 0 14px; color: #fff; font-size: 20px; font-weight: 600; }
+
+        /* Raised folder-style tabs: active tab visually joins the table below. */
+        .activity-tabs {
+            display: flex;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 0 0 18px;
+            background: transparent;
+            border: none;
+        }
+
+        .activity-tab {
+            position: relative;
+            z-index: 1;
+            min-width: 155px;
+            min-height: 46px;
+            padding: 11px 18px;
+            margin: 0;
+            border: 1px solid #3d3d3d;
+            border-bottom: none;
+            border-radius: 7px 7px 0 0;
+            background: #2b2b2b;
+            color: #bdbdbd;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: background .18s ease, color .18s ease, transform .18s ease;
+        }
+
+        .activity-tab:hover {
+            background: #353535;
+            color: #ffffff;
+        }
+
+        .activity-tab.active {
+            z-index: 4;
+            min-height: 52px;
+            margin-bottom: -1px;
+            padding-top: 14px;
+            background: #1d1d1d;
+            color: #ffffff;
+            border-color: #303030;
+            border-bottom: 1px solid #1d1d1d;
+            transform: translateY(0);
+        }
+
+        .activity-tab .overdue-count {
+            margin-left: 7px;
+            vertical-align: 1px;
+        }
+
+        .activity-panel { display: none; }
+        .activity-panel.active { display: block; }
+
+        .activity-panel > .table-card,
+        .activity-panel > .history-card {
+            position: relative;
+            z-index: 2;
+            margin-top: -1px !important;
+            border-radius: 10px !important;
+            border: 1px solid #303030;
+            background: #171717;
+            overflow: hidden;
+        }
+
+        /* Keep the visible top corners rounded on every tab. */
+        .activity-panel > .table-card .table-header,
+        .activity-panel > .history-card .history-header {
+            border-radius: 9px 9px 0 0 !important;
+        }
+
+        /* The selected folder tab and the table header share one surface. */
+        .activity-tab.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -2px;
+            height: 3px;
+            background: #1d1d1d;
+        }
+
+        .activity-panel.active > .table-card,
+        .activity-panel.active > .history-card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+        .contact-badge { display:inline-block; min-width:58px; text-align:center; padding:5px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+        .contact-badge.visit { background:rgba(126,87,194,.20); color:#d1c4e9; border:1px solid rgba(179,157,219,.30); }
+        .contact-badge.call { background:rgba(38,166,154,.16); color:#80cbc4; border:1px solid rgba(128,203,196,.28); }
+        .contact-comments { min-width:220px; max-width:420px; white-space:normal !important; overflow-wrap:anywhere; }
+        .contact-filter-bar { display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; }
+        .contact-filter-bar .form-control, .contact-filter-bar .form-select { height:40px; background:#202020; color:#fff; border:1px solid #3a3a3a; font-size:13px; }
+        .contact-filter-bar .contact-search { min-width:240px; flex:1 1 280px; }
+        .contact-filter-bar .contact-small { width:170px; flex:0 1 170px; }
+        .contact-filter-bar input[type=date] { color-scheme:dark; width:155px; flex:0 0 155px; }
+        .contact-clear { height:40px; padding:0 14px; background:#292929; color:#fff; border:1px solid #444; border-radius:6px; }
+        @media (max-width:768px) {
+            .activity-tabs { padding-left: 8px; flex-wrap: nowrap; overflow-x: auto; gap: 5px; }
+            .activity-tab { width: auto; min-width: 145px; flex: 0 0 auto; text-align: center; }
+        }
+
+
+
+        /* ===== FINAL ACTIVITY MONITORING OVERRIDES ===== */
+        .activity-section {
+            width: 100%;
+            margin: 28px 0 32px;
+        }
+        .activity-section .activity-tabs {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-end !important;
+            justify-content: flex-start !important;
+            gap: 6px !important;
+            width: 100% !important;
+            padding: 0 0 0 18px !important;
+            margin: 0 !important;
+            overflow-x: auto;
+            overflow-y: visible;
+        }
+        .activity-section .activity-tab {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            flex: 0 0 auto !important;
+            width: auto !important;
+            max-width: none !important;
+            min-width: 165px !important;
+            min-height: 46px !important;
+            padding: 11px 18px !important;
+            margin: 0 !important;
+            border: 1px solid #3d3d3d !important;
+            border-bottom: 0 !important;
+            border-radius: 8px 8px 0 0 !important;
+            background: #2b2b2b !important;
+            color: #bdbdbd !important;
+            white-space: nowrap !important;
+        }
+        .activity-section .activity-tab.active {
+            z-index: 5 !important;
+            min-height: 52px !important;
+            padding-top: 14px !important;
+            margin-bottom: -1px !important;
+            background: #1d1d1d !important;
+            color: #fff !important;
+            border-color: #303030 !important;
+            border-bottom: 1px solid #1d1d1d !important;
+        }
+        .activity-section .activity-panel {
+            display: none !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        .activity-section .activity-panel.active {
+            display: block !important;
+        }
+        .activity-section .activity-panel > .table-card,
+        .activity-section .activity-panel > .history-card {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: -1px 0 0 !important;
+            border: 1px solid #303030 !important;
+            border-radius: 10px !important;
+            background: #171717 !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        .activity-section .activity-panel .table-header {
+            display: flex !important;
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            align-items: center !important;
+            gap: 20px !important;
+            width: 100% !important;
+            padding: 20px 24px !important;
+            background: #1d1d1d !important;
+            box-sizing: border-box !important;
+        }
+        .activity-section .activity-panel .table-wrapper {
+            width: 100% !important;
+            overflow-x: auto !important;
+        }
+        .activity-section .activity-panel table.pipeline-table {
+            width: 100% !important;
+            min-width: 900px;
+            table-layout: auto !important;
+            margin: 0 !important;
+        }
+        .activity-section .activity-panel table.pipeline-table th,
+        .activity-section .activity-panel table.pipeline-table td {
+            width: auto !important;
+        }
+        @media (max-width: 768px) {
+            .activity-section .activity-tabs { padding-left: 8px !important; }
+            .activity-section .activity-tab { min-width: 145px !important; }
+        }
+
+        /* =========================
+           EDIT HISTORY
+        ========================= */
+
+        .history-card {
+            background: #171717;
+
+            border: 1px solid #303030;
+            border-radius: 10px;
+
+            overflow: hidden;
+
+            box-shadow:
+                0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+
+        .history-header {
+            padding: 18px 22px;
+
+            background: #1d1d1d;
+
+            border-bottom: 1px solid #333333;
+
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+
+            gap: 20px;
+        }
+
+        .history-header-left {
+            min-width: 0;
+        }
+
+        .history-title {
+            margin: 0;
+
+            color: #ffffff;
+
+            font-size: 17px;
+            font-weight: 600;
+        }
+
+        .history-subtitle {
+            margin: 5px 0 0;
+
+            color: #9f9f9f;
+
+            font-size: 12px;
+        }
+
+        .history-filter {
+            min-width: 240px;
+
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .history-filter .form-select {
+            min-width: 190px;
+            height: 38px;
+        }
+
+        .history-field-filter {
+            width: 165px;
+            min-width: 165px;
+
+            background-color: #292929;
+            color: #e5e5e5;
+
+            border: 1px solid #414141;
+            border-radius: 5px;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+
+            padding: 6px 28px 6px 9px;
+        }
+
+        .history-field-filter:focus {
+            background-color: #292929;
+            color: #ffffff;
+
+            border-color: #c62828;
+
+            box-shadow:
+                0 0 0 0.15rem rgba(198, 40, 40, 0.2);
+        }
+
+        .history-table-wrapper {
+            overflow-x: auto;
+
+            max-height: 650px;
+        }
+
+        .history-table {
+            width: 100%;
+
+            margin: 0;
+
+            white-space: nowrap;
+
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .history-table thead th {
+            background: #292929;
+
+            color: #e5e5e5;
+
+            font-size: 12px;
+            font-weight: 600;
+
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+
+            padding: 15px 16px;
+
+            border-bottom: 1px solid #414141;
+
+            position: sticky;
+            top: 0;
+
+            z-index: 2;
+        }
+
+        .history-table tbody td {
+            background: #171717;
+
+            color: #d5d5d5;
+
+            padding: 15px 16px;
+
+            font-size: 13px;
+
+            border-bottom: 1px solid #292929;
+
+            vertical-align: top;
+        }
+
+        .history-table tbody tr:nth-child(even) td {
+            background: #1c1c1c;
+        }
+
+        .history-table tbody tr:hover td {
+            background: #252525;
+        }
+
+        .history-table tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .history-account {
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .history-field-badge {
+            display: inline-block;
+
+            padding: 5px 9px;
+
+            border-radius: 5px;
+
+            background: rgba(198, 40, 40, 0.18);
+
+            color: #ef9a9a;
+
+            font-size: 12px;
+
+            white-space: nowrap;
+        }
+
+        .history-value {
+            min-width: 180px;
+            max-width: 340px;
+
+            white-space: normal !important;
+
+            overflow-wrap: anywhere;
+        }
+
+
+
+        /* ======================================================
+           RM ACTIVITY MONITORING - AUTHORITATIVE FINAL LAYOUT
+           ====================================================== */
+
+        /* Desktop tabs: no scrollbar, no scrolling container. */
+        .activity-section .activity-tabs {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: flex-end !important;
+            justify-content: flex-start !important;
+            gap: 6px !important;
+            width: 100% !important;
+            padding: 0 0 0 18px !important;
+            margin: 0 !important;
+            overflow: visible !important;
+            scrollbar-width: none !important;
+        }
+        .activity-section .activity-tabs::-webkit-scrollbar { display: none !important; }
+        .activity-section .activity-tab {
+            flex: 0 0 auto !important;
+            min-width: 0 !important;
+            width: auto !important;
+            padding-left: 24px !important;
+            padding-right: 24px !important;
+        }
+
+        /* Customer Contact: title + every filter/button stay on one row on desktop. */
+        #activity-contacts .table-header {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            flex-wrap: nowrap !important;
+            gap: 18px !important;
+        }
+        #activity-contacts .table-title {
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+        }
+        #activity-contacts .table-controls {
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            width: auto !important;
+        }
+        #activity-contacts .contact-filter-bar {
+            display: flex !important;
+            flex-direction: row !important;
+            flex-wrap: nowrap !important;
+            align-items: center !important;
+            justify-content: flex-end !important;
+            gap: 8px !important;
+            width: 100% !important;
+        }
+        #activity-contacts .contact-search {
+            flex: 1 1 240px !important;
+            min-width: 180px !important;
+            max-width: 320px !important;
+        }
+        #activity-contacts .contact-small {
+            flex: 0 1 155px !important;
+            width: 155px !important;
+            min-width: 125px !important;
+        }
+        #activity-contacts input[type="date"] {
+            flex: 0 1 150px !important;
+            width: 150px !important;
+            min-width: 130px !important;
+        }
+        #activity-contacts .contact-clear {
+            flex: 0 0 auto !important;
+            white-space: nowrap !important;
+        }
+
+        /* FINAL Customer Contact controls: one clean toolbar row. */
+        #activity-contacts .table-header {
+            display: block !important;
+            padding: 18px 22px !important;
+        }
+        #activity-contacts .table-title {
+            margin: 0 0 12px 0 !important;
+            white-space: nowrap !important;
+        }
+        #activity-contacts .table-controls {
+            display: block !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            margin: 0 !important;
+        }
+        #activity-contacts .contact-filter-bar {
+            display: grid !important;
+            grid-template-columns: minmax(240px, 1fr) 180px 145px 165px 165px 90px !important;
+            align-items: center !important;
+            gap: 8px !important;
+            width: 100% !important;
+            margin: 0 !important;
+        }
+        #activity-contacts .contact-filter-bar > * {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: none !important;
+            height: 40px !important;
+            min-height: 40px !important;
+            margin: 0 !important;
+            box-sizing: border-box !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+        }
+        #activity-contacts .contact-search,
+        #activity-contacts .contact-small,
+        #activity-contacts input[type="date"] {
+            flex: none !important;
+        }
+        #activity-contacts .contact-clear {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 0 14px !important;
+            background: #292929 !important;
+            color: #fff !important;
+            border: 1px solid #444 !important;
+            font-family: inherit !important;
+            font-weight: 500 !important;
+            line-height: 1 !important;
+            white-space: nowrap !important;
+            cursor: pointer !important;
+            appearance: none !important;
+            -webkit-appearance: none !important;
+        }
+        #activity-contacts .contact-clear:hover {
+            background: #353535 !important;
+            border-color: #555 !important;
+        }
+        @media (max-width: 1100px) {
+            #activity-contacts .contact-filter-bar {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            }
+        }
+        @media (max-width: 650px) {
+            #activity-contacts .contact-filter-bar {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        /* Edit History: restore the proper audit-table layout inside its tab. */
+        #activity-history .history-card {
+            width: 100% !important;
+            background: #171717 !important;
+            border: 1px solid #303030 !important;
+            border-radius: 10px !important;
+            overflow: hidden !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,.35) !important;
+        }
+        #activity-history .history-header {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            justify-content: space-between !important;
+            gap: 20px !important;
+            padding: 18px 22px !important;
+            background: #1d1d1d !important;
+            border-bottom: 1px solid #333 !important;
+        }
+        #activity-history .history-header-left { min-width: 0 !important; }
+        #activity-history .history-filter {
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 10px !important;
+            width: auto !important;
+            flex: 0 0 auto !important;
+        }
+        #activity-history .history-filter .form-select {
+            width: 190px !important;
+            min-width: 190px !important;
+            height: 40px !important;
+        }
+        #activity-history .history-table-wrapper {
+            width: 100% !important;
+            overflow-x: auto !important;
+            max-height: 650px !important;
+        }
+        #activity-history .history-table {
+            width: 100% !important;
+            min-width: 1250px !important;
+            table-layout: auto !important;
+            border-collapse: separate !important;
+            border-spacing: 0 !important;
+            margin: 0 !important;
+            white-space: nowrap !important;
+        }
+        #activity-history .history-table th,
+        #activity-history .history-table td { width: auto !important; }
+        #activity-history .history-reason,
+        #activity-history .history-value {
+            white-space: normal !important;
+            min-width: 150px !important;
+            max-width: 300px !important;
+            overflow-wrap: anywhere !important;
+        }
+
+        @media (max-width: 1100px) {
+            .activity-section .activity-tabs {
+                overflow-x: auto !important;
+                overflow-y: hidden !important;
+            }
+            #activity-contacts .table-header,
+            #activity-contacts .contact-filter-bar,
+            #activity-history .history-header,
+            #activity-history .history-filter {
+                flex-wrap: wrap !important;
             }
         }
 
@@ -1272,10 +2255,655 @@
 
 
     <!-- =========================
+         ACTIVITY & MONITORING
+    ========================= -->
+    <section class="activity-section">
+        <h2 class="activity-heading">Activity & Monitoring</h2>
+        <div class="activity-tabs" role="tablist" aria-label="Activity and monitoring views">
+            <button type="button" class="activity-tab active" data-activity-tab="overdue">Overdue Pipelines <span class="overdue-count">{{ overdue_pipelines|length }}</span></button>
+            <button type="button" class="activity-tab" data-activity-tab="upcoming">Upcoming Deadlines</button>
+            <button type="button" class="activity-tab" data-activity-tab="contacts">Customer Contact</button>
+            <button type="button" class="activity-tab" data-activity-tab="history">Edit History</button>
+        </div>
+        <div id="activity-overdue" class="activity-panel active">
+    <!-- =========================
+         OVERDUE PIPELINES
+    ========================= -->
+
+    <div class="table-card mb-4">
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Overdue Pipelines
+
+                <span class="overdue-count">
+                    {{ overdue_pipelines|length }}
+                </span>
+            </h2>
+
+            <div style="
+                color:#9f9f9f;
+                font-size:12px;
+            ">
+                Active pipelines past their expected closure date
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="table pipeline-table">
+
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Account Manager</th>
+                        <th>Product</th>
+                        <th>Closure Date</th>
+                        <th>Days Overdue</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="overduePipelineBody">
+
+                    {% for p in overdue_pipelines %}
+
+                        <tr
+                            class="overdue-pipeline-row"
+                            {% if loop.index > 5 %}
+                                style="display:none;"
+                            {% endif %}
+                        >
+
+                            <td class="account-name">
+                                {{ p.AccountName }}
+                            </td>
+
+                            <td>
+                                {{ p.AccountManager }}
+                            </td>
+
+                            <td>
+                                {{ p.Product or '-' }}
+                            </td>
+
+                            <td>
+                                {{ p.ClosureDate }}
+                            </td>
+
+                            <td class="overdue-text">
+                                {{ p.DaysOverdue }} days
+                            </td>
+
+                            <td>
+                                {{ p.Status or '-' }}
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td
+                                colspan="6"
+                                class="empty-message"
+                            >
+                                No overdue pipelines.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if overdue_pipelines|length > 5 %}
+
+            <div
+                style="
+                    padding: 14px 20px;
+                    text-align: center;
+                    border-top: 1px solid #292929;
+                "
+            >
+                <button
+                    type="button"
+                    id="toggleOverduePipelines"
+                    class="show-more-button"
+                >
+                    Show 5 More
+                </button>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+        </div>
+        <div id="activity-upcoming" class="activity-panel">
+    <!-- =========================
+     UPCOMING DEADLINES
+========================= -->
+
+<div class="table-card mb-4">
+
+    <div class="table-header">
+
+        <h2 class="table-title">
+            Upcoming Deadlines
+        </h2>
+
+        <div style="
+            color:#9f9f9f;
+            font-size:12px;
+        ">
+            Next 7 Days
+        </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+        <table class="table pipeline-table">
+
+            <thead>
+
+                <tr>
+                    <th>Account</th>
+                    <th>Account Manager</th>
+                    <th>Closure Date</th>
+                    <th>Days Remaining</th>
+                    <th>Status</th>
+                    <th>Next Action</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for deadline in upcoming_deadlines %}
+
+                <tr>
+
+                    <td class="account-name">
+                        {{ deadline.AccountName }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.AccountManager }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.ClosureDate.strftime('%d %b %Y') }}
+                    </td>
+
+
+                    <td>
+
+                        {% if deadline.DaysRemaining == 0 %}
+
+                            <span class="deadline-badge deadline-today">
+                                Due Today
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 7 %}
+
+                            <span class="deadline-badge deadline-urgent">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 14 %}
+
+                            <span class="deadline-badge deadline-soon">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% else %}
+
+                            <span class="deadline-badge deadline-later">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ deadline.Status or '-' }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.NextAction or '-' }}
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty-message"
+                    >
+                        No upcoming deadlines in the next 7 days.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+        </div>
+        <div id="activity-contacts" class="activity-panel">
+
+    <div class="table-card">
+        <div class="table-header">
+            <h2 class="table-title">Customer Contact</h2>
+            <div class="table-controls">
+                <div class="contact-filter-bar">
+                    <input type="text" id="contactSearch" class="form-control contact-search" placeholder="Search account, manager, comments...">
+                    <select id="contactPersonFilter" class="form-select contact-small">
+                        <option value="">All Individuals</option>
+                        {% for user in region_users %}<option value="{{ user.FullName }}">{{ user.FullName }}</option>{% endfor %}
+                    </select>
+                    <select id="contactTypeFilter" class="form-select contact-small">
+                        <option value="">Call & Visit</option><option value="Call">Call</option><option value="Visit">Visit</option>
+                    </select>
+                    <input type="date" id="contactDateFrom" class="form-control" aria-label="Contact date from">
+                    <input type="date" id="contactDateTo" class="form-control" aria-label="Contact date to">
+                    <button type="button" id="clearContactFilters" class="contact-clear">Clear</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="table pipeline-table" id="customerContactTable">
+                <thead><tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Type</th><th>Contact Date</th><th>Time</th><th>Status at Contact</th><th>Comments</th><th>Reported By</th></tr></thead>
+                <tbody id="customerContactBody">
+                    {% for c in customer_contacts %}
+                    <tr class="customer-contact-row" data-manager="{{ c.AccountManager or '' }}" data-type="{{ c.ContactType or '' }}" data-date="{{ c.ContactDate.isoformat() if c.ContactDate else '' }}">
+                        <td class="account-name">{{ c.AccountName or '-' }}</td>
+                        <td>{{ c.AccountManager or '-' }}</td><td>{{ c.Product or '-' }}</td>
+                        <td><span class="contact-badge {{ (c.ContactType or '')|lower }}">{{ c.ContactType or '-' }}</span></td>
+                        <td>{{ c.ContactDate.strftime('%d %b %Y') if c.ContactDate else '-' }}</td>
+                        <td>{{ c.ContactTime.strftime('%I:%M %p') if c.ContactTime else '-' }}</td>
+                        <td>{{ c.SalesCycleStatus or '-' }}</td><td class="contact-comments">{{ c.Comments or '-' }}</td><td>{{ c.ReportedByName or '-' }}</td>
+                    </tr>
+                    {% else %}<tr id="noCustomerContacts"><td colspan="9" class="empty-message">No customer contact has been reported yet.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="history-footer"><span id="contactVisibleCount">Showing {{ customer_contacts|length }} record{% if customer_contacts|length != 1 %}s{% endif %}</span></div>
+    </div>
+
+        </div>
+        <div id="activity-history" class="activity-panel">
+    <!-- =========================
+         EDIT HISTORY
+    ========================= -->
+
+    <div class="history-card">
+
+        <div class="history-header">
+
+            <div class="history-header-left">
+
+                <h2 class="history-title">
+                    Audit Trail
+                </h2>
+
+                <p class="history-subtitle">
+                    Pipeline changes made by users within your view
+                </p>
+
+            </div>
+
+
+            <div class="history-filter">
+
+                <select
+                    id="historyUserFilter"
+                    class="form-select"
+                >
+
+                    <option value="">
+                        All Users
+                    </option>
+
+                    {% for user in history_users %}
+
+                        <option value="{{ user }}">
+                            {{ user }}
+                        </option>
+
+                    {% endfor %}
+
+                </select>
+
+
+                <select
+                    id="historyAccountFilter"
+                    class="form-select"
+                    style="display:none;"
+                >
+
+                    <option value="">
+                        All Accounts
+                    </option>
+
+                </select>
+
+            </div>
+
+        </div>
+
+
+        <div class="history-table-wrapper">
+
+            <table
+                id="historyTable"
+                class="history-table"
+            >
+
+                <thead>
+
+                    <tr>
+
+                        <th>
+                            ID
+                        </th>
+
+                        <th>
+                            Account Name
+                        </th>
+
+                        <th>
+                            Account Manager
+                        </th>
+
+                        <th>
+
+                            <select
+                                id="historyFieldFilter"
+                                class="history-field-filter"
+                                aria-label="Filter edited field"
+                            >
+
+                                <option value="">
+                                    Edited Field
+                                </option>
+
+                                {% for field in history_fields %}
+
+                                    <option value="{{ field }}">
+                                        {{ field }}
+                                    </option>
+
+                                {% endfor %}
+
+                            </select>
+
+                        </th>
+
+                        <th>
+                            Old Value
+                        </th>
+
+                        <th>
+                            New Value
+                        </th>
+
+                        <th>
+                            Edited By
+                        </th>
+
+                        <th>
+                            Reason
+                        </th>
+
+                        <th
+                            id="historyDateHeader"
+                            class="history-date-sort"
+                        >
+                            Edited On
+
+                            <span
+                                id="historyDateSortIcon"
+                                class="history-date-sort-icon"
+                            >
+                                ↓
+                            </span>
+
+                        </th>
+
+                    </tr>
+
+                </thead>
+
+
+                <tbody id="historyTableBody">
+
+                    {% for item in history %}
+
+                        <tr
+                            class="{% if item.IsRepeatedExtension %}history-alert-row{% endif %}"
+                            data-history-user="{{ item.EditedBy or '' }}"
+                            data-history-account="{{ item.AccountName or '' }}"
+                            data-history-manager="{{ item.AccountManager or '' }}"
+                            data-history-field="{{ item.FieldName or '' }}"
+                            data-history-date="{{
+                                item.EditedOn.isoformat()
+                                if item.EditedOn
+                                else ''
+                            }}"
+                        >
+
+                            <td>
+                                {{ item.HistoryID }}
+                            </td>
+
+                            <td class="history-account">
+                                {{ item.AccountName or '-' }}
+                            </td>
+
+                            <td>
+                                {{ item.AccountManager or '-' }}
+                            </td>
+
+                            <td>
+
+                                <span class="history-field-badge">
+                                    {{ item.FieldName or '-' }}
+                                </span>
+
+                                {% if item.IsRepeatedExtension %}
+                                    <span class="history-extension-badge">
+                                        {% if item.FieldName == 'MRC' %}
+    MRC Update {{ item.ExtensionCount }}
+{% else %}
+    Extension {{ item.ExtensionCount }}
+{% endif %}
+                                    </span>
+                                {% endif %}
+
+                            </td>
+
+                            <td class="history-value">
+                                {{ item.OldValue or '-' }}
+                            </td>
+
+                            <td class="history-value">
+                                {{ item.NewValue or '-' }}
+                            </td>
+
+                            <td>
+                                {{ item.EditedBy or '-' }}
+                            </td>
+
+                            <td class="history-reason">
+                                {% if item.IsRepeatedExtension %}
+                                    {{ item.ExtensionReason or '-' }}
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+
+                            <td>
+
+                                {% if item.EditedOn %}
+
+                                    {{
+                                        item.EditedOn.strftime(
+                                            "%d-%m-%Y %I:%M %p"
+                                        )
+                                    }}
+
+                                {% else %}
+
+                                    -
+
+                                {% endif %}
+
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+
+                            <td
+                                colspan="9"
+                                class="empty-message"
+                            >
+                                No edit history available.
+                            </td>
+
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        {% if history %}
+
+            <div class="history-footer">
+
+                <span id="historyVisibleCount">
+                    Showing {{ history|length }}
+                    record{% if history|length != 1 %}s{% endif %}
+                </span>
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+        </div>
+    </section>
+
+    <script>
+    // Activity tabs + overdue pagination are isolated from the rest of the dashboard.
+    document.addEventListener('DOMContentLoaded', function () {
+        const activitySection = document.querySelector('.activity-section');
+        if (!activitySection) return;
+
+        const tabs = Array.from(activitySection.querySelectorAll('.activity-tab'));
+        const panels = Array.from(activitySection.querySelectorAll('.activity-panel'));
+
+        function openActivityTab(tab) {
+            const target = tab.dataset.activityTab;
+
+            tabs.forEach(function (item) {
+                const selected = item === tab;
+                item.classList.toggle('active', selected);
+                item.setAttribute('aria-selected', selected ? 'true' : 'false');
+            });
+
+            panels.forEach(function (panel) {
+                const selected = panel.id === 'activity-' + target;
+                panel.classList.toggle('active', selected);
+                panel.hidden = !selected;
+            });
+        }
+
+        tabs.forEach(function (tab) {
+            tab.addEventListener('click', function (event) {
+                event.preventDefault();
+                openActivityTab(tab);
+            });
+        });
+
+        const initialTab = activitySection.querySelector('.activity-tab.active') || tabs[0];
+        if (initialTab) openActivityTab(initialTab);
+
+        const overdueButton = document.getElementById('toggleOverduePipelines');
+        const overdueRows = Array.from(document.querySelectorAll('.overdue-pipeline-row'));
+        let overdueVisible = Math.min(5, overdueRows.length);
+
+        function renderOverdueRows() {
+            overdueRows.forEach(function (row, index) {
+                row.style.display = index < overdueVisible ? '' : 'none';
+            });
+
+            if (!overdueButton) return;
+
+            if (overdueVisible >= overdueRows.length) {
+                overdueButton.textContent = 'Show Less';
+            } else {
+                const remaining = overdueRows.length - overdueVisible;
+                overdueButton.textContent = 'Show ' + Math.min(5, remaining) + ' More';
+            }
+        }
+
+        if (overdueButton) {
+            overdueButton.addEventListener('click', function () {
+                if (overdueVisible >= overdueRows.length) {
+                    overdueVisible = Math.min(5, overdueRows.length);
+                } else {
+                    overdueVisible = Math.min(overdueVisible + 5, overdueRows.length);
+                }
+                renderOverdueRows();
+            });
+        }
+
+        renderOverdueRows();
+    });
+    </script>
+
+
+    <!-- =========================
          REGION PIPELINES
     ========================= -->
 
-    <div class="table-card">
+    <div class="table-card pipeline-overview-card">
 
         <div class="table-header">
 
@@ -2583,6 +4211,979 @@ downloadPipelineExcel.addEventListener(
         );
 
     }
+
+
+
+
+/* =========================
+   EDIT HISTORY
+========================= */
+
+const historyUserFilter =
+    document.getElementById(
+        'historyUserFilter'
+    );
+
+const historyAccountFilter =
+    document.getElementById(
+        'historyAccountFilter'
+    );
+
+const historyFieldFilter =
+    document.getElementById(
+        'historyFieldFilter'
+    );
+
+const historyTableBody =
+    document.getElementById(
+        'historyTableBody'
+    );
+
+const historyDateHeader =
+    document.getElementById(
+        'historyDateHeader'
+    );
+
+const historyDateSortIcon =
+    document.getElementById(
+        'historyDateSortIcon'
+    );
+
+const historyVisibleCount =
+    document.getElementById(
+        'historyVisibleCount'
+    );
+
+
+let historyDateDescending = true;
+
+
+function normalizeHistoryValue(value) {
+
+    return (
+        value || ''
+    )
+    .trim()
+    .toLowerCase();
+}
+
+
+function updateHistoryVisibleCount() {
+
+    if (
+        !historyTableBody ||
+        !historyVisibleCount
+    ) {
+        return;
+    }
+
+
+    const rows =
+        Array.from(
+            historyTableBody.querySelectorAll(
+                'tr[data-history-user]'
+            )
+        );
+
+
+    const visibleRows =
+        rows.filter(
+            row =>
+                row.style.display !== 'none'
+        );
+
+
+    const count =
+        visibleRows.length;
+
+
+    historyVisibleCount.textContent =
+        'Showing ' +
+        count +
+        ' record' +
+        (
+            count === 1
+                ? ''
+                : 's'
+        );
+}
+
+
+function populateHistoryAccounts() {
+
+    if (
+        !historyUserFilter ||
+        !historyAccountFilter ||
+        !historyTableBody
+    ) {
+        return;
+    }
+
+
+    const selectedUser =
+        normalizeHistoryValue(
+            historyUserFilter.value
+        );
+
+
+    historyAccountFilter.innerHTML =
+        '<option value="">All Accounts</option>';
+
+
+    if (!selectedUser) {
+
+        historyAccountFilter.value = '';
+
+        historyAccountFilter.style.display =
+            'none';
+
+        return;
+    }
+
+
+    const accounts =
+        new Set();
+
+
+    const rows =
+        historyTableBody.querySelectorAll(
+            'tr[data-history-user]'
+        );
+
+
+    rows.forEach(row => {
+
+        const rowUser =
+            normalizeHistoryValue(
+                row.dataset.historyUser
+            );
+
+        const account =
+            (
+                row.dataset.historyAccount ||
+                ''
+            ).trim();
+
+
+        if (
+            rowUser === selectedUser &&
+            account
+        ) {
+            accounts.add(account);
+        }
+
+    });
+
+
+    Array.from(accounts)
+        .sort(
+            (a, b) =>
+                a.localeCompare(b)
+        )
+        .forEach(account => {
+
+            const option =
+                document.createElement(
+                    'option'
+                );
+
+            option.value =
+                account;
+
+            option.textContent =
+                account;
+
+            historyAccountFilter.appendChild(
+                option
+            );
+
+        });
+
+
+    historyAccountFilter.style.display =
+        '';
+}
+
+
+function applyHistoryFilters() {
+
+    if (
+        !historyTableBody
+    ) {
+        return;
+    }
+
+
+    const selectedUser =
+        normalizeHistoryValue(
+            historyUserFilter
+                ? historyUserFilter.value
+                : ''
+        );
+
+    const selectedAccount =
+        normalizeHistoryValue(
+            historyAccountFilter
+                ? historyAccountFilter.value
+                : ''
+        );
+
+    const selectedField =
+        normalizeHistoryValue(
+            historyFieldFilter
+                ? historyFieldFilter.value
+                : ''
+        );
+
+
+    const rows =
+        historyTableBody.querySelectorAll(
+            'tr[data-history-user]'
+        );
+
+
+    rows.forEach(row => {
+
+        const rowUser =
+            normalizeHistoryValue(
+                row.dataset.historyUser
+            );
+
+        const rowAccount =
+            normalizeHistoryValue(
+                row.dataset.historyAccount
+            );
+
+        const rowField =
+            normalizeHistoryValue(
+                row.dataset.historyField
+            );
+
+
+        const userMatches =
+            !selectedUser ||
+            rowUser === selectedUser;
+
+        const accountMatches =
+            !selectedAccount ||
+            rowAccount === selectedAccount;
+
+        const fieldMatches =
+            !selectedField ||
+            rowField === selectedField;
+
+
+        row.style.display =
+            (
+                userMatches &&
+                accountMatches &&
+                fieldMatches
+            )
+                ? ''
+                : 'none';
+
+    });
+
+
+    updateHistoryVisibleCount();
+}
+
+
+if (historyUserFilter) {
+
+    historyUserFilter.addEventListener(
+        'change',
+        function () {
+
+            populateHistoryAccounts();
+
+            applyHistoryFilters();
+        }
+    );
+}
+
+
+if (historyAccountFilter) {
+
+    historyAccountFilter.addEventListener(
+        'change',
+        applyHistoryFilters
+    );
+}
+
+
+if (historyFieldFilter) {
+
+    historyFieldFilter.addEventListener(
+        'change',
+        applyHistoryFilters
+    );
+}
+
+
+if (
+    historyDateHeader &&
+    historyTableBody
+) {
+
+    historyDateHeader.addEventListener(
+        'click',
+        function (event) {
+
+            /*
+             * Prevent date sorting only if the click
+             * somehow originated from another form control.
+             */
+            if (
+                event.target.closest(
+                    'select, input, button'
+                )
+            ) {
+                return;
+            }
+
+
+            historyDateDescending =
+                !historyDateDescending;
+
+
+            const rows =
+                Array.from(
+                    historyTableBody.querySelectorAll(
+                        'tr[data-history-user]'
+                    )
+                );
+
+
+            rows.sort(
+                (rowA, rowB) => {
+
+                    const dateA =
+                        Date.parse(
+                            rowA.dataset.historyDate || ''
+                        );
+
+                    const dateB =
+                        Date.parse(
+                            rowB.dataset.historyDate || ''
+                        );
+
+
+                    const safeDateA =
+                        Number.isNaN(dateA)
+                            ? 0
+                            : dateA;
+
+                    const safeDateB =
+                        Number.isNaN(dateB)
+                            ? 0
+                            : dateB;
+
+
+                    return (
+                        historyDateDescending
+                            ? safeDateB - safeDateA
+                            : safeDateA - safeDateB
+                    );
+
+                }
+            );
+
+
+            rows.forEach(row => {
+
+                historyTableBody.appendChild(
+                    row
+                );
+
+            });
+
+
+            if (historyDateSortIcon) {
+
+                historyDateSortIcon.textContent =
+                    historyDateDescending
+                        ? '↓'
+                        : '↑';
+            }
+
+
+            applyHistoryFilters();
+        }
+    );
+}
+
+
+populateHistoryAccounts();
+
+applyHistoryFilters();
+
+
+
+/* =========================
+   REVENUE BY TEAM
+========================= */
+
+const revenueCanvas =
+    document.getElementById(
+        'revenueChart'
+    );
+
+
+if (revenueCanvas) {
+
+    const revenueCtx =
+        revenueCanvas.getContext('2d');
+
+
+    new Chart(
+        revenueCtx,
+        {
+
+            type: 'bar',
+
+
+            data: {
+
+                labels:
+                    {{ team_names | tojson }},
+
+
+                datasets: [{
+
+                    label: 'Revenue',
+
+                    data:
+                        {{ team_revenues | tojson }},
+
+                    backgroundColor:
+                        'rgba(198, 40, 40, 0.75)',
+
+                    borderColor:
+                        '#c62828',
+
+                    borderWidth: 1,
+
+                    borderRadius: 5
+
+                }]
+
+            },
+
+
+            options: {
+
+                responsive: true,
+
+                maintainAspectRatio: false,
+
+
+                plugins: {
+
+                    legend: {
+
+                        labels: {
+
+                            color:
+                                '#d5d5d5'
+
+                        }
+
+                    }
+
+                },
+
+
+                scales: {
+
+                    x: {
+
+                        ticks: {
+
+                            color:
+                                '#d5d5d5'
+
+                        },
+
+                        grid: {
+
+                            color:
+                                'rgba(255,255,255,0.06)'
+
+                        }
+
+                    },
+
+
+                    y: {
+
+                        beginAtZero: true,
+
+                        ticks: {
+
+                            color:
+                                '#d5d5d5'
+
+                        },
+
+                        grid: {
+
+                            color:
+                                'rgba(255,255,255,0.06)'
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   PIPELINE STATUS
+========================= */
+
+const statusCtx =
+    document
+        .getElementById('statusChart')
+        .getContext('2d');
+
+
+const statusByUser =
+    {{ status_by_user | tojson }};
+
+const allStatuses =
+    {{ all_statuses | tojson }};
+
+
+let currentStatusMetrics =
+    allStatuses;
+
+
+function formatNumber(value) {
+
+    return Number(value || 0)
+        .toLocaleString();
+
+}
+
+
+function getStatusTotals(statuses) {
+
+    const totals = {
+        count: 0,
+        revenue: 0,
+        mrc: 0,
+        otc: 0
+    };
+
+    Object.values(statuses).forEach(metrics => {
+
+        totals.count += Number(metrics.count || 0);
+        totals.revenue += Number(metrics.revenue || 0);
+        totals.mrc += Number(metrics.mrc || 0);
+        totals.otc += Number(metrics.otc || 0);
+
+    });
+
+    return totals;
+
+}
+
+
+function getStatusDisplayTitle(status) {
+
+    const displayTitles = {
+
+        "Documentation/Acceptance/Processing (80%)":
+            "Documentation / Acceptance /\nProcessing (80%)",
+
+        "System Entry/Revenue Locked (100%)":
+            "System Entry / Revenue Locked\n(100%)"
+
+    };
+
+    return displayTitles[status] || status;
+
+}
+
+
+function updateStatusMetrics(status = null) {
+
+    const totals =
+        getStatusTotals(currentStatusMetrics);
+
+    let title = 'All Pipelines';
+    let metrics = totals;
+    let percentage = totals.count ? 100 : 0;
+
+
+    if (
+        status &&
+        currentStatusMetrics[status]
+    ) {
+
+        title =
+            getStatusDisplayTitle(status);
+
+        metrics =
+            currentStatusMetrics[status];
+
+        percentage =
+            totals.count
+                ? (
+                    Number(metrics.count || 0)
+                    / totals.count
+                    * 100
+                )
+                : 0;
+
+    }
+
+
+    document.getElementById('statusMetricTitle').textContent =
+        title;
+
+    document.getElementById('statusMetricPipelines').textContent =
+        formatNumber(metrics.count);
+
+    document.getElementById('statusMetricPercentage').textContent =
+        percentage.toFixed(1) + '%';
+
+    document.getElementById('statusMetricRevenue').textContent =
+        formatNumber(metrics.revenue);
+
+    document.getElementById('statusMetricMRC').textContent =
+        formatNumber(metrics.mrc);
+
+    document.getElementById('statusMetricOTC').textContent =
+        formatNumber(metrics.otc);
+
+}
+
+
+function getShortStatusLabel(status) {
+
+    const shortLabels = {
+
+        "Customer Visit (20%)":
+            "Customer Visit (20%)",
+
+        "Ask for Proposal (40%)":
+            "Proposal (40%)",
+
+        "Negotiations (60%)":
+            "Negotiations (60%)",
+
+        "Documentation/Acceptance/Processing (80%)":
+            "Processing (80%)",
+
+        "System Entry/Revenue Locked (100%)":
+            "Revenue Locked (100%)",
+
+        "Lost to Competitor":
+            "Lost",
+
+        "Retired - No Decision":
+            "Retired"
+
+    };
+
+    return shortLabels[status] || status;
+
+}
+
+
+function buildStatusChartData(statuses) {
+
+    const fullLabels =
+        Object.keys(statuses);
+
+    const displayLabels =
+        fullLabels.map(
+            status =>
+                getShortStatusLabel(status)
+        );
+
+    const counts =
+        fullLabels.map(
+            status =>
+                Number(
+                    statuses[status]?.count || 0
+                )
+        );
+
+    return {
+        fullLabels,
+        displayLabels,
+        counts
+    };
+
+}
+
+
+const initialStatusData =
+    buildStatusChartData(allStatuses);
+
+
+const statusChart =
+    new Chart(
+        statusCtx,
+        {
+
+            type: 'doughnut',
+
+            data: {
+
+                labels:
+                    initialStatusData.displayLabels,
+
+                datasets: [{
+
+                    data:
+                        initialStatusData.counts,
+
+                    backgroundColor:
+                            getPieColors(
+                                Object.keys(currentStatusMetrics)
+                            ),
+
+                    borderColor: '#171717',
+                    borderWidth: 3
+
+                }]
+
+            },
+
+            options: {
+
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '60%',
+
+                onHover: function(
+                    event,
+                    activeElements
+                ) {
+
+                    if (activeElements.length > 0) {
+
+                        const index =
+                            activeElements[0].index;
+
+                        const status =
+                            Object.keys(
+                                currentStatusMetrics
+                            )[index];
+
+                        updateStatusMetrics(status);
+
+                    }
+
+                    else {
+
+                        updateStatusMetrics();
+
+                    }
+
+                },
+
+                plugins: {
+
+                    legend: {
+
+                        position: 'bottom',
+
+                        labels: {
+
+                            color: '#d5d5d5',
+                            padding: 18,
+                            usePointStyle: true
+
+                        }
+
+                    },
+
+                    tooltip: {
+
+                        callbacks: {
+
+                            title: function(context) {
+
+                                if (!context.length) {
+                                    return '';
+                                }
+
+                                const index =
+                                    context[0].dataIndex;
+
+                                const status =
+                                    Object.keys(
+                                        currentStatusMetrics
+                                    )[index];
+
+
+                                if (
+                                    status ===
+                                    "Documentation/Acceptance/Processing (80%)"
+                                ) {
+                                    return [
+                                        "Documentation / Acceptance /",
+                                        "Processing (80%)"
+                                    ];
+                                }
+
+
+                                if (
+                                    status ===
+                                    "System Entry/Revenue Locked (100%)"
+                                ) {
+                                    return [
+                                        "System Entry / Revenue Locked",
+                                        "(100%)"
+                                    ];
+                                }
+
+
+                                return status;
+
+                            },
+
+                            label: function(context) {
+
+                                const value =
+                                    Number(context.raw || 0);
+
+                                const total =
+                                    context.dataset.data.reduce(
+                                        (a, b) =>
+                                            Number(a) + Number(b),
+                                        0
+                                    );
+
+                                const percentage =
+                                    total
+                                        ? (
+                                            value
+                                            / total
+                                            * 100
+                                        ).toFixed(1)
+                                        : '0.0';
+
+                                return (
+                                    value
+                                    + ' pipelines ('
+                                    + percentage
+                                    + '%)'
+                                );
+
+                            }
+
+                        }
+
+                    }
+
+                }
+
+            }
+
+        }
+    );
+
+
+updateStatusMetrics();
+
+
+const statusUserFilter =
+    document.getElementById('statusUserFilter');
+
+
+if (statusUserFilter) {
+
+    statusUserFilter.addEventListener(
+        'change',
+        function () {
+
+            const selectedUser =
+                this.value;
+
+
+            if (selectedUser === 'all') {
+
+                currentStatusMetrics =
+                    allStatuses;
+
+            }
+
+            else {
+
+                currentStatusMetrics =
+                    statusByUser[selectedUser]
+                        ?.statuses || {};
+
+            }
+
+
+            const chartData =
+                buildStatusChartData(
+                    currentStatusMetrics
+                );
+
+
+            statusChart.data.labels =
+                chartData.displayLabels;
+
+            statusChart.data.datasets[0].data =
+                chartData.counts;
+
+            statusChart.update();
+
+            updateStatusMetrics();
+
+        }
+    );
+
+}
+
+
+
+/* =========================
+   CUSTOMER CONTACT FILTERS
+========================= */
+(function () {
+    const search = document.getElementById('contactSearch');
+    const person = document.getElementById('contactPersonFilter');
+    const type = document.getElementById('contactTypeFilter');
+    const from = document.getElementById('contactDateFrom');
+    const to = document.getElementById('contactDateTo');
+    const clear = document.getElementById('clearContactFilters');
+    const count = document.getElementById('contactVisibleCount');
+    const rows = Array.from(document.querySelectorAll('.customer-contact-row'));
+    function applyContactFilters() {
+        const q = (search?.value || '').trim().toLowerCase();
+        const who = (person?.value || '').trim().toLowerCase();
+        const kind = (type?.value || '').trim().toLowerCase();
+        const start = from?.value || ''; const end = to?.value || ''; let visible = 0;
+        rows.forEach(function (row) {
+            const text = row.textContent.toLowerCase();
+            const manager = (row.dataset.manager || '').trim().toLowerCase();
+            const rowType = (row.dataset.type || '').trim().toLowerCase();
+            const date = row.dataset.date || '';
+            const show = (!q || text.includes(q)) && (!who || manager === who) && (!kind || rowType === kind) && (!start || date >= start) && (!end || date <= end);
+            row.style.display = show ? 'table-row' : 'none'; if (show) visible += 1;
+        });
+        if (count) count.textContent = 'Showing ' + visible + ' record' + (visible === 1 ? '' : 's');
+    }
+    [search, person, type, from, to].forEach(el => { if (el) el.addEventListener(el.tagName === 'INPUT' && el.type === 'text' ? 'input' : 'change', applyContactFilters); });
+    if (clear) clear.addEventListener('click', function () { if(search) search.value=''; if(person) person.value=''; if(type) type.value=''; if(from) from.value=''; if(to) to.value=''; applyContactFilters(); });
+})();
 
 
 </script>

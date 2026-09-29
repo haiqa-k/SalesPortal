@@ -241,6 +241,21 @@
 
 
         /* =========================
+           STAGE REQUIREMENTS
+        ========================= */
+        .stage-requirement { display:none; grid-column:span 2; background:#202020; border:1px solid #3a3a3a; border-radius:8px; padding:18px; }
+        .stage-requirement.visible { display:block; }
+        .stage-requirement-title { color:#fff; font-size:13px; font-weight:600; margin-bottom:6px; }
+        .stage-requirement-help { color:#9f9f9f; font-size:12px; margin-bottom:14px; }
+        .stage-options { display:flex; gap:12px; flex-wrap:wrap; }
+        .stage-option { flex:1 1 220px; position:relative; margin:0; cursor:pointer; }
+        .stage-option input { position:absolute; opacity:0; pointer-events:none; }
+        .stage-option-box { display:flex; align-items:center; gap:10px; min-height:44px; padding:10px 13px; background:#242424; border:1px solid #414141; border-radius:6px; color:#ddd; font-size:13px; font-weight:500; box-sizing:border-box; }
+        .stage-option-box::before { content:""; width:16px; height:16px; flex:0 0 16px; border:1px solid #777; border-radius:3px; box-sizing:border-box; }
+        .stage-option input:checked + .stage-option-box { border-color:#c62828; background:rgba(198,40,40,.13); color:#fff; }
+        .stage-option input:checked + .stage-option-box::before { background:#c62828; border-color:#c62828; box-shadow:inset 0 0 0 3px #242424; }
+
+        /* =========================
            RESPONSIVE
         ========================= */
 
@@ -589,6 +604,26 @@
                 </div>
 
 
+
+                <!-- CONDITIONAL STAGE REQUIREMENTS -->
+                <div class="stage-requirement" id="proposal_status_group">
+                    <div class="stage-requirement-title">Proposal Status *</div>
+                    <div class="stage-requirement-help">Required while the pipeline is at Ask for Proposal (40%).</div>
+                    <div class="stage-options">
+                        <label class="stage-option"><input type="radio" name="proposal_status" value="Pending"><span class="stage-option-box">Proposal Pending</span></label>
+                        <label class="stage-option"><input type="radio" name="proposal_status" value="Sent"><span class="stage-option-box">Proposal Sent</span></label>
+                    </div>
+                </div>
+
+                <div class="stage-requirement" id="decision_maker_status_group">
+                    <div class="stage-requirement-title">Decision Maker Status *</div>
+                    <div class="stage-requirement-help">Required while the pipeline is at Documentation/Acceptance/Processing (80%).</div>
+                    <div class="stage-options">
+                        <label class="stage-option"><input type="radio" name="decision_maker_status" value="Not Engaged"><span class="stage-option-box">Decision Maker Not Engaged</span></label>
+                        <label class="stage-option"><input type="radio" name="decision_maker_status" value="Engaged"><span class="stage-option-box">Decision Maker Engaged</span></label>
+                    </div>
+                </div>
+
                 <!-- ACCOUNT MANAGER -->
 
                 <div class="form-group">
@@ -872,6 +907,87 @@ document.addEventListener(
         );
 
 
+        const salesCycleStatus =
+            document.getElementById(
+                'sales_cycle_status'
+            );
+
+        const proposalStatusGroup =
+            document.getElementById(
+                'proposal_status_group'
+            );
+
+        const decisionMakerStatusGroup =
+            document.getElementById(
+                'decision_maker_status_group'
+            );
+
+        const proposalStatusInputs =
+            document.querySelectorAll(
+                'input[name="proposal_status"]'
+            );
+
+        const decisionMakerStatusInputs =
+            document.querySelectorAll(
+                'input[name="decision_maker_status"]'
+            );
+
+
+        function setRequiredForGroup(
+            inputs,
+            required
+        ) {
+            inputs.forEach(
+                function (input) {
+                    input.required = required;
+                }
+            );
+        }
+
+
+        function updateStageRequirements() {
+
+            const status =
+                salesCycleStatus.value;
+
+            const proposalStage =
+                status ===
+                'Ask for Proposal (40%)';
+
+            const decisionStage =
+                status ===
+                'Documentation/Acceptance/Processing (80%)';
+
+            proposalStatusGroup.classList.toggle(
+                'visible',
+                proposalStage
+            );
+
+            decisionMakerStatusGroup.classList.toggle(
+                'visible',
+                decisionStage
+            );
+
+            setRequiredForGroup(
+                proposalStatusInputs,
+                proposalStage
+            );
+
+            setRequiredForGroup(
+                decisionMakerStatusInputs,
+                decisionStage
+            );
+        }
+
+
+        salesCycleStatus.addEventListener(
+            'change',
+            updateStageRequirements
+        );
+
+        updateStageRequirements();
+
+
         contractDuration.addEventListener(
             'change',
             calculateArr
@@ -884,6 +1000,24 @@ document.addEventListener(
     }
 );
 </script>
+
+<!-- =========================================================
+     DUPLICATE PIPELINE POPUP
+========================================================= -->
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            {% if category == "duplicate" %}
+                <script>
+                    document.addEventListener("DOMContentLoaded", function () {
+                        alert({{ message | tojson }});
+                    });
+                </script>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+{% endwith %}
 
 </body>
 </html>

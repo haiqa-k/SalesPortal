@@ -191,6 +191,75 @@
 
 
     /* =========================
+       STAGE REQUIREMENTS
+       ========================= */
+
+    .stage-requirement {
+        display: none;
+        margin-bottom: 1rem;
+        padding: 16px;
+        background: rgba(0, 0, 0, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.22);
+        border-radius: 8px;
+    }
+
+    .stage-requirement.visible {
+        display: block;
+    }
+
+    .stage-options {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 8px;
+    }
+
+    .stage-option {
+        position: relative;
+        flex: 1 1 230px;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .stage-option input {
+        position: absolute;
+        opacity: 0;
+        pointer-events: none;
+    }
+
+    .stage-option-box {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 11px 13px;
+        background: rgba(255, 255, 255, 0.12);
+        border: 1px solid rgba(255, 255, 255, 0.30);
+        border-radius: 6px;
+        color: #fff;
+        font-size: 14px;
+    }
+
+    .stage-option-box::before {
+        content: "";
+        width: 16px;
+        height: 16px;
+        flex: 0 0 16px;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+        border-radius: 3px;
+    }
+
+    .stage-option input:checked + .stage-option-box {
+        background: rgba(198, 40, 40, 0.28);
+        border-color: #ff9e96;
+    }
+
+    .stage-option input:checked + .stage-option-box::before {
+        background: #e52e2e;
+        box-shadow: inset 0 0 0 3px #4b1b58;
+    }
+
+
+    /* =========================
        EXTENSION REASON MODAL
        ========================= */
 
@@ -480,6 +549,57 @@
         </div>
 
 
+        <!-- 40% PROPOSAL STATUS -->
+        <div class="stage-requirement" id="proposalStatusGroup">
+            <label class="form-label">Proposal Status *</label>
+            <div class="stage-options">
+                <label class="stage-option">
+                    <input
+                        type="radio"
+                        name="proposal_status"
+                        value="Pending"
+                        {% if original_proposal_status == 'Pending' %}checked{% endif %}
+                    >
+                    <span class="stage-option-box">Proposal Pending</span>
+                </label>
+                <label class="stage-option">
+                    <input
+                        type="radio"
+                        name="proposal_status"
+                        value="Sent"
+                        {% if original_proposal_status == 'Sent' %}checked{% endif %}
+                    >
+                    <span class="stage-option-box">Proposal Sent</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- 80% DECISION MAKER STATUS -->
+        <div class="stage-requirement" id="decisionMakerStatusGroup">
+            <label class="form-label">Decision Maker Status *</label>
+            <div class="stage-options">
+                <label class="stage-option">
+                    <input
+                        type="radio"
+                        name="decision_maker_status"
+                        value="Not Engaged"
+                        {% if original_decision_maker_status == 'Not Engaged' %}checked{% endif %}
+                    >
+                    <span class="stage-option-box">Decision Maker Not Engaged</span>
+                </label>
+                <label class="stage-option">
+                    <input
+                        type="radio"
+                        name="decision_maker_status"
+                        value="Engaged"
+                        {% if original_decision_maker_status == 'Engaged' %}checked{% endif %}
+                    >
+                    <span class="stage-option-box">Decision Maker Engaged</span>
+                </label>
+            </div>
+        </div>
+
+
         <button
             type="submit"
             class="btn btn-primary"
@@ -735,6 +855,27 @@ document.addEventListener(
                 'status'
             );
 
+        const proposalStatusGroup =
+            document.getElementById(
+                'proposalStatusGroup'
+            );
+
+        const decisionMakerStatusGroup =
+            document.getElementById(
+                'decisionMakerStatusGroup'
+            );
+
+        const proposalStatusInputs =
+            document.querySelectorAll(
+                'input[name="proposal_status"]'
+            );
+
+        const decisionMakerStatusInputs =
+            document.querySelectorAll(
+                'input[name="decision_maker_status"]'
+            );
+
+
         const mrcInput =
             document.getElementById(
                 'mrc'
@@ -849,6 +990,58 @@ document.addEventListener(
 
         let extensionReasonConfirmed = false;
         let mrcUpdateConfirmed = false;
+
+
+        function setStageRequired(
+            inputs,
+            required
+        ) {
+            inputs.forEach(
+                function (input) {
+                    input.required = required;
+                }
+            );
+        }
+
+
+        function updateStageRequirements() {
+
+            const proposalStage =
+                statusInput.value ===
+                'Ask for Proposal (40%)';
+
+            const decisionStage =
+                statusInput.value ===
+                'Documentation/Acceptance/Processing (80%)';
+
+            proposalStatusGroup.classList.toggle(
+                'visible',
+                proposalStage
+            );
+
+            decisionMakerStatusGroup.classList.toggle(
+                'visible',
+                decisionStage
+            );
+
+            setStageRequired(
+                proposalStatusInputs,
+                proposalStage
+            );
+
+            setStageRequired(
+                decisionMakerStatusInputs,
+                decisionStage
+            );
+        }
+
+
+        statusInput.addEventListener(
+            'change',
+            updateStageRequirements
+        );
+
+        updateStageRequirements();
 
 
         function statusHasChanged() {

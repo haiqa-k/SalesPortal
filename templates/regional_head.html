@@ -1464,6 +1464,114 @@
         }
 
 
+
+        /* =========================
+           ACTIVITY & MONITORING TABS
+        ========================= */
+        .activity-section { margin-top: 28px; }
+        .activity-heading { margin: 0 0 14px; color: #fff; font-size: 20px; font-weight: 600; }
+
+        /* Raised folder-style tabs: active tab visually joins the table below. */
+        .activity-tabs {
+            display: flex;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 6px;
+            padding: 0 0 0 18px;
+            background: transparent;
+            border: none;
+        }
+
+        .activity-tab {
+            position: relative;
+            z-index: 1;
+            min-width: 155px;
+            min-height: 46px;
+            padding: 11px 18px;
+            margin: 0;
+            border: 1px solid #3d3d3d;
+            border-bottom: none;
+            border-radius: 7px 7px 0 0;
+            background: #2b2b2b;
+            color: #bdbdbd;
+            font-size: 13px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            transition: background .18s ease, color .18s ease, transform .18s ease;
+        }
+
+        .activity-tab:hover {
+            background: #353535;
+            color: #ffffff;
+        }
+
+        .activity-tab.active {
+            z-index: 4;
+            min-height: 52px;
+            margin-bottom: -1px;
+            padding-top: 14px;
+            background: #1d1d1d;
+            color: #ffffff;
+            border-color: #303030;
+            border-bottom: 1px solid #1d1d1d;
+            transform: translateY(0);
+        }
+
+        .activity-tab .overdue-count {
+            margin-left: 7px;
+            vertical-align: 1px;
+        }
+
+        .activity-panel { display: none; }
+        .activity-panel.active { display: block; }
+
+        .activity-panel > .table-card,
+        .activity-panel > .history-card {
+            position: relative;
+            z-index: 2;
+            margin-top: 0 !important;
+            border-radius: 10px !important;
+            border: 1px solid #303030;
+            background: #171717;
+        }
+
+        /* Keep the visible top corners rounded on every tab. */
+        .activity-panel > .table-card .table-header,
+        .activity-panel > .history-card .history-header {
+            border-radius: 9px 9px 0 0 !important;
+        }
+
+        /* The selected folder tab and the table header share one surface. */
+        .activity-tab.active::after {
+            content: "";
+            position: absolute;
+            left: 0;
+            right: 0;
+            bottom: -2px;
+            height: 3px;
+            background: #1d1d1d;
+        }
+
+        .activity-panel.active > .table-card,
+        .activity-panel.active > .history-card {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        }
+        .contact-badge { display:inline-block; min-width:58px; text-align:center; padding:5px 9px; border-radius:999px; font-size:11px; font-weight:700; }
+        .contact-badge.visit { background:rgba(126,87,194,.20); color:#d1c4e9; border:1px solid rgba(179,157,219,.30); }
+        .contact-badge.call { background:rgba(38,166,154,.16); color:#80cbc4; border:1px solid rgba(128,203,196,.28); }
+        .contact-comments { min-width:220px; max-width:420px; white-space:normal !important; overflow-wrap:anywhere; }
+        .contact-filter-bar { display:flex; flex-wrap:wrap; gap:8px; width:100%; align-items:center; }
+        .contact-filter-bar .form-control, .contact-filter-bar .form-select { height:40px; background:#202020; color:#fff; border:1px solid #3a3a3a; font-size:13px; }
+        .contact-filter-bar .contact-search { min-width:240px; flex:1 1 280px; }
+        .contact-filter-bar .contact-small { width:170px; flex:0 1 170px; }
+        .contact-filter-bar input[type=date] { color-scheme:dark; width:155px; flex:0 0 155px; }
+        .contact-clear { height:40px; padding:0 14px; background:#292929; color:#fff; border:1px solid #444; border-radius:6px; }
+        @media (max-width:768px) {
+            .activity-tabs { padding-left: 8px; flex-wrap: nowrap; overflow-x: auto; gap: 5px; }
+            .activity-tab { width: auto; min-width: 145px; flex: 0 0 auto; text-align: center; }
+        }
+
     </style>
 
 </head>
@@ -1745,253 +1853,8 @@
     </div>
 
 
-    <!-- =========================
-     UPCOMING DEADLINES
-========================= -->
 
-<div class="table-card mb-4">
 
-    <div class="table-header">
-
-        <h2 class="table-title">
-            Upcoming Deadlines
-        </h2>
-
-        <div style="
-            color:#9f9f9f;
-            font-size:12px;
-        ">
-            Next 7 Days
-        </div>
-
-    </div>
-
-
-    <div class="table-wrapper">
-
-        <table class="table pipeline-table">
-
-            <thead>
-
-                <tr>
-                    <th>Account</th>
-                    <th>Account Manager</th>
-                    <th>Closure Date</th>
-                    <th>Days Remaining</th>
-                    <th>Status</th>
-                    <th>Next Action</th>
-                </tr>
-
-            </thead>
-
-
-            <tbody>
-
-
-                {% for deadline in upcoming_deadlines %}
-
-                <tr>
-
-                    <td class="account-name">
-                        {{ deadline.AccountName }}
-                    </td>
-
-
-                    <td>
-                        {{ deadline.AccountManager }}
-                    </td>
-
-
-                    <td>
-                        {{ deadline.ClosureDate.strftime('%d %b %Y') }}
-                    </td>
-
-
-                    <td>
-
-                        {% if deadline.DaysRemaining == 0 %}
-
-                            <span class="deadline-badge deadline-today">
-                                Due Today
-                            </span>
-
-                        {% elif deadline.DaysRemaining <= 7 %}
-
-                            <span class="deadline-badge deadline-urgent">
-                                {{ deadline.DaysRemaining }} days
-                            </span>
-
-                        {% elif deadline.DaysRemaining <= 14 %}
-
-                            <span class="deadline-badge deadline-soon">
-                                {{ deadline.DaysRemaining }} days
-                            </span>
-
-                        {% else %}
-
-                            <span class="deadline-badge deadline-later">
-                                {{ deadline.DaysRemaining }} days
-                            </span>
-
-                        {% endif %}
-
-                    </td>
-
-
-                    <td>
-                        {{ deadline.Status or '-' }}
-                    </td>
-
-
-                    <td>
-                        {{ deadline.NextAction or '-' }}
-                    </td>
-
-                </tr>
-
-
-                {% else %}
-
-                <tr>
-
-                    <td
-                        colspan="6"
-                        class="empty-message"
-                    >
-                        No upcoming deadlines in the next 7 days.
-                    </td>
-
-                </tr>
-
-                {% endfor %}
-
-
-            </tbody>
-
-        </table>
-
-    </div>
-
-</div>
-
-
-    <!-- =========================
-         OVERDUE PIPELINES
-    ========================= -->
-
-    <div class="table-card mb-4">
-
-        <div class="table-header">
-
-            <h2 class="table-title">
-                Overdue Pipelines
-
-                <span class="overdue-count">
-                    {{ overdue_pipelines|length }}
-                </span>
-            </h2>
-
-            <div style="
-                color:#9f9f9f;
-                font-size:12px;
-            ">
-                Active pipelines past their expected closure date
-            </div>
-
-        </div>
-
-        <div class="table-wrapper">
-
-            <table class="table pipeline-table">
-
-                <thead>
-                    <tr>
-                        <th>Account</th>
-                        <th>Account Manager</th>
-                        <th>Product</th>
-                        <th>Closure Date</th>
-                        <th>Days Overdue</th>
-                        <th>Status</th>
-                    </tr>
-                </thead>
-
-                <tbody id="overduePipelineBody">
-
-                    {% for p in overdue_pipelines %}
-
-                        <tr
-                            class="overdue-pipeline-row"
-                            {% if loop.index > 5 %}
-                                style="display:none;"
-                            {% endif %}
-                        >
-
-                            <td class="account-name">
-                                {{ p.AccountName }}
-                            </td>
-
-                            <td>
-                                {{ p.AccountManager }}
-                            </td>
-
-                            <td>
-                                {{ p.Product or '-' }}
-                            </td>
-
-                            <td>
-                                {{ p.ClosureDate }}
-                            </td>
-
-                            <td class="overdue-text">
-                                {{ p.DaysOverdue }} days
-                            </td>
-
-                            <td>
-                                {{ p.Status or '-' }}
-                            </td>
-
-                        </tr>
-
-                    {% else %}
-
-                        <tr>
-                            <td
-                                colspan="6"
-                                class="empty-message"
-                            >
-                                No overdue pipelines.
-                            </td>
-                        </tr>
-
-                    {% endfor %}
-
-                </tbody>
-
-            </table>
-
-        </div>
-
-        {% if overdue_pipelines|length > 5 %}
-
-            <div
-                style="
-                    padding: 14px 20px;
-                    text-align: center;
-                    border-top: 1px solid #292929;
-                "
-            >
-                <button
-                    type="button"
-                    id="toggleOverduePipelines"
-                    class="show-more-button"
-                >
-                    Show 5 More
-                </button>
-            </div>
-
-        {% endif %}
-
-    </div>
 
 
     <!-- =========================
@@ -2748,11 +2611,319 @@
     </div>
 
 
+
+
+
+    <!-- =========================
+         ACTIVITY & MONITORING
+    ========================= -->
+    <section class="activity-section">
+        <!-- <h2 class="activity-heading">Activity & Monitoring</h2> -->
+        <div class="activity-tabs" role="tablist" aria-label="Activity and monitoring views">
+            <button type="button" class="activity-tab active" data-activity-tab="overdue">Overdue Pipelines <span class="overdue-count">{{ overdue_pipelines|length }}</span></button>
+            <button type="button" class="activity-tab" data-activity-tab="upcoming">Upcoming Deadlines</button>
+            <button type="button" class="activity-tab" data-activity-tab="contacts">Customer Contact</button>
+            <button type="button" class="activity-tab" data-activity-tab="history">Edit History</button>
+        </div>
+        <div id="activity-overdue" class="activity-panel active">
+    <!-- =========================
+         OVERDUE PIPELINES
+    ========================= -->
+
+    <div class="table-card mb-4">
+
+        <div class="table-header">
+
+            <h2 class="table-title">
+                Overdue Pipelines
+
+                <span class="overdue-count">
+                    {{ overdue_pipelines|length }}
+                </span>
+            </h2>
+
+            <div style="
+                color:#9f9f9f;
+                font-size:12px;
+            ">
+                Active pipelines past their expected closure date
+            </div>
+
+        </div>
+
+        <div class="table-wrapper">
+
+            <table class="table pipeline-table">
+
+                <thead>
+                    <tr>
+                        <th>Account</th>
+                        <th>Account Manager</th>
+                        <th>Product</th>
+                        <th>Closure Date</th>
+                        <th>Days Overdue</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+
+                <tbody id="overduePipelineBody">
+
+                    {% for p in overdue_pipelines %}
+
+                        <tr
+                            class="overdue-pipeline-row"
+                            {% if loop.index > 5 %}
+                                style="display:none;"
+                            {% endif %}
+                        >
+
+                            <td class="account-name">
+                                {{ p.AccountName }}
+                            </td>
+
+                            <td>
+                                {{ p.AccountManager }}
+                            </td>
+
+                            <td>
+                                {{ p.Product or '-' }}
+                            </td>
+
+                            <td>
+                                {{ p.ClosureDate }}
+                            </td>
+
+                            <td class="overdue-text">
+                                {{ p.DaysOverdue }} days
+                            </td>
+
+                            <td>
+                                {{ p.Status or '-' }}
+                            </td>
+
+                        </tr>
+
+                    {% else %}
+
+                        <tr>
+                            <td
+                                colspan="6"
+                                class="empty-message"
+                            >
+                                No overdue pipelines.
+                            </td>
+                        </tr>
+
+                    {% endfor %}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+        {% if overdue_pipelines|length > 5 %}
+
+            <div
+                style="
+                    padding: 14px 20px;
+                    text-align: center;
+                    border-top: 1px solid #292929;
+                "
+            >
+                <button
+                    type="button"
+                    id="toggleOverduePipelines"
+                    class="show-more-button"
+                >
+                    Show 5 More
+                </button>
+            </div>
+
+        {% endif %}
+
+    </div>
+
+        </div>
+        <div id="activity-upcoming" class="activity-panel">
+    <!-- =========================
+     UPCOMING DEADLINES
+========================= -->
+
+<div class="table-card mb-4">
+
+    <div class="table-header">
+
+        <h2 class="table-title">
+            Upcoming Deadlines
+        </h2>
+
+        <div style="
+            color:#9f9f9f;
+            font-size:12px;
+        ">
+            Next 7 Days
+        </div>
+
+    </div>
+
+
+    <div class="table-wrapper">
+
+        <table class="table pipeline-table">
+
+            <thead>
+
+                <tr>
+                    <th>Account</th>
+                    <th>Account Manager</th>
+                    <th>Closure Date</th>
+                    <th>Days Remaining</th>
+                    <th>Status</th>
+                    <th>Next Action</th>
+                </tr>
+
+            </thead>
+
+
+            <tbody>
+
+
+                {% for deadline in upcoming_deadlines %}
+
+                <tr>
+
+                    <td class="account-name">
+                        {{ deadline.AccountName }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.AccountManager }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.ClosureDate.strftime('%d %b %Y') }}
+                    </td>
+
+
+                    <td>
+
+                        {% if deadline.DaysRemaining == 0 %}
+
+                            <span class="deadline-badge deadline-today">
+                                Due Today
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 7 %}
+
+                            <span class="deadline-badge deadline-urgent">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% elif deadline.DaysRemaining <= 14 %}
+
+                            <span class="deadline-badge deadline-soon">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% else %}
+
+                            <span class="deadline-badge deadline-later">
+                                {{ deadline.DaysRemaining }} days
+                            </span>
+
+                        {% endif %}
+
+                    </td>
+
+
+                    <td>
+                        {{ deadline.Status or '-' }}
+                    </td>
+
+
+                    <td>
+                        {{ deadline.NextAction or '-' }}
+                    </td>
+
+                </tr>
+
+
+                {% else %}
+
+                <tr>
+
+                    <td
+                        colspan="6"
+                        class="empty-message"
+                    >
+                        No upcoming deadlines in the next 7 days.
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+
+            </tbody>
+
+        </table>
+
+    </div>
+
+</div>
+
+        </div>
+        <div id="activity-contacts" class="activity-panel">
+
+    <div class="table-card">
+        <div class="table-header">
+            <h2 class="table-title">Customer Contact</h2>
+            <div class="table-controls">
+                <div class="contact-filter-bar">
+                    <input type="text" id="contactSearch" class="form-control contact-search" placeholder="Search account, manager, comments...">
+                    <select id="contactPersonFilter" class="form-select contact-small">
+                        <option value="">All Individuals</option>
+                        {% for user in head_users %}<option value="{{ user.FullName }}">{{ user.FullName }}</option>{% endfor %}
+                    </select>
+                    <select id="contactTypeFilter" class="form-select contact-small">
+                        <option value="">Call & Visit</option><option value="Call">Call</option><option value="Visit">Visit</option>
+                    </select>
+                    <input type="date" id="contactDateFrom" class="form-control" aria-label="Contact date from">
+                    <input type="date" id="contactDateTo" class="form-control" aria-label="Contact date to">
+                    <button type="button" id="clearContactFilters" class="contact-clear">Clear</button>
+                </div>
+            </div>
+        </div>
+        <div class="table-wrapper">
+            <table class="table pipeline-table" id="customerContactTable">
+                <thead><tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Type</th><th>Contact Date</th><th>Time</th><th>Status at Contact</th><th>Comments</th><th>Reported By</th></tr></thead>
+                <tbody id="customerContactBody">
+                    {% for c in customer_contacts %}
+                    <tr class="customer-contact-row" data-manager="{{ c.AccountManager or '' }}" data-type="{{ c.ContactType or '' }}" data-date="{{ c.ContactDate.isoformat() if c.ContactDate else '' }}">
+                        <td class="account-name">{{ c.AccountName or '-' }}</td>
+                        <td>{{ c.AccountManager or '-' }}</td><td>{{ c.Product or '-' }}</td>
+                        <td><span class="contact-badge {{ (c.ContactType or '')|lower }}">{{ c.ContactType or '-' }}</span></td>
+                        <td>{{ c.ContactDate.strftime('%d %b %Y') if c.ContactDate else '-' }}</td>
+                        <td>{{ c.ContactTime.strftime('%I:%M %p') if c.ContactTime else '-' }}</td>
+                        <td>{{ c.SalesCycleStatus or '-' }}</td><td class="contact-comments">{{ c.Comments or '-' }}</td><td>{{ c.ReportedByName or '-' }}</td>
+                    </tr>
+                    {% else %}<tr id="noCustomerContacts"><td colspan="9" class="empty-message">No customer contact has been reported yet.</td></tr>{% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="history-footer"><span id="contactVisibleCount">Showing {{ customer_contacts|length }} record{% if customer_contacts|length != 1 %}s{% endif %}</span></div>
+    </div>
+
+        </div>
+        <div id="activity-history" class="activity-panel">
     <!-- =========================
          EDIT HISTORY
     ========================= -->
 
-    <div class="history-card mt-4">
+    <div class="history-card">
 
         <div class="history-header">
 
@@ -3015,6 +3186,8 @@
 
     </div>
 
+        </div>
+    </section>
 
 </div>
 
@@ -4815,6 +4988,53 @@ document.addEventListener("DOMContentLoaded", function () {
     updateOverdueRows();
 
 });
+
+
+/* =========================
+   ACTIVITY & MONITORING TABS
+========================= */
+document.querySelectorAll('.activity-tab').forEach(function (button) {
+    button.addEventListener('click', function () {
+        const target = button.dataset.activityTab;
+        document.querySelectorAll('.activity-tab').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.activity-panel').forEach(p => p.classList.remove('active'));
+        button.classList.add('active');
+        const panel = document.getElementById('activity-' + target);
+        if (panel) panel.classList.add('active');
+    });
+});
+
+/* =========================
+   CUSTOMER CONTACT FILTERS
+========================= */
+(function () {
+    const search = document.getElementById('contactSearch');
+    const person = document.getElementById('contactPersonFilter');
+    const type = document.getElementById('contactTypeFilter');
+    const from = document.getElementById('contactDateFrom');
+    const to = document.getElementById('contactDateTo');
+    const clear = document.getElementById('clearContactFilters');
+    const count = document.getElementById('contactVisibleCount');
+    const rows = Array.from(document.querySelectorAll('.customer-contact-row'));
+    function applyContactFilters() {
+        const q = (search?.value || '').trim().toLowerCase();
+        const who = (person?.value || '').trim().toLowerCase();
+        const kind = (type?.value || '').trim().toLowerCase();
+        const start = from?.value || ''; const end = to?.value || ''; let visible = 0;
+        rows.forEach(function (row) {
+            const text = row.textContent.toLowerCase();
+            const manager = (row.dataset.manager || '').trim().toLowerCase();
+            const rowType = (row.dataset.type || '').trim().toLowerCase();
+            const date = row.dataset.date || '';
+            const show = (!q || text.includes(q)) && (!who || manager === who) && (!kind || rowType === kind) && (!start || date >= start) && (!end || date <= end);
+            row.style.display = show ? 'table-row' : 'none'; if (show) visible += 1;
+        });
+        if (count) count.textContent = 'Showing ' + visible + ' record' + (visible === 1 ? '' : 's');
+    }
+    [search, person, type, from, to].forEach(el => { if (el) el.addEventListener(el.tagName === 'INPUT' && el.type === 'text' ? 'input' : 'change', applyContactFilters); });
+    if (clear) clear.addEventListener('click', function () { if(search) search.value=''; if(person) person.value=''; if(type) type.value=''; if(from) from.value=''; if(to) to.value=''; applyContactFilters(); });
+})();
+
 </script>
 
 </body>

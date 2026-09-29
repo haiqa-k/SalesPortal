@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, session, g
+from flask import Flask, render_template, request, redirect, url_for, session, g, flash
 import pyodbc
 import bcrypt
 from datetime import datetime
@@ -971,7 +971,7 @@ def my_pipelines():
         overdue_pipelines=overdue_pipelines
     )
 
-    
+
 # ============================================================
 # EDO PIPELINE EDIT LIMITS
 #
@@ -980,8 +980,8 @@ def my_pipelines():
 # additional confirmation is required.
 # ============================================================
 
-EDO_CLOSURE_DATE_FREE_UPDATES = 2
-EDO_MRC_FREE_UPDATES = 2
+EDO_CLOSURE_DATE_FREE_UPDATES = 3
+EDO_MRC_FREE_UPDATES = 3
 
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
@@ -1011,7 +1011,9 @@ def edit_pipeline(pipeline_id):
                 EstimatedClosureDateFull,           -- 6
                 [MRC],                              -- 7
                 [Contract Duration (Months)],       -- 8
-                [ARR]                               -- 9
+                [ARR],                              -- 9
+                ProposalStatus,                       -- 10
+                DecisionMakerStatus                   -- 11
 
             FROM Pipelines
 
@@ -1027,6 +1029,8 @@ def edit_pipeline(pipeline_id):
         original_closure_date = pipeline[6]
         original_mrc = pipeline[7]
         contract_duration = pipeline[8] or 0
+        original_proposal_status = (pipeline[10] or "").strip()
+        original_decision_maker_status = (pipeline[11] or "").strip()
 
 
         # ========================================================
@@ -1070,14 +1074,6 @@ def edit_pipeline(pipeline_id):
             or 0
         )
 
-
-        # ========================================================
-        # HOW MANY MRC CHANGES HAVE HAPPENED
-        # SINCE THE LAST SALES CYCLE STATUS CHANGE?
-        #
-        # This mirrors the closure-date rule: a status change
-        # starts a fresh count.
-        # ========================================================
 
         cursor.execute("""
             SELECT COUNT(*)
@@ -1147,6 +1143,16 @@ def edit_pipeline(pipeline_id):
                 "status"
             )
 
+            proposal_status = (
+                request.form.get("proposal_status")
+                or ""
+            ).strip()
+
+            decision_maker_status = (
+                request.form.get("decision_maker_status")
+                or ""
+            ).strip()
+
             extension_reason = (
                 request.form.get("extension_reason")
                 or ""
@@ -1195,6 +1201,32 @@ def edit_pipeline(pipeline_id):
                 effective_new_status
                 != original_status
             )
+
+
+            # ====================================================
+            # STAGE-SPECIFIC VALIDATION
+            # ====================================================
+
+            if effective_new_status == "Ask for Proposal (40%)":
+                if proposal_status not in {"Pending", "Sent"}:
+                    return (
+                        "Please select Proposal Pending or Proposal Sent.",
+                        400
+                    )
+
+            if (
+                effective_new_status ==
+                "Documentation/Acceptance/Processing (80%)"
+            ):
+                if decision_maker_status not in {
+                    "Not Engaged",
+                    "Engaged"
+                }:
+                    return (
+                        "Please select whether the Decision Maker "
+                        "has been engaged.",
+                        400
+                    )
 
             date_was_pushed = (
                 original_closure_date is not None
@@ -1365,6 +1397,27 @@ def edit_pipeline(pipeline_id):
                 params.append(
                     status
                 )
+
+
+            # ====================================================
+            # PROPOSAL / DECISION MAKER STATUS
+            # ====================================================
+
+            if effective_new_status == "Ask for Proposal (40%)":
+                if proposal_status != original_proposal_status:
+                    updates.append("ProposalStatus = ?")
+                    params.append(proposal_status)
+
+            if (
+                effective_new_status ==
+                "Documentation/Acceptance/Processing (80%)"
+            ):
+                if (
+                    decision_maker_status
+                    != original_decision_maker_status
+                ):
+                    updates.append("DecisionMakerStatus = ?")
+                    params.append(decision_maker_status)
 
 
             # ====================================================
@@ -1545,6 +1598,14 @@ def edit_pipeline(pipeline_id):
                 else 0
             ),
 
+            original_proposal_status=(
+                original_proposal_status
+            ),
+
+            original_decision_maker_status=(
+                original_decision_maker_status
+            ),
+
             previous_extension_count=(
                 previous_extension_count
             ),
@@ -1566,6 +1627,302 @@ def edit_pipeline(pipeline_id):
 
     finally:
         cursor.close()
+
+@app.route(
+    "/pipeline/<int:pipeline_id>/contact",
+    methods=["GET", "POST"]
+)
+def report_contact(pipeline_id):
+
+    # =========================
+    # AUTHENTICATION
+    # =========================
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    emp_id = session["user_id"]
+    cursor = conn.cursor()
+
+
+    # =========================
+    # GET LOGGED-IN EMPLOYEE
+    # =========================
+
+    cursor.execute("""
+        SELECT EmployeeName
+        FROM dbo.Users
+        WHERE EmpID = ?
+          AND IsActive = 1
+    """, (emp_id,))
+
+    user_row = cursor.fetchone()
+
+    if not user_row:
+        return "User not found or inactive.", 403
+
+    employee_name = (
+        user_row[0] or ""
+    ).strip()
+
+
+    # =========================
+    # GET PIPELINE
+    # AND VERIFY OWNERSHIP
+    # =========================
+
+    cursor.execute("""
+        SELECT
+            PipelineID,
+            [Account Name],
+            [Product],
+            [Sales Cycle Status],
+            [Account Manager],
+            ProposalStatus,
+            DecisionMakerStatus
+        FROM dbo.Pipelines
+        WHERE
+            PipelineID = ?
+            AND LTRIM(RTRIM([Account Manager])) =
+                LTRIM(RTRIM(?))
+    """, (
+        pipeline_id,
+        employee_name
+    ))
+
+    row = cursor.fetchone()
+
+    if not row:
+        return "Pipeline not found or access denied.", 404
+
+    pipeline = {
+        "PipelineID": row[0],
+        "AccountName": row[1],
+        "Product": row[2],
+        "SalesCycleStatus": row[3],
+        "AccountManager": row[4],
+        "ProposalStatus": row[5],
+        "DecisionMakerStatus": row[6]
+    }
+
+
+    # =========================
+    # DISPLAY FORM
+    # =========================
+
+    if request.method == "GET":
+        return render_template(
+            "report_contact.html",
+            pipeline=pipeline,
+            edo_name=employee_name
+        )
+
+
+    # =========================
+    # READ FORM
+    # =========================
+
+    contact_type = (
+        request.form.get("contact_type") or ""
+    ).strip()
+
+    contact_date = (
+        request.form.get("contact_date") or ""
+    ).strip()
+
+    contact_time = (
+        request.form.get("contact_time") or ""
+    ).strip()
+
+    status = (
+        request.form.get("status") or ""
+    ).strip()
+
+    comments = (
+        request.form.get("comments") or ""
+    ).strip()
+
+    proposal_status = (
+        request.form.get("proposal_status") or ""
+    ).strip()
+
+    decision_maker_status = (
+        request.form.get("decision_maker_status") or ""
+    ).strip()
+
+
+    # =========================
+    # VALIDATION
+    # =========================
+
+    if contact_type not in {"Call", "Visit"}:
+        return "Please select Call or Visit.", 400
+
+    if not contact_date:
+        return "Contact date is required.", 400
+
+    if not contact_time:
+        return "Contact time is required.", 400
+
+    if not status:
+        return "Sales Cycle Status is required.", 400
+
+    if status == "Ask for Proposal (40%)":
+        if proposal_status not in {"Pending", "Sent"}:
+            return (
+                "Please select Proposal Pending or Proposal Sent.",
+                400
+            )
+
+    if (
+        status ==
+        "Documentation/Acceptance/Processing (80%)"
+    ):
+        if decision_maker_status not in {
+            "Not Engaged",
+            "Engaged"
+        }:
+            return (
+                "Please select whether the Decision Maker "
+                "has been engaged.",
+                400
+            )
+
+
+    # =========================
+    # COMMENT WORD LIMIT
+    # =========================
+
+    if len(comments.split()) > 20:
+        return "Comments cannot exceed 20 words.", 400
+
+
+    # =========================
+    # PARSE DATE AND TIME
+    # =========================
+
+    try:
+        contact_date_value = datetime.strptime(
+            contact_date,
+            "%Y-%m-%d"
+        ).date()
+
+        contact_time_value = datetime.strptime(
+            contact_time,
+            "%H:%M"
+        ).time()
+
+    except ValueError:
+        return "Invalid date or time.", 400
+
+
+    # =========================
+    # PREVENT FUTURE DATE
+    # =========================
+
+    if contact_date_value > datetime.now().date():
+        return (
+            "Contact date cannot be in the future.",
+            400
+        )
+
+
+    # =========================
+    # INSERT CONTACT + UPDATE PIPELINE
+    # =========================
+
+    try:
+        cursor.execute("""
+            INSERT INTO dbo.CustomerContact
+            (
+                PipelineID,
+                ContactType,
+                ContactDate,
+                ContactTime,
+                SalesCycleStatus,
+                Comments,
+                ReportedBy
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (
+            pipeline_id,
+            contact_type,
+            contact_date_value,
+            contact_time_value,
+            status,
+            comments if comments else None,
+            emp_id
+        ))
+
+        current_status = (
+            pipeline["SalesCycleStatus"] or ""
+        ).strip()
+
+        updates = []
+        params = []
+
+        if status != current_status:
+            updates.append(
+                "[Sales Cycle Status] = ?"
+            )
+            params.append(status)
+
+        # Only update the field relevant to the selected stage.
+        # Previously recorded values for other stages are retained.
+        if status == "Ask for Proposal (40%)":
+            current_proposal_status = (
+                pipeline["ProposalStatus"] or ""
+            ).strip()
+
+            if proposal_status != current_proposal_status:
+                updates.append(
+                    "ProposalStatus = ?"
+                )
+                params.append(proposal_status)
+
+        if (
+            status ==
+            "Documentation/Acceptance/Processing (80%)"
+        ):
+            current_decision_status = (
+                pipeline["DecisionMakerStatus"] or ""
+            ).strip()
+
+            if (
+                decision_maker_status
+                != current_decision_status
+            ):
+                updates.append(
+                    "DecisionMakerStatus = ?"
+                )
+                params.append(
+                    decision_maker_status
+                )
+
+        if updates:
+            sql = (
+                "UPDATE dbo.Pipelines "
+                f"SET {', '.join(updates)} "
+                "WHERE PipelineID = ?"
+            )
+
+            params.append(pipeline_id)
+
+            cursor.execute(
+                sql,
+                params
+            )
+
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+
+
+    return redirect(
+        url_for("my_pipelines")
+    )
 
 @app.route("/teamlead", methods=["GET"])
 def teamlead_dashboard():
@@ -2003,46 +2360,21 @@ def teamlead_dashboard():
 
         all_statuses=all_statuses
     )
-
 @app.route("/add_pipeline", methods=["GET", "POST"])
 def add_pipeline():
-
-    # Allowed dropdown values
     verticals = [
-        "Commercial",
-        "FinTech",
-        "Healthcare",
-        "Manufacturing",
-        "Telecom",
-        "Others"
+        "Commercial", "FinTech", "Healthcare", "Manufacturing",
+        "Telecom", "Education", "Construction", "Technology",
+        "Consultancy", "Logistics", "Transportation", "Others"
     ]
 
     products = [
-        "0-365",
-        "Boost",
-        "Business Line",
-        "Cloud",
-        "CMT",
-        "Device GSM",
-        "Device MBB",
-        "Digital Dukan",
-        "FFM",
-        "Fixed",
-        "Group Data",
-        "GSM",
-        "M2M",
-        "SaaS",
-        "SIP",
-        "Other"
+        "0-365", "Boost", "Business Line", "Cloud", "CMT",
+        "Device GSM", "Device MBB", "Digital Dukan", "FFM",
+        "Fixed", "Group Data", "GSM", "M2M", "SaaS", "SIP", "Other"
     ]
 
-    regions = [
-        "Central",
-        "CVM",
-        "North",
-        "South",
-        "Others"
-    ]
+    regions = ["Central", "CVM", "North", "South", "Others"]
 
     statuses = [
         "Customer Visit (20%)",
@@ -2054,27 +2386,16 @@ def add_pipeline():
         "Retired - No Decision"
     ]
 
-    contract_durations = [
-        3,
-        6,
-        9,
-        12,
-        15,
-        18,
-        21,
-        24
-    ]
+    contract_durations = [3, 6, 9, 12, 15, 18, 21, 24]
 
-    # Logged-in Account Manager
     edo_name = (
         session.get("employee_name")
         or f"{session['first_name']} {session['last_name']}"
     )
 
-
-    # =========================
-    # GET
-    # =========================
+    # =========================================================
+    # GET - SHOW FORM
+    # =========================================================
 
     if request.method == "GET":
         return render_template(
@@ -2087,41 +2408,44 @@ def add_pipeline():
             contract_durations=contract_durations
         )
 
-
-    # =========================
-    # POST - FORM DATA
-    # =========================
+    # =========================================================
+    # GET FORM VALUES
+    # =========================================================
 
     vertical = request.form.get("vertical")
     account_name = request.form.get("account_name")
     product = request.form.get("product")
     region = request.form.get("region")
 
-    mrc_input = (
-        request.form.get("mrc")
-        or ""
-    ).strip()
+    mrc_input = (request.form.get("mrc") or "").strip()
 
     contract_duration_input = (
-        request.form.get("contract_duration")
-        or ""
+        request.form.get("contract_duration") or ""
     ).strip()
 
-    project_otc = request.form.get("project_otc")
-    total_project_revenue = request.form.get(
-        "total_project_revenue"
-    )
+    project_otc_input = (
+        request.form.get("project_otc") or ""
+    ).strip()
+
+    total_project_revenue_input = (
+        request.form.get("total_project_revenue") or ""
+    ).strip()
 
     closure_date = request.form.get("closure_date")
-    sales_cycle_status = request.form.get(
-        "sales_cycle_status"
-    )
+    sales_cycle_status = request.form.get("sales_cycle_status")
     next_action = request.form.get("next_action")
 
+    proposal_status = (
+        request.form.get("proposal_status") or ""
+    ).strip()
 
-    # =========================
+    decision_maker_status = (
+        request.form.get("decision_maker_status") or ""
+    ).strip()
+
+    # =========================================================
     # REQUIRED FIELD VALIDATION
-    # =========================
+    # =========================================================
 
     if not all([
         vertical,
@@ -2132,11 +2456,6 @@ def add_pipeline():
         closure_date
     ]):
         return "Please fill in all required fields.", 400
-
-
-    # =========================
-    # VALIDATE DROPDOWN VALUES
-    # =========================
 
     if vertical not in verticals:
         return "Invalid Vertical selected.", 400
@@ -2150,89 +2469,176 @@ def add_pipeline():
     if sales_cycle_status not in statuses:
         return "Invalid Sales Cycle Status selected.", 400
 
+    # =========================================================
+    # 40% PROPOSAL VALIDATION
+    # =========================================================
 
-    # =========================
-    # MRC + CONTRACT DURATION
-    # =========================
+    if sales_cycle_status == "Ask for Proposal (40%)":
+        if proposal_status not in {"Pending", "Sent"}:
+            return (
+                "Please select Proposal Pending or Proposal Sent.",
+                400
+            )
+    else:
+        proposal_status = ""
 
-    mrc = (
-        float(mrc_input)
-        if mrc_input
-        else None
-    )
+    # =========================================================
+    # 80% DECISION MAKER VALIDATION
+    # =========================================================
+
+    if sales_cycle_status == "Documentation/Acceptance/Processing (80%)":
+        if decision_maker_status not in {"Not Engaged", "Engaged"}:
+            return (
+                "Please select whether the Decision Maker "
+                "has been engaged.",
+                400
+            )
+    else:
+        decision_maker_status = ""
+
+    # =========================================================
+    # NUMERIC CONVERSION
+    # =========================================================
+
+    try:
+        mrc = float(mrc_input) if mrc_input else None
+    except ValueError:
+        return "Invalid MRC value.", 400
 
     contract_duration = None
 
     if contract_duration_input:
         try:
-            contract_duration = int(
-                contract_duration_input
-            )
+            contract_duration = int(contract_duration_input)
         except ValueError:
             return "Invalid Contract Duration selected.", 400
 
         if contract_duration not in contract_durations:
             return "Invalid Contract Duration selected.", 400
 
-
-    # Contract Duration becomes mandatory if MRC is entered
-    if (
-        mrc is not None
-        and contract_duration is None
-    ):
+    if mrc is not None and contract_duration is None:
         return (
             "Contract Duration is required when MRC is entered.",
             400
         )
 
-
-    # ARR is calculated server-side
-    arr = None
-
-    if (
-        mrc is not None
-        and contract_duration is not None
-    ):
-        arr = mrc * contract_duration
-
-
-    # =========================
-    # OTHER NUMBER FIELDS
-    # =========================
-
-    project_otc = (
-        float(project_otc)
-        if project_otc
+    arr = (
+        mrc * contract_duration
+        if mrc is not None and contract_duration is not None
         else None
     )
 
-    total_project_revenue = (
-        float(total_project_revenue)
-        if total_project_revenue
-        else None
-    )
+    try:
+        project_otc = (
+            float(project_otc_input)
+            if project_otc_input
+            else None
+        )
+    except ValueError:
+        return "Invalid Project OTC value.", 400
 
+    try:
+        total_project_revenue = (
+            float(total_project_revenue_input)
+            if total_project_revenue_input
+            else None
+        )
+    except ValueError:
+        return "Invalid Total Project Revenue value.", 400
 
-    # =========================
+    # =========================================================
     # CLOSURE DATE
-    # =========================
+    # =========================================================
 
-    closure_date_obj = datetime.strptime(
-        closure_date,
-        "%Y-%m-%d"
-    )
+    try:
+        closure_date_obj = datetime.strptime(
+            closure_date,
+            "%Y-%m-%d"
+        )
+    except ValueError:
+        return "Invalid closure date.", 400
 
     closure_day = closure_date_obj.day
     closure_month = closure_date_obj.strftime("%B")
 
     account_manager = edo_name
 
-
-    # =========================
-    # INSERT INTO SQL SERVER
-    # =========================
-
     cursor = conn.cursor()
+
+    # =========================================================
+    # DUPLICATE PIPELINE CHECK
+    #
+    # Duplicate if ALL SIX match:
+    #
+    # 1. Account Manager
+    # 2. Account Name
+    # 3. Product
+    # 4. MRC
+    # 5. Project OTC
+    # 6. Region
+    # =========================================================
+
+    cursor.execute("""
+        SELECT TOP 1
+            PipelineID
+        FROM dbo.Pipelines
+        WHERE
+            LOWER(LTRIM(RTRIM([Account Manager]))) =
+            LOWER(LTRIM(RTRIM(?)))
+
+            AND LOWER(LTRIM(RTRIM([Account Name]))) =
+            LOWER(LTRIM(RTRIM(?)))
+
+            AND LOWER(LTRIM(RTRIM([Product]))) =
+            LOWER(LTRIM(RTRIM(?)))
+
+            AND (
+                [MRC] = ?
+                OR ([MRC] IS NULL AND ? IS NULL)
+            )
+
+            AND (
+                [Project OTC] = ?
+                OR ([Project OTC] IS NULL AND ? IS NULL)
+            )
+
+            AND LOWER(LTRIM(RTRIM([Region]))) =
+            LOWER(LTRIM(RTRIM(?)))
+    """, (
+        account_manager,
+        account_name,
+        product,
+        mrc,
+        mrc,
+        project_otc,
+        project_otc,
+        region
+    ))
+
+    # IMPORTANT:
+    # Fetch the result of the duplicate query.
+    duplicate = cursor.fetchone()
+
+    # =========================================================
+    # DUPLICATE FOUND
+    # =========================================================
+
+    if duplicate:
+        existing_pipeline_id = duplicate[0]
+
+        cursor.close()
+
+        flash(
+            f"Duplicate pipeline detected. "
+            f"Pipeline #{existing_pipeline_id} already exists.",
+            "duplicate"
+        )
+
+        return redirect(url_for("add_pipeline"))
+
+    # =========================================================
+    # NO DUPLICATE - INSERT PIPELINE
+    # =========================================================
 
     cursor.execute("""
         INSERT INTO dbo.Pipelines
@@ -2246,17 +2652,17 @@ def add_pipeline():
             [ARR],
             [Project OTC],
             [Total Project Revenue],
-
             [Estimated Closure Date],
             [Estimated Closure Month],
             EstimatedClosureDateFull,
-
             [Sales Cycle Status],
             [Account Manager],
-            [Next Action]
+            [Next Action],
+            ProposalStatus,
+            DecisionMakerStatus
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
         vertical,
         account_name,
         product,
@@ -2266,21 +2672,20 @@ def add_pipeline():
         arr,
         project_otc,
         total_project_revenue,
-
         closure_day,
         closure_month,
         closure_date,
-
         sales_cycle_status,
         account_manager,
-        next_action
-    )
+        next_action,
+        proposal_status or None,
+        decision_maker_status or None
+    ))
 
     conn.commit()
     cursor.close()
 
     return redirect(url_for("my_pipelines"))
-
 
 @app.route("/regional-manager")
 def regional_manager_dashboard():
@@ -2858,30 +3263,259 @@ def regional_manager_dashboard():
 
 
     # ========================================================
+    # UPCOMING DEADLINES
+    # Regional Manager + everyone underneath them
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+            SELECT EmpID, EmployeeName, Role, ManagerID
+            FROM Users
+            WHERE EmpID = ? AND IsActive = 1
+
+            UNION ALL
+
+            SELECT u.EmpID, u.EmployeeName, u.Role, u.ManagerID
+            FROM Users u
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            p.PipelineID,
+            p.[Account Name],
+            p.[Account Manager],
+            p.[Sales Cycle Status],
+            p.[Next Action],
+            p.EstimatedClosureDateFull,
+            DATEDIFF(DAY, CAST(GETDATE() AS DATE), p.EstimatedClosureDateFull)
+        FROM Pipelines p
+        INNER JOIN UserHierarchy uh
+            ON LTRIM(RTRIM(p.[Account Manager])) = LTRIM(RTRIM(uh.EmployeeName))
+        WHERE
+            p.EstimatedClosureDateFull IS NOT NULL
+            AND p.EstimatedClosureDateFull >= CAST(GETDATE() AS DATE)
+            AND p.EstimatedClosureDateFull <= DATEADD(DAY, 7, CAST(GETDATE() AS DATE))
+        ORDER BY p.EstimatedClosureDateFull ASC
+    """, (regional_manager_id,))
+
+    upcoming_deadlines = [
+        {
+            "PipelineID": row[0],
+            "AccountName": row[1],
+            "AccountManager": row[2],
+            "Status": row[3],
+            "NextAction": row[4],
+            "ClosureDate": row[5],
+            "DaysRemaining": row[6]
+        }
+        for row in cursor.fetchall()
+    ]
+
+    # ========================================================
+    # OVERDUE PIPELINES
+    # ========================================================
+
+    cursor.execute("""
+        WITH UserHierarchy AS (
+            SELECT EmpID, EmployeeName, Role, ManagerID
+            FROM Users
+            WHERE EmpID = ? AND IsActive = 1
+
+            UNION ALL
+
+            SELECT u.EmpID, u.EmployeeName, u.Role, u.ManagerID
+            FROM Users u
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+            WHERE u.IsActive = 1
+        )
+
+        SELECT
+            p.PipelineID,
+            p.[Account Name],
+            p.[Account Manager],
+            p.[Product],
+            p.EstimatedClosureDateFull,
+            p.[Sales Cycle Status],
+            DATEDIFF(DAY, p.EstimatedClosureDateFull, CAST(GETDATE() AS DATE))
+        FROM Pipelines p
+        INNER JOIN UserHierarchy uh
+            ON LTRIM(RTRIM(p.[Account Manager])) = LTRIM(RTRIM(uh.EmployeeName))
+        WHERE
+            p.EstimatedClosureDateFull IS NOT NULL
+            AND p.EstimatedClosureDateFull < CAST(GETDATE() AS DATE)
+            AND p.[Sales Cycle Status] IN (
+                'Customer Visit (20%)',
+                'Ask for Proposal (40%)',
+                'Negotiations (60%)',
+                'Documentation/Acceptance/Processing (80%)'
+            )
+        ORDER BY p.EstimatedClosureDateFull ASC, p.[Account Name] ASC
+    """, (regional_manager_id,))
+
+    overdue_pipelines = [
+        {
+            "PipelineID": row[0],
+            "AccountName": row[1],
+            "AccountManager": row[2],
+            "Product": row[3],
+            "ClosureDate": row[4],
+            "Status": row[5],
+            "DaysOverdue": row[6]
+        }
+        for row in cursor.fetchall()
+    ]
+
+    # ========================================================
+    # CUSTOMER CONTACT ACTIVITY
+    # Uses the already-authorized Regional Manager pipeline list.
+    # ========================================================
+
+    customer_contacts = []
+    visible_pipeline_ids = [
+        pipeline["PipelineID"]
+        for pipeline in pipelines
+        if pipeline.get("PipelineID") is not None
+    ]
+
+    if visible_pipeline_ids:
+        placeholders = ",".join("?" for _ in visible_pipeline_ids)
+
+        contact_sql = f"""
+            SELECT
+                cc.ContactID,
+                cc.PipelineID,
+                p.[Account Name],
+                p.[Account Manager],
+                p.[Product],
+                cc.ContactType,
+                cc.ContactDate,
+                cc.ContactTime,
+                cc.SalesCycleStatus,
+                cc.Comments,
+                cc.ReportedBy,
+                reporter.EmployeeName AS ReportedByName,
+                cc.CreatedAt
+            FROM dbo.CustomerContact cc
+            INNER JOIN dbo.Pipelines p
+                ON cc.PipelineID = p.PipelineID
+            LEFT JOIN dbo.Users reporter
+                ON cc.ReportedBy = reporter.EmpID
+            WHERE cc.PipelineID IN ({placeholders})
+            ORDER BY cc.ContactDate DESC, cc.ContactTime DESC, cc.CreatedAt DESC
+        """
+
+        cursor.execute(contact_sql, tuple(visible_pipeline_ids))
+
+        customer_contacts = [
+            {
+                "ContactID": row[0],
+                "PipelineID": row[1],
+                "AccountName": row[2],
+                "AccountManager": row[3],
+                "Product": row[4],
+                "ContactType": row[5],
+                "ContactDate": row[6],
+                "ContactTime": row[7],
+                "SalesCycleStatus": row[8],
+                "Comments": row[9],
+                "ReportedBy": row[10],
+                "ReportedByName": row[11],
+                "CreatedAt": row[12]
+            }
+            for row in cursor.fetchall()
+        ]
+
+    # ========================================================
+    # EDIT HISTORY
+    # Scoped to the same pipelines visible to this RM.
+    # ========================================================
+
+    history = []
+    history_users = []
+    history_fields = []
+
+    if visible_pipeline_ids:
+        placeholders = ",".join("?" for _ in visible_pipeline_ids)
+        history_cursor = conn.cursor()
+
+        history_sql = f"""
+            SELECT
+                h.HistoryID,
+                h.PipelineID,
+                h.[Account Name],
+                h.FieldName,
+                h.OldValue,
+                h.NewValue,
+                h.EditedBy,
+                h.EditedOn,
+                h.IsRepeatedExtension,
+                h.ExtensionReason,
+                h.ExtensionCount,
+                CASE
+                    WHEN h.FieldName = 'Account Manager'
+                        THEN COALESCE(NULLIF(LTRIM(RTRIM(h.OldValue)), ''), p.[Account Manager])
+                    ELSE p.[Account Manager]
+                END AS AccountManager
+            FROM dbo.History h
+            LEFT JOIN dbo.Pipelines p
+                ON h.PipelineID = p.PipelineID
+            WHERE h.PipelineID IN ({placeholders})
+            ORDER BY h.EditedOn DESC
+        """
+
+        history_cursor.execute(history_sql, tuple(visible_pipeline_ids))
+
+        history = [
+            {
+                "HistoryID": row[0],
+                "PipelineID": row[1],
+                "AccountName": row[2],
+                "FieldName": row[3],
+                "OldValue": row[4],
+                "NewValue": row[5],
+                "EditedBy": row[6],
+                "EditedOn": row[7],
+                "IsRepeatedExtension": bool(row[8]),
+                "ExtensionReason": row[9],
+                "ExtensionCount": row[10],
+                "AccountManager": row[11]
+            }
+            for row in history_cursor.fetchall()
+        ]
+
+        history_fields = sorted({
+            item["FieldName"] for item in history if item["FieldName"]
+        })
+        history_users = sorted({
+            item["EditedBy"] for item in history if item["EditedBy"]
+        })
+        history_cursor.close()
+
+    # ========================================================
     # RENDER DASHBOARD
     # ========================================================
 
     return render_template(
         "regional_manager.html",
-
         first_name=first_name,
-
         summary=summary,
-
         team_leads=team_leads,
-
-        # NEW:
-        # Used by the individual dropdown
         region_users=region_users,
-
         team_names=team_names,
         team_revenues=team_revenues,
         status_users=status_users,
-
         status_by_user=status_by_user,
         all_statuses=all_statuses,
-
-        pipelines=pipelines
+        pipelines=pipelines,
+        upcoming_deadlines=upcoming_deadlines,
+        overdue_pipelines=overdue_pipelines,
+        customer_contacts=customer_contacts,
+        history=history,
+        history_users=history_users,
+        history_fields=history_fields,
     )
 
 
@@ -4214,6 +4848,83 @@ def regional_head_dashboard():
     ]
 
 
+
+    # ========================================================
+    # CUSTOMER CONTACT ACTIVITY
+    # Uses the already-authorized pipeline list above, so the
+    # contact table follows exactly the same Regional Head scope.
+    # ========================================================
+
+    customer_contacts = []
+
+    visible_pipeline_ids = [
+        pipeline["PipelineID"]
+        for pipeline in pipelines
+        if pipeline.get("PipelineID") is not None
+    ]
+
+    if visible_pipeline_ids:
+
+        placeholders = ",".join(
+            "?" for _ in visible_pipeline_ids
+        )
+
+        contact_sql = f"""
+            SELECT
+                cc.ContactID,
+                cc.PipelineID,
+                p.[Account Name],
+                p.[Account Manager],
+                p.[Product],
+                cc.ContactType,
+                cc.ContactDate,
+                cc.ContactTime,
+                cc.SalesCycleStatus,
+                cc.Comments,
+                cc.ReportedBy,
+                reporter.EmployeeName AS ReportedByName,
+                cc.CreatedAt
+
+            FROM dbo.CustomerContact cc
+
+            INNER JOIN dbo.Pipelines p
+                ON cc.PipelineID = p.PipelineID
+
+            LEFT JOIN dbo.Users reporter
+                ON cc.ReportedBy = reporter.EmpID
+
+            WHERE cc.PipelineID IN ({placeholders})
+
+            ORDER BY
+                cc.ContactDate DESC,
+                cc.ContactTime DESC,
+                cc.CreatedAt DESC
+        """
+
+        cursor.execute(
+            contact_sql,
+            tuple(visible_pipeline_ids)
+        )
+
+        customer_contacts = [
+            {
+                "ContactID": row[0],
+                "PipelineID": row[1],
+                "AccountName": row[2],
+                "AccountManager": row[3],
+                "Product": row[4],
+                "ContactType": row[5],
+                "ContactDate": row[6],
+                "ContactTime": row[7],
+                "SalesCycleStatus": row[8],
+                "Comments": row[9],
+                "ReportedBy": row[10],
+                "ReportedByName": row[11],
+                "CreatedAt": row[12]
+            }
+            for row in cursor.fetchall()
+        ]
+
     # ========================================================
     # EDIT HISTORY
     # ========================================================
@@ -4324,6 +5035,7 @@ def regional_head_dashboard():
 
         upcoming_deadlines=upcoming_deadlines,
         overdue_pipelines=overdue_pipelines,
+        customer_contacts=customer_contacts,
         history=history,
         history_users=history_users,
         history_fields=history_fields,
@@ -4351,6 +5063,12 @@ def executive_dashboard():
 
 
     first_name = session.get("first_name", "")
+    viewer_id = session["user_id"]
+
+    # Admin and HOD have organization-wide pipeline visibility.
+    # Other executive roles remain hierarchy-scoped.
+    organization_wide_access = role in {"Admin", "HOD"}
+
     cursor = conn.cursor()
 
 
@@ -4467,7 +5185,15 @@ def executive_dashboard():
         return None
 
 
-    cursor.execute("""
+    # =====================================================
+    # PIPELINE VISIBILITY
+    # Admin and HOD: all active sales users across the organization.
+    # Other executive roles: only the logged-in user's hierarchy.
+    # =====================================================
+
+    if organization_wide_access:
+
+        cursor.execute("""
         SELECT
             p.PipelineID,                    -- 0
             p.[Account Manager],             -- 1
@@ -4485,7 +5211,9 @@ def executive_dashboard():
             p.EstimatedClosureDateFull,      -- 13
             p.[Sales Cycle Status],          -- 14
             p.[Next Action],                 -- 15
-            p.CreatedAt                      -- 16
+            p.CreatedAt,                     -- 16
+            p.ProposalStatus,                 -- 17
+            p.DecisionMakerStatus             -- 18
 
         FROM Pipelines p
 
@@ -4503,13 +5231,71 @@ def executive_dashboard():
 
         ORDER BY
             CASE
-                WHEN p.EstimatedClosureDateFull IS NULL
-                THEN 1
+                WHEN p.EstimatedClosureDateFull IS NULL THEN 1
                 ELSE 0
             END,
             p.EstimatedClosureDateFull ASC,
             p.[Account Name]
-    """)
+        """)
+
+    else:
+
+        cursor.execute("""
+        WITH UserHierarchy AS (
+            SELECT EmpID, EmployeeName, Role, ManagerID
+            FROM Users
+            WHERE EmpID = ? AND IsActive = 1
+
+            UNION ALL
+
+            SELECT u.EmpID, u.EmployeeName, u.Role, u.ManagerID
+            FROM Users u
+            INNER JOIN UserHierarchy h
+                ON u.ManagerID = h.EmpID
+            WHERE u.IsActive = 1
+        )
+        SELECT
+            p.PipelineID,                    -- 0
+            p.[Account Manager],             -- 1
+            p.[Vertical],                    -- 2
+            p.[Account Name],                -- 3
+            p.[Product],                     -- 4
+            p.[Region],                      -- 5
+            p.[MRC],                         -- 6
+            p.[Contract Duration (Months)],  -- 7
+            p.[ARR],                         -- 8
+            p.[Project OTC],                 -- 9
+            p.[Total Project Revenue],       -- 10
+            p.[Estimated Closure Date],      -- 11
+            p.[Estimated Closure Month],     -- 12
+            p.EstimatedClosureDateFull,      -- 13
+            p.[Sales Cycle Status],          -- 14
+            p.[Next Action],                 -- 15
+            p.CreatedAt,                     -- 16
+            p.ProposalStatus,                 -- 17
+            p.DecisionMakerStatus             -- 18
+
+        FROM Pipelines p
+
+        INNER JOIN UserHierarchy u
+            ON LTRIM(RTRIM(p.[Account Manager])) =
+               LTRIM(RTRIM(u.EmployeeName))
+
+        WHERE u.Role IN (
+            'Regional Head',
+            'Regional Manager',
+            'Team Lead',
+            'EDO'
+        )
+
+        ORDER BY
+            CASE
+                WHEN p.EstimatedClosureDateFull IS NULL THEN 1
+                ELSE 0
+            END,
+            p.EstimatedClosureDateFull ASC,
+            p.[Account Name]
+        """, (viewer_id,))
 
     pipeline_rows = cursor.fetchall()
 
@@ -4895,6 +5681,10 @@ def executive_dashboard():
 
             "CreatedAt": row[16],
 
+            "ProposalStatus": row[17],
+
+            "DecisionMakerStatus": row[18],
+
             "DaysRemaining": days_remaining
         })
 
@@ -5054,6 +5844,397 @@ def executive_dashboard():
     }
 
 
+    # =====================================================
+    # CUSTOMER CONTACT ACTIVITY
+    # Uses the same organization-wide vs hierarchy scope as pipelines.
+    # =====================================================
+
+    customer_contacts = []
+
+    contact_select = """
+        SELECT
+            cc.ContactID,
+            cc.PipelineID,
+            p.[Account Name],
+            p.[Account Manager],
+            p.[Product],
+            cc.ContactType,
+            cc.ContactDate,
+            cc.ContactTime,
+            cc.SalesCycleStatus,
+            cc.Comments,
+            cc.ReportedBy,
+            reporter.EmployeeName AS ReportedByName,
+            cc.CreatedAt
+    """
+
+    if organization_wide_access:
+        cursor.execute(contact_select + """
+            FROM dbo.CustomerContact cc
+            INNER JOIN dbo.Pipelines p
+                ON cc.PipelineID = p.PipelineID
+            INNER JOIN dbo.Users owner
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+                   LTRIM(RTRIM(owner.EmployeeName))
+            LEFT JOIN dbo.Users reporter
+                ON cc.ReportedBy = reporter.EmpID
+            WHERE owner.IsActive = 1
+              AND owner.Role IN (
+                  'Regional Head',
+                  'Regional Manager',
+                  'Team Lead',
+                  'EDO'
+              )
+            ORDER BY
+                cc.ContactDate DESC,
+                cc.ContactTime DESC,
+                cc.CreatedAt DESC
+        """)
+    else:
+        cursor.execute("""
+            WITH UserHierarchy AS (
+                SELECT EmpID, EmployeeName, Role, ManagerID
+                FROM dbo.Users
+                WHERE EmpID = ? AND IsActive = 1
+
+                UNION ALL
+
+                SELECT u.EmpID, u.EmployeeName, u.Role, u.ManagerID
+                FROM dbo.Users u
+                INNER JOIN UserHierarchy h
+                    ON u.ManagerID = h.EmpID
+                WHERE u.IsActive = 1
+            )
+        """ + contact_select + """
+            FROM dbo.CustomerContact cc
+            INNER JOIN dbo.Pipelines p
+                ON cc.PipelineID = p.PipelineID
+            INNER JOIN UserHierarchy owner
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+                   LTRIM(RTRIM(owner.EmployeeName))
+            LEFT JOIN dbo.Users reporter
+                ON cc.ReportedBy = reporter.EmpID
+            WHERE owner.Role IN (
+                'Regional Head',
+                'Regional Manager',
+                'Team Lead',
+                'EDO'
+            )
+            ORDER BY
+                cc.ContactDate DESC,
+                cc.ContactTime DESC,
+                cc.CreatedAt DESC
+        """, (viewer_id,))
+
+    customer_contacts = [
+        {
+            "ContactID": row[0],
+            "PipelineID": row[1],
+            "AccountName": row[2],
+            "AccountManager": row[3],
+            "Product": row[4],
+            "ContactType": row[5],
+            "ContactDate": row[6],
+            "ContactTime": row[7],
+            "SalesCycleStatus": row[8],
+            "Comments": row[9],
+            "ReportedBy": row[10],
+            "ReportedByName": row[11],
+            "CreatedAt": row[12]
+        }
+        for row in cursor.fetchall()
+    ]
+
+    # =====================================================
+    # ADMIN FLAGGED PIPELINES
+    # =====================================================
+
+    flagged_deadline_risk = []
+    flagged_high_value = []
+    flagged_aging = []
+    flagged_proposal_pending = []
+    flagged_decision_maker = []
+    flagged_status_regression = []
+
+    if role == "Admin":
+
+        # 1) Stage-vs-deadline risk flags.
+        # Only future/today deadlines are included here; overdue items
+        # already appear in Activity & Monitoring.
+        stage_deadline_limits = {
+            "Documentation/Acceptance/Processing (80%)": 7,
+            "Negotiations (60%)": 15,
+            "Ask for Proposal (40%)": 21,
+            "Customer Visit (20%)": 30
+        }
+
+        for pipeline in pipelines:
+            status = pipeline.get("Status")
+            closure_date = pipeline.get("ClosureDateFull")
+
+            if status not in stage_deadline_limits or not closure_date:
+                continue
+
+            days_remaining = (closure_date - today).days
+            threshold_days = stage_deadline_limits[status]
+
+            if 0 <= days_remaining <= threshold_days:
+                flagged_deadline_risk.append({
+                    **pipeline,
+                    "DaysRemaining": days_remaining,
+                    "ThresholdDays": threshold_days
+                })
+
+        flagged_deadline_risk.sort(
+            key=lambda item: (
+                item["DaysRemaining"],
+                item.get("AccountName") or ""
+            )
+        )
+
+        # 2) GSM / Business Line pipelines with MRC or OTC >= 100,000.
+        flagged_high_value = [
+            pipeline
+            for pipeline in pipelines
+            if pipeline.get("Product") in {"GSM", "Business Line"}
+            and (
+                (pipeline.get("MRC") or 0) >= 100000
+                or (pipeline.get("ProjectOTC") or 0) >= 100000
+            )
+        ]
+
+        flagged_high_value.sort(
+            key=lambda item: max(
+                item.get("MRC") or 0,
+                item.get("ProjectOTC") or 0
+            ),
+            reverse=True
+        )
+
+        # 3) Aging / stale pipelines. Last modified means the latest
+        # History.EditedOn entry; if never edited, fall back to CreatedAt.
+        aging_cursor = conn.cursor()
+        aging_cursor.execute("""
+            SELECT
+                p.PipelineID,
+                p.[Account Name],
+                p.[Account Manager],
+                p.[Product],
+                p.[Sales Cycle Status],
+                p.EstimatedClosureDateFull,
+                p.CreatedAt,
+                MAX(h.EditedOn) AS LastHistoryEdit
+            FROM dbo.Pipelines p
+            INNER JOIN dbo.Users owner
+                ON LTRIM(RTRIM(p.[Account Manager])) =
+                   LTRIM(RTRIM(owner.EmployeeName))
+            LEFT JOIN dbo.History h
+                ON h.PipelineID = p.PipelineID
+            WHERE owner.IsActive = 1
+              AND owner.Role IN (
+                  'Regional Head',
+                  'Regional Manager',
+                  'Team Lead',
+                  'EDO'
+              )
+            GROUP BY
+                p.PipelineID,
+                p.[Account Name],
+                p.[Account Manager],
+                p.[Product],
+                p.[Sales Cycle Status],
+                p.EstimatedClosureDateFull,
+                p.CreatedAt
+        """)
+
+        for row in aging_cursor.fetchall():
+            last_modified = row[7] or row[6]
+
+            if not last_modified:
+                continue
+
+            last_modified_date = (
+                last_modified.date()
+                if hasattr(last_modified, "date")
+                else last_modified
+            )
+            aging_days = max((today - last_modified_date).days, 0)
+
+            # Active pipelines (0-30 days) do not belong in
+            # the Flagged queue.
+            if aging_days <= 30:
+                continue
+            elif aging_days <= 45:
+                aging_label = "Needs review"
+                escalation = "RM"
+            elif aging_days <= 50:
+                aging_label = "At risk"
+                escalation = "RH"
+            else:
+                aging_label = "Lost"
+                escalation = ""
+
+            flagged_aging.append({
+                "PipelineID": row[0],
+                "AccountName": row[1],
+                "AccountManager": row[2],
+                "Product": row[3],
+                "Status": row[4],
+                "ClosureDate": row[5],
+                "LastModified": last_modified,
+                "AgingDays": aging_days,
+                "AgingLabel": aging_label,
+                "Escalation": escalation
+            })
+
+        flagged_aging.sort(
+            key=lambda item: item["AgingDays"],
+            reverse=True
+        )
+        aging_cursor.close()
+
+
+        # 4) 40% pipelines where the proposal has not been sent.
+        # NULL is included for legacy pipelines where this was never recorded.
+        flagged_proposal_pending = [
+            pipeline
+            for pipeline in pipelines
+            if pipeline.get("Status") == "Ask for Proposal (40%)"
+            and (
+                not (pipeline.get("ProposalStatus") or "").strip()
+                or (pipeline.get("ProposalStatus") or "").strip() == "Pending"
+            )
+        ]
+
+        flagged_proposal_pending.sort(
+            key=lambda item: (
+                item.get("AccountManager") or "",
+                item.get("AccountName") or ""
+            )
+        )
+
+
+        # 5) 80% pipelines where the decision maker is not engaged.
+        # NULL is included for legacy pipelines where this was never recorded.
+        flagged_decision_maker = [
+            pipeline
+            for pipeline in pipelines
+            if (
+                pipeline.get("Status") ==
+                "Documentation/Acceptance/Processing (80%)"
+            )
+            and (
+                not (pipeline.get("DecisionMakerStatus") or "").strip()
+                or (
+                    (pipeline.get("DecisionMakerStatus") or "").strip()
+                    == "Not Engaged"
+                )
+            )
+        ]
+
+        flagged_decision_maker.sort(
+            key=lambda item: (
+                item.get("AccountManager") or "",
+                item.get("AccountName") or ""
+            )
+        )
+
+
+        # 6) Pipelines whose MOST RECENT sales-cycle status change
+        # moved backwards (for example 80% -> 60%).
+        #
+        # Only the latest Sales Cycle Status history record per pipeline
+        # is considered. If a pipeline later progresses again, it is no
+        # longer kept in the regression queue.
+        regression_cursor = conn.cursor()
+
+        regression_cursor.execute("""
+            WITH LatestStatusChange AS (
+                SELECT
+                    h.PipelineID,
+                    p.[Account Name],
+                    p.[Account Manager],
+                    p.[Product],
+                    p.[Sales Cycle Status] AS CurrentStatus,
+                    h.OldValue,
+                    h.NewValue,
+                    h.EditedOn,
+                    h.EditedBy,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY h.PipelineID
+                        ORDER BY h.EditedOn DESC, h.HistoryID DESC
+                    ) AS rn
+                FROM dbo.History h
+                INNER JOIN dbo.Pipelines p
+                    ON h.PipelineID = p.PipelineID
+                INNER JOIN dbo.Users owner
+                    ON LTRIM(RTRIM(p.[Account Manager])) =
+                       LTRIM(RTRIM(owner.EmployeeName))
+                WHERE h.FieldName = 'Sales Cycle Status'
+                  AND owner.IsActive = 1
+                  AND owner.Role IN (
+                      'Regional Head',
+                      'Regional Manager',
+                      'Team Lead',
+                      'EDO'
+                  )
+            )
+            SELECT
+                PipelineID,
+                [Account Name],
+                [Account Manager],
+                [Product],
+                CurrentStatus,
+                OldValue,
+                NewValue,
+                EditedOn,
+                EditedBy
+            FROM LatestStatusChange
+            WHERE rn = 1
+        """)
+
+        stage_rank = {
+            "Customer Visit (20%)": 20,
+            "Ask for Proposal (40%)": 40,
+            "Negotiations (60%)": 60,
+            "Documentation/Acceptance/Processing (80%)": 80,
+            "System Entry/Revenue Locked (100%)": 100
+        }
+
+        for row in regression_cursor.fetchall():
+            old_status = (row[5] or "").strip()
+            new_status = (row[6] or "").strip()
+
+            old_rank = stage_rank.get(old_status)
+            new_rank = stage_rank.get(new_status)
+
+            # Lost / Retired are not treated as percentage regressions.
+            if old_rank is None or new_rank is None:
+                continue
+
+            if new_rank < old_rank:
+                flagged_status_regression.append({
+                    "PipelineID": row[0],
+                    "AccountName": row[1],
+                    "AccountManager": row[2],
+                    "Product": row[3],
+                    "CurrentStatus": row[4],
+                    "PreviousStatus": old_status,
+                    "RegressedTo": new_status,
+                    "RegressedOn": row[7],
+                    "EditedBy": row[8]
+                })
+
+        flagged_status_regression.sort(
+            key=lambda item: (
+                item.get("RegressedOn") is not None,
+                item.get("RegressedOn")
+            ),
+            reverse=True
+        )
+
+        regression_cursor.close()
+
     cursor.close()
 
 
@@ -5202,6 +6383,27 @@ def executive_dashboard():
         overdue_pipelines=
             overdue_pipelines,
 
+        customer_contacts=
+            customer_contacts,
+
+        flagged_deadline_risk=
+            flagged_deadline_risk,
+
+        flagged_high_value=
+            flagged_high_value,
+
+        flagged_aging=
+            flagged_aging,
+
+        flagged_proposal_pending=
+            flagged_proposal_pending,
+
+        flagged_decision_maker=
+            flagged_decision_maker,
+
+        flagged_status_regression=
+            flagged_status_regression,
+
         history=
             history,
 
@@ -5211,6 +6413,7 @@ def executive_dashboard():
         history_fields=
             history_fields
     )
+
 
 
 

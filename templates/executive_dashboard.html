@@ -1821,6 +1821,49 @@
 
 
 
+
+        /* =============================================
+           ACTIVITY & MONITORING
+        ============================================= */
+        .activity-monitoring-section { margin-bottom: 22px; }
+        .activity-monitoring-heading { margin: 0 0 14px; text-align: center; color: #fff; font-size: 20px; font-weight: 600; }
+        .activity-tabs { display: flex; align-items: flex-end; gap: 7px; padding: 0 0 0 18px; margin: 0; overflow: visible; }
+        .activity-tab { flex: 0 0 auto; min-width: 190px; min-height: 48px; padding: 11px 18px; margin: 0; border: 1px solid #3d3d3d; border-bottom: none; border-radius: 9px 9px 0 0; background: #2b2b2b; color: #bdbdbd; font-size: 13px; font-weight: 600; cursor: pointer; position: relative; z-index: 1; }
+        .activity-tab.active { min-height: 54px; margin-bottom: -1px; padding-top: 14px; background: #171717; color: #fff; border-color: #303030; border-bottom: 1px solid #171717; z-index: 3; }
+        .activity-shell { position: relative; z-index: 2; background: #171717; border: 1px solid #303030; border-radius: 10px; overflow: hidden; box-shadow: 0 8px 22px rgba(0,0,0,.3); }
+        .activity-panel { display: none; }
+        .activity-panel.active { display: block; }
+        .activity-panel-header { min-height: 70px; padding: 17px 20px; background: #1d1d1d; border-bottom: 1px solid #333; display: flex; align-items: center; justify-content: space-between; gap: 18px; }
+        .activity-panel-title { color: #fff; font-size: 17px; font-weight: 600; }
+        .activity-panel-description { margin-top: 4px; color: #9f9f9f; font-size: 12px; }
+        .activity-table-wrapper { overflow-x: auto; }
+        .activity-table { width: 100%; margin: 0; border-collapse: separate; border-spacing: 0; white-space: nowrap; }
+        .activity-table thead th { background: #292929; color: #e5e5e5; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .4px; padding: 15px 16px; border-bottom: 1px solid #414141; }
+        .activity-table tbody td { background: #171717; color: #d5d5d5; padding: 15px 16px; font-size: 13px; border-bottom: 1px solid #292929; vertical-align: middle; }
+        .activity-table tbody tr:nth-child(even) td { background: #1c1c1c; }
+        .activity-table tbody tr:hover td { background: #252525; }
+        .activity-table tbody tr:last-child td { border-bottom: none; }
+        .activity-account { color: #fff !important; font-weight: 600; }
+        .activity-empty { text-align: center; color: #999 !important; padding: 30px !important; }
+        .activity-footer { padding: 13px 18px; background: #1d1d1d; border-top: 1px solid #292929; text-align: center; color: #9d9d9d; font-size: 12px; }
+        .contact-activity-header { align-items: flex-end; flex-wrap: nowrap; }
+        .contact-title-block { flex: 0 0 auto; min-width: 175px; }
+        .contact-filter-row { flex: 1 1 auto; min-width: 0; display: flex; align-items: center; justify-content: flex-end; gap: 7px; flex-wrap: nowrap; }
+        .contact-filter-control { height: 40px; min-height: 40px; margin: 0; padding: 0 10px; box-sizing: border-box; background: #242424; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 12px; }
+        .contact-search { flex: 1 1 230px; min-width: 180px; max-width: 300px; }
+        #contactManagerFilter { flex: 0 1 170px; width: 170px; min-width: 145px; }
+        .contact-type-filter { flex: 0 0 120px; width: 120px; }
+        .contact-date-filter { flex: 0 0 164px; width: 164px; height: 40px; display: inline-flex; align-items: center; background: #242424; border: 1px solid #444; border-radius: 6px; overflow: hidden; }
+        .contact-date-filter label { margin: 0; padding: 0 7px 0 9px; color: #9a9a9a; font-size: 10px; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+        .contact-date-filter input { flex: 1 1 auto; width: 0; min-width: 0; height: 38px; margin: 0; padding: 0 7px 0 0; background: transparent; color: #fff; border: none; outline: none; font-size: 11px; color-scheme: dark; }
+        .contact-clear-button { flex: 0 0 68px; width: 68px; min-width: 68px; height: 40px; min-height: 40px; margin: 0; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box; background: #292929; color: #fff; border: 1px solid #444; border-radius: 6px; font-size: 12px; font-weight: 600; cursor: pointer; }
+        .contact-badge { display: inline-block; min-width: 48px; padding: 5px 8px; border-radius: 999px; text-align: center; font-size: 11px; font-weight: 600; }
+        .contact-badge.call { background: rgba(66,165,245,.16); color: #90caf9; }
+        .contact-badge.visit { background: rgba(102,187,106,.16); color: #a5d6a7; }
+        .contact-comments { min-width: 180px; max-width: 320px; white-space: normal !important; overflow-wrap: anywhere; }
+        @media (max-width: 1150px) { .contact-activity-header { align-items: stretch; flex-direction: column; } .contact-filter-row { justify-content: flex-start; flex-wrap: wrap; } }
+        @media (max-width: 700px) { .activity-tabs { padding-left: 0; overflow-x: auto; } .activity-tab { min-width: 165px; } }
+
         /* =============================================
            RESPONSIVE
         ============================================= */
@@ -1962,6 +2005,53 @@
             }
         }
 
+
+
+        /* =============================================
+           FLAGGED - ADMIN ONLY
+        ============================================= */
+        .flagged-page-heading { margin: 6px 0 18px; }
+        .flagged-card { background:#171717; border:1px solid #303030; border-radius:10px; overflow:hidden; box-shadow:0 8px 22px rgba(0,0,0,.3); margin-bottom:22px; }
+        .flagged-card-header { padding:17px 20px; background:#1d1d1d; border-bottom:1px solid #333; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+        .flagged-card-header h2 { margin:0; font-size:17px; font-weight:600; color:#fff; }
+        .flagged-card-header p { margin:5px 0 0; color:#9f9f9f; font-size:12px; }
+        .flagged-count { min-width:30px; padding:4px 9px; border-radius:15px; background:#333; text-align:center; font-size:12px; font-weight:600; }
+        .flagged-table-wrapper { overflow-x:auto; max-height:520px; }
+        .flagged-table { width:100%; margin:0; border-collapse:separate; border-spacing:0; white-space:nowrap; }
+        .flagged-table thead th { position:sticky; top:0; z-index:2; background:#292929; color:#e5e5e5; padding:14px 15px; border-bottom:1px solid #414141; font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.35px; }
+        .flagged-table tbody td { background:#171717; color:#d5d5d5; padding:14px 15px; border-bottom:1px solid #292929; font-size:13px; }
+        .flagged-table tbody tr:nth-child(even) td { background:#1c1c1c; }
+        .flagged-table tbody tr:hover td { background:#252525; }
+        .flagged-table tbody tr:last-child td { border-bottom:none; }
+        .flagged-account { color:#fff !important; font-weight:600; }
+        .flag-badge, .aging-badge { display:inline-block; padding:5px 9px; border-radius:6px; font-size:11px; font-weight:700; white-space:nowrap; }
+        .flag-badge.deadline { background:rgba(255,193,7,.15); color:#ffd180; border:1px solid rgba(255,193,7,.22); }
+        .aging-active { background:rgba(76,175,80,.15); color:#a5d6a7; }
+        .aging-needs-review { background:rgba(255,193,7,.15); color:#ffd180; }
+        .aging-at-risk { background:rgba(255,152,0,.18); color:#ffcc80; }
+        .aging-lost { background:rgba(198,40,40,.20); color:#ef9a9a; }
+        .contact-pagination-footer { display:flex; align-items:center; justify-content:space-between; gap:14px; text-align:left; }
+        .flagged-search-row { padding:12px 20px; background:#191919; border-bottom:1px solid #2c2c2c; }
+        .flagged-search {
+            width:min(420px, 100%);
+            height:38px;
+            padding:8px 12px;
+            background:#242424;
+            color:#fff;
+            border:1px solid #444;
+            border-radius:6px;
+            font-size:13px;
+            box-sizing:border-box;
+        }
+        .flagged-search::placeholder { color:#8f8f8f; }
+        .flagged-search:focus {
+            outline:none;
+            border-color:#c62828;
+            box-shadow:0 0 0 .2rem rgba(198,40,40,.15);
+        }
+        .flagged-no-results { display:none; }
+
+
 </style>
 
 </head>
@@ -2036,8 +2126,7 @@
 
     <div class="page-subtitle">
 
-        Organization-wide sales analytics
-        and detailed pipeline visibility
+        Organization-wide visibility
 
     </div>
 
@@ -2075,6 +2164,16 @@
                 Audit Trail
             </button>
 
+        {% endif %}
+
+        {% if viewer_role == "Admin" %}
+            <button
+                type="button"
+                class="executive-tab"
+                data-tab="flagged"
+            >
+                Flagged
+            </button>
         {% endif %}
 
     </div>
@@ -2844,219 +2943,154 @@
 
 
 <!-- =========================================
-     DEADLINES
+     ACTIVITY & MONITORING
 ========================================== -->
 
-    <div class="deadline-grid">
+    <section class="activity-monitoring-section">
 
+        <h2 class="activity-monitoring-heading">Activity & Monitoring</h2>
 
-        <!-- UPCOMING -->
-
-        <div class="dashboard-card">
-
-            <div class="section-title">
-
-                Upcoming Deadlines
-
-                <span class="deadline-count">
-
-                    {{ upcoming_deadlines|length }}
-
-                </span>
-
-            </div>
-
-            <div class="section-description">
-
-                Active pipelines expected to
-                close within the next 7 days
-
-            </div>
-
-
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Account</th>
-
-                            <th>Account Manager</th>
-
-                            <th>Product</th>
-
-                            <th>Date</th>
-
-                            <th>Days</th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody>
-
-                        {% for p in upcoming_deadlines %}
-
-                            <tr>
-
-                                <td>
-                                    {{ p.AccountName }}
-                                </td>
-
-                                <td>
-                                    {{ p.AccountManager }}
-                                </td>
-
-                                <td>
-                                    {{ p.Product }}
-                                </td>
-
-                                <td>
-                                    {{ p.ClosureDate }}
-                                </td>
-
-                                <td class="upcoming-text">
-                                    {{ p.DaysRemaining }}
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-        </div>
-
-
-
-        <!-- OVERDUE -->
-
-        <div class="dashboard-card">
-
-            <div class="section-title">
-
+        <div class="activity-tabs" role="tablist" aria-label="Activity and monitoring views">
+            <button type="button" class="activity-tab active" data-activity-tab="overdue">
                 Overdue Pipelines
-
-                <span class="deadline-count">
-
-                    {{ overdue_pipelines|length }}
-
-                </span>
-
-            </div>
-
-            <div class="section-description">
-
-                Active pipelines whose expected
-                closure date has passed
-
-            </div>
-
-
-            <div class="table-wrapper">
-
-                <table>
-
-                    <thead>
-
-                        <tr>
-
-                            <th>Account</th>
-
-                            <th>Account Manager</th>
-
-                            <th>Product</th>
-
-                            <th>Date</th>
-
-                            <th>Overdue</th>
-
-                            <th>Status</th>
-
-                        </tr>
-
-                    </thead>
-
-
-                    <tbody id="overduePipelineBody">
-
-                        {% for p in overdue_pipelines %}
-
-                            <tr
-                                class="overdue-pipeline-row"
-                                {% if loop.index > 5 %}
-                                    style="display:none;"
-                                {% endif %}
-                            >
-
-                                <td>
-                                    {{ p.AccountName }}
-                                </td>
-
-                                <td>
-                                    {{ p.AccountManager }}
-                                </td>
-
-                                <td>
-                                    {{ p.Product }}
-                                </td>
-
-                                <td>
-                                    {{ p.ClosureDate }}
-                                </td>
-
-                                <td class="overdue-text">
-                                    {{ p.DaysOverdue }} days
-                                </td>
-
-                                <td>
-                                    {{ p.Status or '-' }}
-                                </td>
-
-                            </tr>
-
-                        {% endfor %}
-
-                    </tbody>
-
-                </table>
-
-            </div>
-
-
-            {% if overdue_pipelines|length > 5 %}
-
-                <div
-                    style="
-                        padding: 14px 20px;
-                        text-align: center;
-                        border-top: 1px solid #292929;
-                    "
-                >
-
-                    <button
-                        type="button"
-                        id="toggleOverduePipelines"
-                        class="show-more-button"
-                    >
-                        Show 5 More
-                    </button>
-
-                </div>
-
-            {% endif %}
-
+                <span class="deadline-count">{{ overdue_pipelines|length }}</span>
+            </button>
+            <button type="button" class="activity-tab" data-activity-tab="upcoming">
+                Upcoming Deadlines
+                <span class="deadline-count">{{ upcoming_deadlines|length }}</span>
+            </button>
+            <button type="button" class="activity-tab" data-activity-tab="contacts">
+                Customer Contact
+                <span class="deadline-count">{{ customer_contacts|length }}</span>
+            </button>
         </div>
 
-    </div>
+        <div class="activity-shell">
+
+            <div id="activity-overdue" class="activity-panel active">
+                <div class="activity-panel-header">
+                    <div>
+                        <div class="activity-panel-title">Overdue Pipelines</div>
+                        <div class="activity-panel-description">Active pipelines whose expected closure date has passed</div>
+                    </div>
+                </div>
+                <div class="activity-table-wrapper">
+                    <table class="activity-table">
+                        <thead><tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Closure Date</th><th>Days Overdue</th><th>Status</th></tr></thead>
+                        <tbody id="overduePipelineBody">
+                        {% for p in overdue_pipelines %}
+                            <tr class="overdue-pipeline-row" {% if loop.index > 5 %}style="display:none;"{% endif %}>
+                                <td class="activity-account">{{ p.AccountName }}</td>
+                                <td>{{ p.AccountManager }}</td>
+                                <td>{{ p.Product or '-' }}</td>
+                                <td>{{ p.ClosureDate }}</td>
+                                <td class="overdue-text">{{ p.DaysOverdue }} days</td>
+                                <td>{{ p.Status or '-' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6" class="activity-empty">No overdue pipelines.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if overdue_pipelines|length > 5 %}
+                <div class="activity-footer">
+                    <button type="button" id="toggleOverduePipelines" class="show-more-button">Show 5 More</button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="activity-upcoming" class="activity-panel">
+                <div class="activity-panel-header">
+                    <div>
+                        <div class="activity-panel-title">Upcoming Deadlines</div>
+                        <div class="activity-panel-description">Active pipelines expected to close within the next 7 days</div>
+                    </div>
+                </div>
+                <div class="activity-table-wrapper">
+                    <table class="activity-table">
+                        <thead><tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Closure Date</th><th>Days Remaining</th><th>Status</th></tr></thead>
+                        <tbody id="upcomingPipelineBody">
+                        {% for p in upcoming_deadlines %}
+                            <tr class="upcoming-pipeline-row" {% if loop.index > 5 %}style="display:none;"{% endif %}>
+                                <td class="activity-account">{{ p.AccountName }}</td>
+                                <td>{{ p.AccountManager }}</td>
+                                <td>{{ p.Product or '-' }}</td>
+                                <td>{{ p.ClosureDate }}</td>
+                                <td class="upcoming-text">{{ p.DaysRemaining }} days</td>
+                                <td>{{ p.Status or '-' }}</td>
+                            </tr>
+                        {% else %}
+                            <tr><td colspan="6" class="activity-empty">No upcoming deadlines.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if upcoming_deadlines|length > 5 %}
+                <div class="activity-footer">
+                    <button type="button" id="toggleUpcomingPipelines" class="show-more-button">Show 5 More</button>
+                </div>
+                {% endif %}
+            </div>
+
+            <div id="activity-contacts" class="activity-panel">
+                <div class="activity-panel-header contact-activity-header">
+                    <div class="contact-title-block">
+                        <div class="activity-panel-title">Customer Contact</div>
+                        <div class="activity-panel-description">Calls and visits reported against visible pipelines</div>
+                    </div>
+                    <div class="contact-filter-row">
+                        <input type="text" id="contactSearch" class="contact-filter-control contact-search" placeholder="Search account, product, manager...">
+                        <select id="contactManagerFilter" class="contact-filter-control">
+                            <option value="">All Individuals</option>
+                        </select>
+                        <select id="contactTypeFilter" class="contact-filter-control contact-type-filter">
+                            <option value="">Call & Visit</option>
+                            <option value="Call">Call</option>
+                            <option value="Visit">Visit</option>
+                        </select>
+                        <div class="contact-date-filter"><label for="contactDateFrom">From</label><input type="date" id="contactDateFrom"></div>
+                        <div class="contact-date-filter"><label for="contactDateTo">To</label><input type="date" id="contactDateTo"></div>
+                        <button type="button" id="clearContactFilters" class="contact-clear-button">Clear</button>
+                    </div>
+                </div>
+                <div class="activity-table-wrapper">
+                    <table class="activity-table contact-table">
+                        <thead><tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Contact Type</th><th>Contact Date</th><th>Time</th><th>Status at Contact</th><th>Comments</th><th>Reported By</th></tr></thead>
+                        <tbody id="customerContactBody">
+                        {% for contact in customer_contacts %}
+                            <tr class="customer-contact-row"
+                                data-manager="{{ contact.AccountManager or '' }}"
+                                data-contact-type="{{ contact.ContactType or '' }}"
+                                data-contact-date="{{ contact.ContactDate.isoformat() if contact.ContactDate else '' }}">
+                                <td class="activity-account">{{ contact.AccountName }}</td>
+                                <td>{{ contact.AccountManager or '-' }}</td>
+                                <td>{{ contact.Product or '-' }}</td>
+                                <td><span class="contact-badge {{ 'visit' if contact.ContactType == 'Visit' else 'call' }}">{{ contact.ContactType }}</span></td>
+                                <td>{{ contact.ContactDate.strftime('%d %b %Y') if contact.ContactDate else '-' }}</td>
+                                <td>{{ contact.ContactTime.strftime('%H:%M') if contact.ContactTime else '-' }}</td>
+                                <td>{{ contact.SalesCycleStatus or '-' }}</td>
+                                <td class="contact-comments">{{ contact.Comments or '-' }}</td>
+                                <td>{{ contact.ReportedByName or contact.ReportedBy }}</td>
+                            </tr>
+                        {% else %}
+                            <tr class="contact-empty-row"><td colspan="9" class="activity-empty">No customer contact has been reported yet.</td></tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% if customer_contacts %}
+                <div class="activity-footer contact-pagination-footer">
+                    <span id="contactVisibleCount">Showing 0 records</span>
+                    {% if customer_contacts|length > 5 %}
+                    <button type="button" id="toggleCustomerContacts" class="show-more-button">Show 5 More</button>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+
+        </div>
+    </section>
 
 
     <!-- =========================================
@@ -3575,6 +3609,266 @@
 
 
     </div>
+
+
+    {% if viewer_role == "Admin" %}
+
+    <!-- =========================================
+         FLAGGED PIPELINES - ADMIN ONLY
+    ========================================== -->
+    <div id="flagged" class="executive-tab-content">
+
+        <div class="flagged-page-heading">
+            <div class="pipeline-tab-title">Flagged Pipelines</div>
+            <div class="pipeline-tab-description">
+                Admin review queues for pipeline risk, process gaps, commercial anomalies, aging, and status regression.
+            </div>
+        </div>
+
+
+        <!-- STAGE VS DEADLINE -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>Deadline Risk </h2>
+                    <p>80% within 7 days · 60% within 15 days · 40% within 21 days · 20% within 30 days</p>
+                </div>
+                <span class="flagged-count">{{ flagged_deadline_risk|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="deadlineRiskTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="deadlineRiskTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Closure Date</th><th>Days Remaining</th><th>Flag Rule</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_deadline_risk %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.Status or '-' }}</td>
+                            <td>{{ p.ClosureDateFull.strftime('%d %b %Y') if p.ClosureDateFull else '-' }}</td>
+                            <td><span class="flag-badge deadline">{{ p.DaysRemaining }} day{% if p.DaysRemaining != 1 %}s{% endif %}</span></td>
+                            <td>Within {{ p.ThresholdDays }} days at current stage</td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="7" class="activity-empty">No pipelines currently meet the stage/deadline flag rules.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="7" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- HIGH VALUE -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>Unrealistic Revenue - GSM & Business Line</h2>
+                    <p>GSM or Business Line pipelines where MRC or Project OTC is 100,000 or more</p>
+                </div>
+                <span class="flagged-count">{{ flagged_high_value|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="highValueTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="highValueTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>MRC</th><th>Project OTC</th><th>Total Revenue</th><th>Status</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_high_value %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.MRC | comma }}</td>
+                            <td>{{ p.ProjectOTC | comma }}</td>
+                            <td>{{ p.TotalRevenue | comma }}</td>
+                            <td>{{ p.Status or '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="7" class="activity-empty">No GSM or Business Line pipelines meet the 100,000 threshold.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="7" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- AGING -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>Stale Pipelines</h2>
+                    <p>Only Needs Review, At Risk, and Lost pipelines are shown. Active pipelines are excluded.</p>
+                </div>
+                <span class="flagged-count">{{ flagged_aging|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="agingTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="agingTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Last Modified</th><th>Age</th><th>Aging Label</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_aging %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.Status or '-' }}</td>
+                            <td>{{ p.LastModified.strftime('%d %b %Y') if p.LastModified else '-' }}</td>
+                            <td>{{ p.AgingDays }} days</td>
+                            <td>
+                                <span class="aging-badge aging-{{ p.AgingLabel|lower|replace(' ', '-') }}">
+                                    {{ p.AgingLabel }}{% if p.Escalation %} / {{ p.Escalation }}{% endif %}
+                                </span>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="7" class="activity-empty">No pipelines currently require aging review.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="7" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- 40% PROPOSAL -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>40% - Proposal Pending</h2>
+                    <p>Pipelines at Ask for Proposal (40%) where the proposal is still pending or was never recorded.</p>
+                </div>
+                <span class="flagged-count">{{ flagged_proposal_pending|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="proposalPendingTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="proposalPendingTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Proposal Status</th><th>Closure Date</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_proposal_pending %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.Status or '-' }}</td>
+                            <td>{{ p.ProposalStatus or 'Not Recorded' }}</td>
+                            <td>{{ p.ClosureDateFull.strftime('%d %b %Y') if p.ClosureDateFull else '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="6" class="activity-empty">No 40% pipelines have a pending proposal.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="6" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- 80% DECISION MAKER -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>80% - Decision Maker Not Engaged</h2>
+                    <p>Pipelines at Documentation/Acceptance/Processing (80%) where the decision maker is not engaged or was never recorded.</p>
+                </div>
+                <span class="flagged-count">{{ flagged_decision_maker|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="decisionMakerTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="decisionMakerTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Decision Maker Status</th><th>Closure Date</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_decision_maker %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.Status or '-' }}</td>
+                            <td>{{ p.DecisionMakerStatus or 'Not Recorded' }}</td>
+                            <td>{{ p.ClosureDateFull.strftime('%d %b %Y') if p.ClosureDateFull else '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="6" class="activity-empty">No 80% pipelines have an unengaged decision maker.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="6" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+
+        <!-- STATUS REGRESSION -->
+        <div class="flagged-card">
+            <div class="flagged-card-header">
+                <div>
+                    <h2>Sales Cycle Status Regression</h2>
+                    <p>Pipelines whose most recent sales-cycle status change moved backwards to a lower percentage stage.</p>
+                </div>
+                <span class="flagged-count">{{ flagged_status_regression|length }}</span>
+            </div>
+
+            <div class="flagged-search-row">
+                <input type="text" class="flagged-search" data-flag-search="statusRegressionTable" placeholder="Search this table...">
+            </div>
+
+            <div class="flagged-table-wrapper">
+                <table class="flagged-table" id="statusRegressionTable">
+                    <thead>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Previous Status</th><th>Regressed To</th><th>Changed On</th><th>Edited By</th></tr>
+                    </thead>
+                    <tbody>
+                    {% for p in flagged_status_regression %}
+                        <tr class="flagged-data-row">
+                            <td class="flagged-account">{{ p.AccountName }}</td>
+                            <td>{{ p.AccountManager or '-' }}</td>
+                            <td>{{ p.Product or '-' }}</td>
+                            <td>{{ p.PreviousStatus or '-' }}</td>
+                            <td>{{ p.RegressedTo or '-' }}</td>
+                            <td>{{ p.RegressedOn.strftime('%d %b %Y %H:%M') if p.RegressedOn else '-' }}</td>
+                            <td>{{ p.EditedBy or '-' }}</td>
+                        </tr>
+                    {% else %}
+                        <tr class="flagged-empty-row"><td colspan="7" class="activity-empty">No pipelines currently have a latest-stage regression.</td></tr>
+                    {% endfor %}
+                        <tr class="flagged-no-results"><td colspan="7" class="activity-empty">No matching pipelines found.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </div>
+    {% endif %}
 
 
     {% if viewer_role in ["Admin", "HOD"] %}
@@ -6194,91 +6488,7 @@ if (productMixCanvas) {
 
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", function () {
 
-    const overdueToggle =
-        document.getElementById(
-            "toggleOverduePipelines"
-        );
-
-    if (!overdueToggle) {
-        return;
-    }
-
-    const overdueRows =
-        Array.from(
-            document.querySelectorAll(
-                ".overdue-pipeline-row"
-            )
-        );
-
-    const batchSize = 5;
-
-    let visibleCount =
-        Math.min(
-            batchSize,
-            overdueRows.length
-        );
-
-
-    function updateOverdueRows() {
-
-        overdueRows.forEach(
-            function (row, index) {
-
-                row.style.display =
-                    index < visibleCount
-                        ? "table-row"
-                        : "none";
-            }
-        );
-
-
-        const remaining =
-            overdueRows.length - visibleCount;
-
-
-        if (remaining <= 0) {
-
-            overdueToggle.style.display =
-                "none";
-
-        } else {
-
-            const nextBatch =
-                Math.min(
-                    batchSize,
-                    remaining
-                );
-
-            overdueToggle.textContent =
-                "Show " +
-                nextBatch +
-                " More";
-        }
-    }
-
-
-    overdueToggle.addEventListener(
-        "click",
-        function () {
-
-            visibleCount =
-                Math.min(
-                    visibleCount + batchSize,
-                    overdueRows.length
-                );
-
-            updateOverdueRows();
-        }
-    );
-
-
-    updateOverdueRows();
-
-});
-</script>
 
 
 <script>
@@ -6980,6 +7190,184 @@ document.addEventListener('DOMContentLoaded', function () {
 
     populateHistoryAccounts();
     applyHistoryFilters();
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const tabs = Array.from(document.querySelectorAll(".activity-tab"));
+    const panels = Array.from(document.querySelectorAll(".activity-panel"));
+
+    tabs.forEach(tab => {
+        tab.addEventListener("click", function () {
+            const target = this.dataset.activityTab;
+            tabs.forEach(item => item.classList.remove("active"));
+            panels.forEach(panel => panel.classList.remove("active"));
+            this.classList.add("active");
+            const panel = document.getElementById("activity-" + target);
+            if (panel) panel.classList.add("active");
+        });
+    });
+
+    function setupShowMore(buttonId, rowSelector) {
+        const button = document.getElementById(buttonId);
+        const rows = Array.from(document.querySelectorAll(rowSelector));
+        if (!button || rows.length <= 5) return;
+        const batchSize = 5;
+        let visibleCount = Math.min(batchSize, rows.length);
+
+        function render() {
+            rows.forEach((row, index) => { row.style.display = index < visibleCount ? "table-row" : "none"; });
+            if (visibleCount >= rows.length) {
+                button.textContent = "Show Less";
+            } else {
+                button.textContent = "Show " + Math.min(batchSize, rows.length - visibleCount) + " More";
+            }
+        }
+
+        button.addEventListener("click", function () {
+            if (visibleCount >= rows.length) visibleCount = Math.min(batchSize, rows.length);
+            else visibleCount = Math.min(visibleCount + batchSize, rows.length);
+            render();
+        });
+        render();
+    }
+
+    setupShowMore("toggleOverduePipelines", ".overdue-pipeline-row");
+    setupShowMore("toggleUpcomingPipelines", ".upcoming-pipeline-row");
+
+    const contactRows = Array.from(document.querySelectorAll(".customer-contact-row"));
+    const search = document.getElementById("contactSearch");
+    const manager = document.getElementById("contactManagerFilter");
+    const type = document.getElementById("contactTypeFilter");
+    const from = document.getElementById("contactDateFrom");
+    const to = document.getElementById("contactDateTo");
+    const clear = document.getElementById("clearContactFilters");
+    const count = document.getElementById("contactVisibleCount");
+
+    if (manager) {
+        [...new Set(contactRows.map(row => row.dataset.manager).filter(Boolean))]
+            .sort((a,b) => a.localeCompare(b))
+            .forEach(name => { const option = document.createElement("option"); option.value = name; option.textContent = name; manager.appendChild(option); });
+    }
+
+    const contactToggle = document.getElementById("toggleCustomerContacts");
+    const contactBatchSize = 5;
+    let contactVisibleLimit = contactBatchSize;
+
+    function getFilteredContactRows() {
+        if (!search || !manager || !type || !from || !to) return [];
+        const q = search.value.trim().toLowerCase();
+        return contactRows.filter(row =>
+            (!q || row.textContent.toLowerCase().includes(q)) &&
+            (!manager.value || row.dataset.manager === manager.value) &&
+            (!type.value || row.dataset.contactType === type.value) &&
+            (!from.value || (row.dataset.contactDate && row.dataset.contactDate >= from.value)) &&
+            (!to.value || (row.dataset.contactDate && row.dataset.contactDate <= to.value))
+        );
+    }
+
+    function filterContacts(resetLimit = false) {
+        if (resetLimit) contactVisibleLimit = contactBatchSize;
+        const filteredRows = getFilteredContactRows();
+        const filteredSet = new Set(filteredRows);
+
+        contactRows.forEach(row => { row.style.display = "none"; });
+        filteredRows.forEach((row, index) => {
+            row.style.display = index < contactVisibleLimit ? "table-row" : "none";
+        });
+
+        const shown = Math.min(contactVisibleLimit, filteredRows.length);
+        if (count) count.textContent = "Showing " + shown + " of " + filteredRows.length + " record" + (filteredRows.length === 1 ? "" : "s");
+
+        if (contactToggle) {
+            if (filteredRows.length <= contactBatchSize) {
+                contactToggle.style.display = "none";
+            } else {
+                contactToggle.style.display = "inline-flex";
+                contactToggle.textContent = contactVisibleLimit >= filteredRows.length
+                    ? "Show Less"
+                    : "Show " + Math.min(contactBatchSize, filteredRows.length - shown) + " More";
+            }
+        }
+    }
+
+    if (contactToggle) {
+        contactToggle.addEventListener("click", function () {
+            const filteredRows = getFilteredContactRows();
+            if (contactVisibleLimit >= filteredRows.length) contactVisibleLimit = contactBatchSize;
+            else contactVisibleLimit = Math.min(contactVisibleLimit + contactBatchSize, filteredRows.length);
+            filterContacts(false);
+        });
+    }
+
+    [search, manager, type, from, to].forEach(control => {
+        if (!control) return;
+        control.addEventListener(control.tagName === "INPUT" && control.type === "text" ? "input" : "change", function () { filterContacts(true); });
+    });
+
+    if (clear) clear.addEventListener("click", function () {
+        search.value = ""; manager.value = ""; type.value = ""; from.value = ""; to.value = ""; filterContacts(true);
+    });
+
+    filterContacts(true);
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".flagged-search").forEach(function (input) {
+
+        const tableId = input.dataset.flagSearch;
+        const table = document.getElementById(tableId);
+
+        if (!table) {
+            return;
+        }
+
+        const dataRows = Array.from(
+            table.querySelectorAll("tbody .flagged-data-row")
+        );
+
+        const noResultsRow =
+            table.querySelector("tbody .flagged-no-results");
+
+        input.addEventListener("input", function () {
+
+            const query =
+                input.value.trim().toLowerCase();
+
+            let visibleCount = 0;
+
+            dataRows.forEach(function (row) {
+
+                const matches =
+                    !query ||
+                    row.textContent
+                        .toLowerCase()
+                        .includes(query);
+
+                row.style.display =
+                    matches
+                        ? "table-row"
+                        : "none";
+
+                if (matches) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (noResultsRow) {
+                noResultsRow.style.display =
+                    query && dataRows.length > 0 && visibleCount === 0
+                        ? "table-row"
+                        : "none";
+            }
+        });
+    });
 });
 </script>
 
