@@ -112,6 +112,8 @@ def login():
                     return redirect(url_for("regional_manager_dashboard"))
                 elif role == "Regional Head":
                     return redirect(url_for("regional_head_dashboard"))
+                elif role == "Coordinator":
+                    return redirect(url_for("coordinator_dashboard"))
                 elif role == "Super User":
                     return redirect(url_for("super_user_dashboard"))
                 elif role in app.config.get(
@@ -335,6 +337,7 @@ def export_pipeline_overview():
         "Team Lead",
         "Regional Manager",
         "Regional Head",
+        "Coordinator",
         "Head",
         "HOD",
         "Admin",
@@ -376,6 +379,39 @@ def export_pipeline_overview():
 
 
     try:
+
+        # Coordinator visibility is rooted at the Regional Head
+        # assigned through Users.ManagerID.
+        visibility_root_id = user_id
+
+        if role == "Coordinator":
+
+            cursor.execute("""
+                SELECT
+                    rh.EmpID
+
+                FROM dbo.Users coordinator
+
+                INNER JOIN dbo.Users rh
+                    ON coordinator.ManagerID = rh.EmpID
+
+                WHERE
+                    coordinator.EmpID = ?
+                    AND coordinator.Role = 'Coordinator'
+                    AND coordinator.IsActive = 1
+                    AND rh.Role = 'Regional Head'
+                    AND rh.IsActive = 1
+            """, (user_id,))
+
+            coordinator_scope = cursor.fetchone()
+
+            if not coordinator_scope:
+                return (
+                    "Coordinator is not assigned to an active Regional Head.",
+                    403
+                )
+
+            visibility_root_id = coordinator_scope[0]
 
 
         if role in {
@@ -486,7 +522,7 @@ def export_pipeline_overview():
 
                 OPTION (MAXRECURSION 100)
             """, (
-                user_id,
+                visibility_root_id,
             ))
 
 
@@ -980,8 +1016,8 @@ def my_pipelines():
 # additional confirmation is required.
 # ============================================================
 
-EDO_CLOSURE_DATE_FREE_UPDATES = 3
-EDO_MRC_FREE_UPDATES = 3
+EDO_CLOSURE_DATE_FREE_UPDATES = 2
+EDO_MRC_FREE_UPDATES = 2
 
 
 @app.route("/pipeline/<int:pipeline_id>/edit", methods=["GET", "POST"])
@@ -4145,7 +4181,8 @@ def regional_manager_team_dashboard(teamlead_id):
 
     allowed_roles = {
         "Regional Manager",
-        "Regional Head"
+        "Regional Head",
+        "Coordinator"
     } | executive_roles
 
     if role not in allowed_roles:
@@ -4156,6 +4193,38 @@ def regional_manager_team_dashboard(teamlead_id):
     viewer_first_name = session.get("first_name", "")
 
     cursor = conn.cursor()
+
+    visibility_head_id = viewer_id
+
+    if role == "Coordinator":
+
+        cursor.execute("""
+            SELECT
+                rh.EmpID
+
+            FROM dbo.Users coordinator
+
+            INNER JOIN dbo.Users rh
+                ON coordinator.ManagerID = rh.EmpID
+
+            WHERE
+                coordinator.EmpID = ?
+                AND coordinator.Role = 'Coordinator'
+                AND coordinator.IsActive = 1
+                AND rh.Role = 'Regional Head'
+                AND rh.IsActive = 1
+        """, (viewer_id,))
+
+        coordinator_scope = cursor.fetchone()
+
+        if not coordinator_scope:
+            cursor.close()
+            return (
+                "Coordinator is not assigned to an active Regional Head.",
+                403
+            )
+
+        visibility_head_id = coordinator_scope[0]
 
     # ========================================================
     # CHECK THAT THIS USER CAN VIEW THIS TEAM
@@ -4186,7 +4255,7 @@ def regional_manager_team_dashboard(teamlead_id):
         """, (teamlead_id, viewer_id))
 
 
-    elif role == "Regional Head":
+    elif role in {"Regional Head", "Coordinator"}:
 
         cursor.execute("""
             SELECT
@@ -4208,7 +4277,7 @@ def regional_manager_team_dashboard(teamlead_id):
                 AND rm.ManagerID = ?
                 AND rm.Role = 'Regional Manager'
                 AND rm.IsActive = 1
-        """, (teamlead_id, viewer_id))
+        """, (teamlead_id, visibility_head_id))
 
 
     elif role in executive_roles:
@@ -4246,6 +4315,14 @@ def regional_manager_team_dashboard(teamlead_id):
             return redirect(
                 url_for(
                     "regional_head_dashboard"
+                )
+            )
+
+        elif role == "Coordinator":
+
+            return redirect(
+                url_for(
+                    "coordinator_dashboard"
                 )
             )
 
@@ -4580,7 +4657,28 @@ def regional_manager_team_dashboard(teamlead_id):
 
 
 # ============================================================
-# HEAD DASHBOARD
+# COORDINATOR DASHBOARD
+#
+# Coordinators use the Regional Head dashboard UI, but their
+# visibility root is the Regional Head assigned through
+# Users.ManagerID. Multiple Coordinators can therefore point to
+# the same Regional Head without changing the sales hierarchy.
+# ============================================================
+
+@app.route("/coordinator")
+def coordinator_dashboard():
+
+    if "user_id" not in session:
+        return redirect(url_for("login"))
+
+    if (session.get("role") or "").strip() != "Coordinator":
+        return redirect(url_for("login"))
+
+    return regional_head_dashboard()
+
+
+# ============================================================
+# REGIONAL HEAD / COORDINATOR DASHBOARD
 # ============================================================
 
 @app.route("/regional-head")
@@ -4593,14 +4691,52 @@ def regional_head_dashboard():
     if "user_id" not in session:
         return redirect(url_for("login"))
 
-    if session.get("role") != "Regional Head":
+    role = (session.get("role") or "").strip()
+
+    if role not in {"Regional Head", "Coordinator"}:
         return redirect(url_for("login"))
 
-    regional_head_id = session["user_id"]
-    head_id = session["user_id"]
+    viewer_id = session["user_id"]
     first_name = session.get("first_name", "")
 
     cursor = conn.cursor()
+
+    # Regional Heads use their own EmpID as the hierarchy root.
+    # Coordinators use the Regional Head assigned as ManagerID.
+    if role == "Coordinator":
+
+        cursor.execute("""
+            SELECT
+                rh.EmpID
+
+            FROM dbo.Users coordinator
+
+            INNER JOIN dbo.Users rh
+                ON coordinator.ManagerID = rh.EmpID
+
+            WHERE
+                coordinator.EmpID = ?
+                AND coordinator.Role = 'Coordinator'
+                AND coordinator.IsActive = 1
+                AND rh.Role = 'Regional Head'
+                AND rh.IsActive = 1
+        """, (viewer_id,))
+
+        coordinator_scope = cursor.fetchone()
+
+        if not coordinator_scope:
+            cursor.close()
+            return (
+                "Coordinator is not assigned to an active Regional Head.",
+                403
+            )
+
+        regional_head_id = coordinator_scope[0]
+        head_id = coordinator_scope[0]
+
+    else:
+        regional_head_id = viewer_id
+        head_id = viewer_id
 
 
     # ========================================================
@@ -9016,6 +9152,7 @@ def super_user_dashboard():
             "Team Lead",
             "Regional Manager",
             "Regional Head",
+            "Coordinator",
             "HOD",
             "Admin",
             "Super User"
@@ -9171,6 +9308,7 @@ def super_user_add_user():
             "Team Lead",
             "Regional Manager",
             "Regional Head",
+            "Coordinator",
             "Head",
             "HOD",
             "Admin",
@@ -9204,6 +9342,32 @@ def super_user_add_user():
 
             if (cursor.fetchone()[0] or 0) == 0:
                 return "Selected Manager does not exist.", 400
+
+
+        # A Coordinator's ManagerID is the Regional Head whose
+        # dashboard scope the Coordinator is allowed to view.
+        if role == "Coordinator":
+
+            if manager_id is None:
+                return (
+                    "Coordinator must be assigned to a Regional Head.",
+                    400
+                )
+
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM dbo.Users
+                WHERE
+                    EmpID = ?
+                    AND Role = 'Regional Head'
+                    AND IsActive = 1
+            """, (manager_id,))
+
+            if (cursor.fetchone()[0] or 0) == 0:
+                return (
+                    "Coordinator must be assigned to an active Regional Head.",
+                    400
+                )
 
 
         # ====================================================
@@ -9399,6 +9563,22 @@ def super_user_edit_user(emp_id):
             )
 
 
+        allowed_roles = {
+            "EDO",
+            "Team Lead",
+            "Regional Manager",
+            "Regional Head",
+            "Coordinator",
+            "Head",
+            "HOD",
+            "Admin",
+            "Super User"
+        }
+
+        if role not in allowed_roles:
+            return "Invalid Role.", 400
+
+
         manager_id = None
 
         if manager_id_input:
@@ -9417,6 +9597,30 @@ def super_user_edit_user(emp_id):
                 "A user cannot be their own manager.",
                 400
             )
+
+
+        if role == "Coordinator":
+
+            if manager_id is None:
+                return (
+                    "Coordinator must be assigned to a Regional Head.",
+                    400
+                )
+
+            cursor.execute("""
+                SELECT COUNT(*)
+                FROM dbo.Users
+                WHERE
+                    EmpID = ?
+                    AND Role = 'Regional Head'
+                    AND IsActive = 1
+            """, (manager_id,))
+
+            if (cursor.fetchone()[0] or 0) == 0:
+                return (
+                    "Coordinator must be assigned to an active Regional Head.",
+                    400
+                )
 
 
         cursor.execute("""
