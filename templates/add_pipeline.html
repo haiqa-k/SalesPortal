@@ -168,6 +168,22 @@
 
 
         /* =========================
+           DATE PICKER ICON
+        ========================= */
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.9;
+            cursor: pointer;
+            transition: opacity 0.2s ease;
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+
+        /* =========================
            BUTTONS
         ========================= */
 
@@ -543,8 +559,7 @@
                     <input
                         type="text"
                         id="total_project_revenue_display"
-                        inputmode="decimal"
-                        autocomplete="off"
+                        readonly
                         placeholder="0"
                     >
 
@@ -571,6 +586,13 @@
                         name="closure_date"
                         required
                     >
+
+                    <small
+                        id="closure_date_note"
+                        style="display:none; color:#bdbdbd; margin-top:7px;"
+                    >
+                        Closure date has been set to today because this pipeline is being closed.
+                    </small>
 
                 </div>
 
@@ -831,12 +853,6 @@ document.addEventListener(
             projectOtcInput
         );
 
-        bindFormattedNumber(
-            totalRevenueDisplay,
-            totalRevenueInput
-        );
-
-
         function updateMrcRequirements() {
 
             const hasMrc =
@@ -854,7 +870,7 @@ document.addEventListener(
         }
 
 
-        function calculateArr() {
+        function calculateFinancials() {
 
             const mrc =
                 parseFloat(
@@ -867,13 +883,14 @@ document.addEventListener(
                     10
                 );
 
+            let arr = null;
+
             if (
                 !Number.isNaN(mrc) &&
                 !Number.isNaN(months)
             ) {
 
-                const arr =
-                    mrc * months;
+                arr = mrc * months;
 
                 arrInput.value =
                     arr.toFixed(2);
@@ -893,6 +910,43 @@ document.addEventListener(
 
                 arrDisplay.value = '';
             }
+
+
+            const projectOtc =
+                parseFloat(
+                    projectOtcInput.value
+                );
+
+            const hasArr =
+                arr !== null;
+
+            const hasProjectOtc =
+                !Number.isNaN(projectOtc);
+
+            if (hasArr || hasProjectOtc) {
+
+                const totalRevenue =
+                    (hasArr ? arr : 0) +
+                    (hasProjectOtc ? projectOtc : 0);
+
+                totalRevenueInput.value =
+                    totalRevenue.toFixed(2);
+
+                totalRevenueDisplay.value =
+                    totalRevenue.toLocaleString(
+                        'en-US',
+                        {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2
+                        }
+                    );
+
+            } else {
+
+                totalRevenueInput.value = '';
+
+                totalRevenueDisplay.value = '';
+            }
         }
 
 
@@ -902,9 +956,35 @@ document.addEventListener(
 
                 updateMrcRequirements();
 
-                calculateArr();
+                calculateFinancials();
             }
         );
+
+
+        projectOtcDisplay.addEventListener(
+            'input',
+            calculateFinancials
+        );
+
+
+        const closureDateInput =
+            document.getElementById(
+                'closure_date'
+            );
+
+        const closureDateNote =
+            document.getElementById(
+                'closure_date_note'
+            );
+
+        const now = new Date();
+
+        const todayDate =
+            now.getFullYear() +
+            '-' +
+            String(now.getMonth() + 1).padStart(2, '0') +
+            '-' +
+            String(now.getDate()).padStart(2, '0');
 
 
         const salesCycleStatus =
@@ -980,23 +1060,89 @@ document.addEventListener(
         }
 
 
+        const closedStatuses = [
+            'System Entry/Revenue Locked (100%)',
+            'Lost to Competitor',
+            'Retired - No Decision'
+        ];
+
+        let tentativeClosureDate =
+            closureDateInput.value;
+
+        let wasClosedStatus = false;
+
+
+        function isClosedStatus() {
+            return closedStatuses.includes(
+                salesCycleStatus.value
+            );
+        }
+
+
+        function updateClosureDateForStatus() {
+
+            const closed = isClosedStatus();
+
+            if (closed) {
+
+                if (!wasClosedStatus) {
+                    tentativeClosureDate =
+                        closureDateInput.value;
+                }
+
+                closureDateInput.value =
+                    todayDate;
+
+                closureDateNote.style.display =
+                    'block';
+
+            } else {
+
+                if (wasClosedStatus) {
+                    closureDateInput.value =
+                        tentativeClosureDate || '';
+                }
+
+                closureDateNote.style.display =
+                    'none';
+            }
+
+            wasClosedStatus = closed;
+        }
+
+
+        closureDateInput.addEventListener(
+            'change',
+            function () {
+                if (!isClosedStatus()) {
+                    tentativeClosureDate =
+                        closureDateInput.value;
+                }
+            }
+        );
+
+
         salesCycleStatus.addEventListener(
             'change',
-            updateStageRequirements
+            function () {
+                updateStageRequirements();
+                updateClosureDateForStatus();
+            }
         );
 
         updateStageRequirements();
+        updateClosureDateForStatus();
 
 
         contractDuration.addEventListener(
             'change',
-            calculateArr
+            calculateFinancials
         );
 
 
         updateMrcRequirements();
 
-        calculateArr();
+        calculateFinancials();
     }
 );
 </script>

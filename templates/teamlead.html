@@ -1393,6 +1393,10 @@
                             Next Action
                         </th>
 
+                        <th>
+                            Actions
+                        </th>
+
                     </tr>
 
                 </thead>
@@ -1480,6 +1484,15 @@
                             {{ pipeline.NextAction or '-' }}
                         </td>
 
+                        <td>
+                            <a
+                                href="{{ url_for('edit_pipeline', pipeline_id=pipeline.PipelineID) }}"
+                                class="btn btn-sm btn-primary"
+                            >
+                                Edit
+                            </a>
+                        </td>
+
                     </tr>
 
                     {% else %}
@@ -1487,7 +1500,7 @@
                     <tr>
 
                         <td
-                            colspan="14"
+                            colspan="15"
                             class="empty-message"
                         >
                             No pipelines found.

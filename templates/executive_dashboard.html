@@ -2052,6 +2052,255 @@
         .flagged-no-results { display:none; }
 
 
+
+        /* =============================================
+           FLAGGED EXPORT + REPORTS
+        ============================================= */
+        .flagged-search-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .table-export-button,
+        .report-export-button {
+            height: 38px;
+            padding: 0 15px;
+            background: rgba(255, 255, 255, 0.10);
+            color: #ffffff;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s ease, border-color 0.2s ease;
+        }
+
+        .table-export-button:hover,
+        .report-export-button:hover {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.42);
+        }
+
+        .reports-page-heading {
+            margin: 6px 0 18px;
+        }
+
+        .report-card {
+            background: #171717;
+            border: 1px solid #303030;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+            margin-bottom: 22px;
+        }
+
+        .report-card-header {
+            padding: 17px 20px;
+            background: #1d1d1d;
+            border-bottom: 1px solid #333333;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+        }
+
+        .report-card-header h2 {
+            margin: 0;
+            font-size: 17px;
+            font-weight: 600;
+            color: #ffffff;
+        }
+
+        .report-card-header p {
+            margin: 5px 0 0;
+            color: #9f9f9f;
+            font-size: 12px;
+        }
+
+        .report-controls {
+            padding: 12px 20px;
+            background: #191919;
+            border-bottom: 1px solid #2c2c2c;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .report-filter-group {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+        }
+
+        .report-filter-label {
+            margin: 0;
+            color: #bdbdbd;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        #revenueTypeFilter {
+            min-width: 190px;
+            height: 38px;
+            background: #242424;
+            color: #ffffff;
+            border: 1px solid #444444;
+            border-radius: 6px;
+            padding: 0 10px;
+            font-size: 13px;
+        }
+
+        #revenueTypeFilter:focus {
+            outline: none;
+            border-color: #c62828;
+            box-shadow: 0 0 0 .2rem rgba(198, 40, 40, .15);
+        }
+
+        .report-table-wrapper {
+            width: 100%;
+            overflow-x: hidden;
+        }
+
+        .report-table {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 13px 12px;
+            border-bottom: 1px solid #303030;
+            white-space: nowrap;
+        }
+
+        .report-table th {
+            background: #292929;
+            color: #e5e5e5;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: .35px;
+        }
+
+        .report-table td {
+            color: #d5d5d5;
+            background: #171717;
+        }
+
+        /* =====================================================
+           REPORT TABLE - REGION COLOR GROUPING
+           Each region has its own muted color.
+           The Total Revenue row is darker within each region.
+           ===================================================== */
+
+        .report-table tbody tr.report-region-central td {
+            background: #1b2a3a !important;
+        }
+
+
+        .report-table tbody tr.report-region-cvm td {
+            background: #2a2138 !important;
+        }
+
+
+        .report-table tbody tr.report-region-north td {
+            background: #1b3025 !important;
+        }
+
+
+        .report-table tbody tr.report-region-south td {
+            background: #35291c !important;
+        }
+
+
+        .report-table tbody tr.report-region-others td {
+            background: #292929 !important;
+        }
+
+
+        /* All Regions / grand total block */
+        .report-table tbody tr.report-all-regions td {
+            background: #353b48 !important;
+            font-weight: 700;
+        }
+
+
+        /* Strong separator at the beginning of every region group */
+        .report-table tbody tr.report-region-start td {
+            border-top: 2px solid rgba(255, 255, 255, 0.16);
+        }
+
+        /* Keep hover feedback without losing the region grouping */
+        .report-table tbody tr.report-region-central:hover td {
+            background: #22364a !important;
+        }
+
+        .report-table tbody tr.report-region-cvm:hover td {
+            background: #342946 !important;
+        }
+
+        .report-table tbody tr.report-region-north:hover td {
+            background: #223d2e !important;
+        }
+
+        .report-table tbody tr.report-region-south:hover td {
+            background: #433424 !important;
+        }
+
+        .report-table tbody tr.report-region-others:hover td {
+            background: #333333 !important;
+        }
+
+        .report-table tbody tr.report-all-regions:hover td {
+            background: #414958 !important;
+        }
+
+        .report-table th:nth-child(n+3),
+        .report-table td:nth-child(n+3) {
+            text-align: right;
+        }
+
+        .report-region {
+            color: #ffffff !important;
+            font-weight: 700;
+        }
+
+        .report-total-revenue-row td {
+            font-weight: 600;
+        }
+
+        .report-all-regions td {
+            font-weight: 700;
+            border-top: 2px solid #5b6474;
+        }
+
+        .report-total-column {
+            font-weight: 700;
+            color: #ffffff !important;
+        }
+
+        .report-table.single-metric .report-revenue-type-column {
+            display: none;
+        }
+
+        @media (max-width: 900px) {
+            .report-table {
+                font-size: 11px;
+            }
+
+            .report-table th,
+            .report-table td {
+                padding: 10px 7px;
+            }
+        }
+
 </style>
 
 </head>
@@ -2173,6 +2422,14 @@
                 data-tab="flagged"
             >
                 Flagged
+            </button>
+
+            <button
+                type="button"
+                class="executive-tab"
+                data-tab="reports"
+            >
+                Reports
             </button>
         {% endif %}
 
@@ -3620,9 +3877,6 @@
 
         <div class="flagged-page-heading">
             <div class="pipeline-tab-title">Flagged Pipelines</div>
-            <div class="pipeline-tab-description">
-                Admin review queues for pipeline risk, process gaps, commercial anomalies, aging, and status regression.
-            </div>
         </div>
 
 
@@ -3638,6 +3892,15 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="deadlineRiskTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="deadlineRiskTable"
+                    data-export-key="deadline_risk"
+                    data-export-title="Deadline Risk"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
@@ -3678,6 +3941,15 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="highValueTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="highValueTable"
+                    data-export-key="high_value"
+                    data-export-title="Unrealistic Revenue"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
@@ -3718,12 +3990,21 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="agingTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="agingTable"
+                    data-export-key="aging"
+                    data-export-title="Stale Pipelines"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
                 <table class="flagged-table" id="agingTable">
                     <thead>
-                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Last Modified</th><th>Age</th><th>Aging Label</th></tr>
+                        <tr><th>Account</th><th>Account Manager</th><th>Product</th><th>Status</th><th>Last Activity</th><th>Age</th><th>Aging Label</th></tr>
                     </thead>
                     <tbody>
                     {% for p in flagged_aging %}
@@ -3762,6 +4043,15 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="proposalPendingTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="proposalPendingTable"
+                    data-export-key="proposal_pending"
+                    data-export-title="40% Proposal Pending"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
@@ -3801,6 +4091,15 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="decisionMakerTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="decisionMakerTable"
+                    data-export-key="decision_maker"
+                    data-export-title="80% Decision Maker Not Engaged"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
@@ -3840,6 +4139,15 @@
 
             <div class="flagged-search-row">
                 <input type="text" class="flagged-search" data-flag-search="statusRegressionTable" placeholder="Search this table...">
+                <button
+                    type="button"
+                    class="table-export-button"
+                    data-export-table="statusRegressionTable"
+                    data-export-key="status_regression"
+                    data-export-title="Sales Cycle Status Regression"
+                >
+                    Download Excel
+                </button>
             </div>
 
             <div class="flagged-table-wrapper">
@@ -3867,6 +4175,98 @@
             </div>
         </div>
 
+    </div>
+
+
+    <!-- =========================================
+         REPORTS - ADMIN ONLY
+    ========================================== -->
+    <div id="reports" class="executive-tab-content">
+
+        <div class="reports-page-heading">
+            <div class="pipeline-tab-title">Reports</div>
+            <div class="pipeline-tab-description">
+                Active pipeline revenue by region and sales-cycle stage. Only 20%, 40%, 60%, and 80% pipelines are included; won, lost, and retired pipelines are excluded.
+            </div>
+        </div>
+
+        <div class="report-card">
+            <div class="report-card-header">
+                <div>
+                    <h2 id="activeRevenueReportTitle">Active Pipeline Revenue by Region &amp; Stage</h2>
+                    <p>Total includes only the 20%, 40%, 60%, and 80% active pipeline stages.</p>
+                </div>
+            </div>
+
+            <div class="report-controls">
+                <div class="report-filter-group">
+                    <label for="revenueTypeFilter" class="report-filter-label">Revenue Type</label>
+                    <select id="revenueTypeFilter">
+                        <option value="all" selected>All Revenue Types</option>
+                        <option value="mrc">MRC</option>
+                        <option value="otc">OTC</option>
+                        <option value="total_revenue">Total Revenue</option>
+                    </select>
+                </div>
+
+                <button
+                    type="button"
+                    id="downloadRevenueReport"
+                    class="report-export-button"
+                >
+                    Download Excel
+                </button>
+            </div>
+
+            <div class="report-table-wrapper">
+                <table class="report-table" id="activeRevenueReportTable">
+                    <thead>
+                        <tr>
+                            <th>Region</th>
+                            <th class="report-revenue-type-column">Revenue Type</th>
+                            <th>20%</th>
+                            <th>40%</th>
+                            <th>60%</th>
+                            <th>80%</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for region_group in report_revenue_rows %}
+
+                            {% if region_group.IsTotal %}
+                                {% set report_region_class = "report-all-regions" %}
+                            {% elif region_group.Region == "Central" %}
+                                {% set report_region_class = "report-region-central" %}
+                            {% elif region_group.Region == "CVM" %}
+                                {% set report_region_class = "report-region-cvm" %}
+                            {% elif region_group.Region == "North" %}
+                                {% set report_region_class = "report-region-north" %}
+                            {% elif region_group.Region == "South" %}
+                                {% set report_region_class = "report-region-south" %}
+                            {% else %}
+                                {% set report_region_class = "report-region-others" %}
+                            {% endif %}
+
+                            {% for metric in region_group.Metrics %}
+                                <tr
+                                    class="report-data-row {{ report_region_class }}{% if loop.first %} report-region-start{% endif %}{% if metric.Key == 'total_revenue' %} report-total-revenue-row{% endif %}"
+                                    data-revenue-type="{{ metric.Key }}"
+                                >
+                                    <td class="report-region">{{ region_group.Region }}</td>
+                                    <td class="report-revenue-type-column">{{ metric.Label }}</td>
+                                    <td>{{ metric['20'] | comma }}</td>
+                                    <td>{{ metric['40'] | comma }}</td>
+                                    <td>{{ metric['60'] | comma }}</td>
+                                    <td>{{ metric['80'] | comma }}</td>
+                                    <td class="report-total-column">{{ metric.Total | comma }}</td>
+                                </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
     {% endif %}
 
@@ -7368,6 +7768,158 @@ document.addEventListener("DOMContentLoaded", function () {
             }
         });
     });
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const exportUrl = "{{ url_for('export_executive_table') }}";
+
+    function getDownloadName(response, fallbackName) {
+        const disposition = response.headers.get("Content-Disposition") || "";
+        const match = disposition.match(/filename\*?=(?:UTF-8''|\")?([^\";]+)/i);
+        return match ? decodeURIComponent(match[1].replace(/\"/g, "")) : fallbackName;
+    }
+
+    function downloadExcelPayload(payload, fallbackName) {
+        return fetch(exportUrl, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(function (response) {
+            if (!response.ok) {
+                throw new Error("Excel export failed.");
+            }
+
+            const filename = getDownloadName(response, fallbackName);
+
+            return response.blob().then(function (blob) {
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+            });
+        })
+        .catch(function (error) {
+            console.error(error);
+            alert("The Excel file could not be generated. Please try again.");
+        });
+    }
+
+    function cleanCellText(cell) {
+        return cell.textContent.replace(/\s+/g, " ").trim();
+    }
+
+    document.querySelectorAll(".table-export-button").forEach(function (button) {
+        button.addEventListener("click", function () {
+            const table = document.getElementById(button.dataset.exportTable);
+            if (!table) return;
+
+            const headers = Array.from(table.querySelectorAll("thead th")).map(cleanCellText);
+            const rows = Array.from(table.querySelectorAll("tbody .flagged-data-row")).map(function (row) {
+                return Array.from(row.querySelectorAll("td")).map(cleanCellText);
+            });
+
+            downloadExcelPayload(
+                {
+                    report_key: button.dataset.exportKey,
+                    title: button.dataset.exportTitle,
+                    headers: headers,
+                    rows: rows
+                },
+                button.dataset.exportKey + ".xlsx"
+            );
+        });
+    });
+
+    const revenueTypeFilter = document.getElementById("revenueTypeFilter");
+    const revenueReportTable = document.getElementById("activeRevenueReportTable");
+    const revenueReportTitle = document.getElementById("activeRevenueReportTitle");
+    const downloadRevenueReport = document.getElementById("downloadRevenueReport");
+
+    const revenueLabels = {
+        all: "All Revenue Types",
+        mrc: "MRC",
+        otc: "OTC",
+        total_revenue: "Total Revenue"
+    };
+
+    function applyRevenueTypeFilter() {
+        if (!revenueTypeFilter || !revenueReportTable) return;
+
+        const selected = revenueTypeFilter.value;
+        const rows = revenueReportTable.querySelectorAll("tbody .report-data-row");
+
+        rows.forEach(function (row) {
+            row.style.display =
+                selected === "all" || row.dataset.revenueType === selected
+                    ? "table-row"
+                    : "none";
+        });
+
+        revenueReportTable.classList.toggle("single-metric", selected !== "all");
+
+        if (revenueReportTitle) {
+            revenueReportTitle.textContent =
+                selected === "all"
+                    ? "Active Pipeline Revenue by Region & Stage"
+                    : "Active Pipeline Revenue by Region & Stage - " + revenueLabels[selected];
+        }
+    }
+
+    if (revenueTypeFilter) {
+        revenueTypeFilter.addEventListener("change", applyRevenueTypeFilter);
+        applyRevenueTypeFilter();
+    }
+
+    if (downloadRevenueReport && revenueReportTable && revenueTypeFilter) {
+        downloadRevenueReport.addEventListener("click", function () {
+            const selected = revenueTypeFilter.value;
+            const allMode = selected === "all";
+
+            const headers = allMode
+                ? ["Region", "Revenue Type", "20%", "40%", "60%", "80%", "Total"]
+                : ["Region", "20%", "40%", "60%", "80%", "Total"];
+
+            const rows = Array.from(
+                revenueReportTable.querySelectorAll("tbody .report-data-row")
+            )
+            .filter(function (row) {
+                return allMode || row.dataset.revenueType === selected;
+            })
+            .map(function (row) {
+                const cells = Array.from(row.querySelectorAll("td"));
+                const values = cells.map(cleanCellText);
+
+                if (!allMode) {
+                    values.splice(1, 1);
+                }
+
+                return values;
+            });
+
+            downloadExcelPayload(
+                {
+                    report_key: "active_pipeline_revenue",
+                    title: allMode
+                        ? "Active Pipeline Revenue by Region and Stage"
+                        : "Active Pipeline Revenue - " + revenueLabels[selected],
+                    headers: headers,
+                    rows: rows
+                },
+                "Active_Pipeline_Revenue.xlsx"
+            );
+        });
+    }
 });
 </script>
 

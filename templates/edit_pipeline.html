@@ -1,1375 +1,2896 @@
 <!DOCTYPE html>
 
+
+
 <html>
+
+
 
 <head>
 
+
+
     <title>Edit Pipeline</title>
 
+
+
     <meta
+
         name="viewport"
+
         content="width=device-width, initial-scale=1"
+
     >
 
+
+
     <link
+
         rel="stylesheet"
+
         href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+
     >
+
+
 
     <style>
 
+
+
     body {
+
+
 
         /* Gradient from bright red to deep purple */
 
+
+
         background:
+
             linear-gradient(
+
                 to bottom,
+
                 #e52e2e,
+
                 #4b0082
+
             );
+
+
 
         min-height: 100vh;
 
+
+
         color: #fff;
 
+
+
         font-family:
+
             'Segoe UI',
+
             Roboto,
+
             sans-serif;
+
     }
+
+
+
 
 
     .container {
 
+
+
         background:
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.1
+
             );
+
+
 
         padding: 30px;
 
+
+
         border-radius: 10px;
+
+
 
         margin-top: 50px;
 
+
+
         box-shadow:
+
             0 4px 20px
+
             rgba(
+
                 0,
+
                 0,
+
                 0,
+
                 0.3
+
             );
+
     }
+
+
+
 
 
     h1 {
 
+
+
         font-weight: 600;
+
+
 
         margin-bottom: 20px;
 
+
+
         color: #fff;
+
     }
+
+
+
 
 
     .form-label {
 
+
+
         font-weight: 500;
 
+
+
         color: #fff;
+
     }
+
+
+
 
 
     .form-control,
+
     .form-select {
 
+
+
         background-color:
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.15
+
             );
+
+
 
         color: #fff;
 
+
+
         border:
+
             1px solid
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.3
+
             );
+
     }
+
+
+
 
 
     .form-control:focus,
+
     .form-select:focus {
 
+
+
         background-color:
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.25
+
             );
+
+
 
         color: #fff;
 
+
+
         border-color: #fff;
 
+
+
         box-shadow: none;
+
     }
+
+
+
 
 
     /* Fix dropdown visibility */
 
+
+
     .form-select option {
+
+
 
         background-color: #fff;
 
+
+
         color: #000;
+
     }
+
+
+
 
 
     .btn-primary {
 
+
+
         background:
+
             linear-gradient(
+
                 to right,
+
                 #e52e2e,
+
                 #4b0082
+
             );
 
+
+
         border: none;
+
     }
+
+
+
 
 
     .btn-primary:hover {
 
+
+
         background:
+
             linear-gradient(
+
                 to right,
+
                 #c62828,
+
                 #3a0066
+
             );
+
     }
+
+
+
 
 
     .btn-secondary {
 
+
+
         background-color:
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.2
+
             );
+
+
 
         border: none;
 
+
+
         color: #fff;
+
     }
+
+
+
 
 
     .btn-secondary:hover {
 
+
+
         background-color:
+
             rgba(
+
                 255,
+
                 255,
+
                 255,
+
                 0.35
+
             );
+
     }
 
 
+
+
+
     /* =========================
+
        STAGE REQUIREMENTS
+
        ========================= */
+
+
 
     .stage-requirement {
+
         display: none;
+
         margin-bottom: 1rem;
+
         padding: 16px;
+
         background: rgba(0, 0, 0, 0.18);
+
         border: 1px solid rgba(255, 255, 255, 0.22);
+
         border-radius: 8px;
+
     }
+
+
 
     .stage-requirement.visible {
+
         display: block;
+
     }
+
+
 
     .stage-options {
+
         display: flex;
+
         gap: 12px;
+
         flex-wrap: wrap;
+
         margin-top: 8px;
+
     }
+
+
 
     .stage-option {
+
         position: relative;
+
         flex: 1 1 230px;
+
         cursor: pointer;
+
         margin: 0;
+
     }
+
+
 
     .stage-option input {
+
         position: absolute;
+
         opacity: 0;
+
         pointer-events: none;
+
     }
+
+
 
     .stage-option-box {
+
         display: flex;
+
         align-items: center;
+
         gap: 10px;
+
         padding: 11px 13px;
+
         background: rgba(255, 255, 255, 0.12);
+
         border: 1px solid rgba(255, 255, 255, 0.30);
+
         border-radius: 6px;
+
         color: #fff;
+
         font-size: 14px;
+
     }
+
+
 
     .stage-option-box::before {
+
         content: "";
+
         width: 16px;
+
         height: 16px;
+
         flex: 0 0 16px;
+
         border: 1px solid rgba(255, 255, 255, 0.65);
+
         border-radius: 3px;
+
     }
+
+
 
     .stage-option input:checked + .stage-option-box {
+
         background: rgba(198, 40, 40, 0.28);
+
         border-color: #ff9e96;
+
     }
 
+
+
     .stage-option input:checked + .stage-option-box::before {
+
         background: #e52e2e;
+
         box-shadow: inset 0 0 0 3px #4b1b58;
+
     }
+
+
+
 
 
     /* =========================
+
        EXTENSION REASON MODAL
+
        ========================= */
+
+
 
     .extension-modal .modal-content {
 
+
+
         background: #1b1b1b;
+
+
 
         color: #ffffff;
 
+
+
         border:
+
             1px solid #414141;
+
+
 
         border-radius: 12px;
 
+
+
         box-shadow:
+
             0 20px 55px
+
             rgba(
+
                 0,
+
                 0,
+
                 0,
+
                 0.55
+
             );
+
     }
+
+
+
 
 
     .extension-modal .modal-header {
 
+
+
         border-bottom:
+
             1px solid #333333;
+
     }
+
+
+
 
 
     .extension-modal .modal-footer {
 
+
+
         border-top:
+
             1px solid #333333;
+
     }
+
+
+
 
 
     .extension-modal .modal-title {
 
+
+
         font-size: 19px;
 
+
+
         font-weight: 600;
+
     }
+
+
+
 
 
     .extension-modal-message {
 
+
+
         color: #c2c2c2;
+
+
 
         font-size: 13px;
 
+
+
         line-height: 1.6;
 
+
+
         margin-bottom: 14px;
+
     }
+
+
+
 
 
     .extension-count-badge {
 
+
+
         display: inline-block;
+
+
 
         padding: 4px 8px;
 
+
+
         margin-bottom: 13px;
+
+
 
         border-radius: 5px;
 
+
+
         background:
+
             rgba(
+
                 198,
+
                 40,
+
                 40,
+
                 0.22
+
             );
+
+
 
         color: #ff9e96;
 
+
+
         border:
+
             1px solid
+
             rgba(
+
                 255,
+
                 138,
+
                 128,
+
                 0.28
+
             );
+
+
 
         font-size: 12px;
 
+
+
         font-weight: 600;
+
     }
+
+
+
 
 
     #extensionReasonInput {
 
+
+
         min-height: 110px;
+
+
 
         resize: vertical;
 
+
+
         background: #262626;
+
+
 
         color: #ffffff;
 
+
+
         border:
+
             1px solid #484848;
+
     }
+
+
+
 
 
     #extensionReasonInput::placeholder {
 
+
+
         color: #8f8f8f;
+
     }
+
+
+
 
 
     #extensionReasonInput:focus {
 
+
+
         background: #2b2b2b;
+
+
 
         border-color: #c62828;
 
+
+
         color: #ffffff;
 
+
+
         box-shadow:
+
             0 0 0 0.2rem
+
             rgba(
+
                 198,
+
                 40,
+
                 40,
+
                 0.16
+
             );
+
     }
+
+
+
 
 
     .extension-error {
 
+
+
         display: none;
+
+
 
         margin-top: 8px;
 
+
+
         color: #ff8a80;
 
+
+
         font-size: 12px;
+
     }
+
+
 
     </style>
 
+
+
 </head>
+
+
+
 
 
 <body>
 
 
+
+
+
 <div class="container">
 
+
+
     <h1>
+
         {{ pipeline[1] }}
+
     </h1>
 
 
+
+
+
     <form
+
         method="POST"
+
         id="editPipelineForm"
+
     >
+
+
 
         <!-- Extension reason submitted only when required -->
 
-        <input
-            type="hidden"
-            name="extension_reason"
-            id="extensionReason"
-            value=""
-        >
+
 
         <input
+
             type="hidden"
-            name="mrc_reason"
-            id="mrcReason"
+
+            name="extension_reason"
+
+            id="extensionReason"
+
             value=""
+
         >
+
+
+
+        <input
+
+            type="hidden"
+
+            name="mrc_reason"
+
+            id="mrcReason"
+
+            value=""
+
+        >
+
+
+
 
 
         <!-- Calendar input -->
 
+
+
         <div class="mb-3">
 
+
+
             <label class="form-label">
+
                 Estimated Closure Date
+
             </label>
 
+
+
             <input
+
                 type="date"
+
                 name="closure_date"
+
                 id="closure_date"
+
                 class="form-control"
+
                 value="{{
+
                     pipeline[6].strftime('%Y-%m-%d')
+
                     if pipeline[6]
+
                     else ''
+
                 }}"
+
             >
 
-            <small class="text-light">
-                Pick a full date — the system will save
-                the day and month separately.
+
+
+
+            <small
+
+                id="closedStatusDateNote"
+
+                class="text-warning"
+
+                style="display: none;"
+
+            >
+
+                Closure date has been set to today because this pipeline is being closed.
+
             </small>
 
+
+
         </div>
+
+
+
 
 
         <!-- MRC -->
 
+
+
         {% if is_edo %}
+
+
 
         <div class="mb-3">
 
+
+
             <label class="form-label">
+
                 MRC
+
             </label>
 
+
+
             <input
+
                 type="number"
+
                 name="mrc"
+
                 id="mrc"
+
                 class="form-control"
+
                 min="0"
+
                 step="0.01"
+
                 value="{{ pipeline[7] if pipeline[7] is not none else '' }}"
+
             >
 
+
+
             <small class="text-light">
+
                 Updating MRC will automatically recalculate ARR.
+
             </small>
 
+
+
         </div>
+
+
 
         {% endif %}
 
 
+
+
+
         <!-- Next Action -->
+
+
 
         <div class="mb-3">
 
+
+
             <label class="form-label">
+
                 Next Action
+
             </label>
 
+
+
             <input
+
                 type="text"
+
                 name="next_action"
+
                 class="form-control"
+
                 value="{{ pipeline[4] or '' }}"
+
             >
 
+
+
         </div>
+
+
+
 
 
         <!-- Sales Cycle Status -->
 
+
+
         <div class="mb-3">
 
+
+
             <label class="form-label">
+
                 Sales Cycle Status
+
             </label>
 
+
+
             <select
+
                 name="status"
+
                 id="status"
+
                 class="form-select"
+
             >
+
+
 
                 {% for s in statuses %}
 
+
+
                     <option
+
                         value="{{ s }}"
+
                         {% if s == pipeline[5] %}
+
                             selected
+
                         {% endif %}
+
                     >
+
                         {{ s }}
+
                     </option>
+
+
 
                 {% endfor %}
 
+
+
             </select>
 
+
+
         </div>
+
+
+
 
 
         <!-- 40% PROPOSAL STATUS -->
+
         <div class="stage-requirement" id="proposalStatusGroup">
+
             <label class="form-label">Proposal Status *</label>
+
             <div class="stage-options">
+
                 <label class="stage-option">
+
                     <input
+
                         type="radio"
+
                         name="proposal_status"
+
                         value="Pending"
+
                         {% if original_proposal_status == 'Pending' %}checked{% endif %}
+
                     >
+
                     <span class="stage-option-box">Proposal Pending</span>
+
                 </label>
+
                 <label class="stage-option">
+
                     <input
+
                         type="radio"
+
                         name="proposal_status"
+
                         value="Sent"
+
                         {% if original_proposal_status == 'Sent' %}checked{% endif %}
+
                     >
+
                     <span class="stage-option-box">Proposal Sent</span>
+
                 </label>
+
             </div>
+
         </div>
 
+
+
         <!-- 80% DECISION MAKER STATUS -->
+
         <div class="stage-requirement" id="decisionMakerStatusGroup">
+
             <label class="form-label">Decision Maker Status *</label>
+
             <div class="stage-options">
+
                 <label class="stage-option">
+
                     <input
+
                         type="radio"
+
                         name="decision_maker_status"
+
                         value="Not Engaged"
+
                         {% if original_decision_maker_status == 'Not Engaged' %}checked{% endif %}
+
                     >
+
                     <span class="stage-option-box">Decision Maker Not Engaged</span>
+
                 </label>
+
                 <label class="stage-option">
+
                     <input
+
                         type="radio"
+
                         name="decision_maker_status"
+
                         value="Engaged"
+
                         {% if original_decision_maker_status == 'Engaged' %}checked{% endif %}
+
                     >
+
                     <span class="stage-option-box">Decision Maker Engaged</span>
+
                 </label>
+
             </div>
+
         </div>
+
+
+
 
 
         <button
+
             type="submit"
+
             class="btn btn-primary"
+
         >
+
             Save Changes
+
         </button>
 
 
+
+
+
         <a
+
             href="{{ url_for('my_pipelines') }}"
+
             class="btn btn-secondary"
+
         >
+
             Cancel
+
         </a>
+
+
 
     </form>
 
+
+
 </div>
 
 
+
+
+
 <!-- =========================================================
+
      REPEATED EXTENSION REASON POPUP
+
      ========================================================= -->
 
+
+
 <div
+
     class="modal fade extension-modal"
+
     id="extensionReasonModal"
+
     tabindex="-1"
+
     aria-labelledby="extensionReasonModalLabel"
+
     aria-hidden="true"
+
 >
 
+
+
     <div
+
         class="modal-dialog modal-dialog-centered"
+
     >
+
+
 
         <div class="modal-content">
 
+
+
             <div class="modal-header">
 
+
+
                 <h5
+
                     class="modal-title"
+
                     id="extensionReasonModalLabel"
+
                 >
+
                     Closure Date Extension
+
                 </h5>
 
+
+
                 <button
+
                     type="button"
+
                     class="btn-close btn-close-white"
+
                     data-bs-dismiss="modal"
+
                     aria-label="Close"
+
                 ></button>
 
+
+
             </div>
+
+
+
 
 
             <div class="modal-body">
 
+
+
                 <div
+
                     class="extension-count-badge"
+
                     id="extensionCountBadge"
+
                 >
+
                     Repeated Extension
+
                 </div>
+
+
+
 
 
                 <p
+
                     class="extension-modal-message"
+
                     id="extensionReasonMessage"
+
                 >
+
                 </p>
 
 
+
+
+
                 <label
+
                     for="extensionReasonInput"
+
                     class="form-label"
+
                 >
+
                     Reason for extension
+
                 </label>
 
 
+
+
+
                 <textarea
+
                     id="extensionReasonInput"
+
                     class="form-control"
+
                     maxlength="1000"
+
                     placeholder="Enter the reason for pushing the closure date..."
+
                 ></textarea>
 
 
+
+
+
                 <div
+
                     id="extensionReasonError"
+
                     class="extension-error"
+
                 >
+
                     Please enter a reason before continuing.
+
                 </div>
 
+
+
             </div>
+
+
+
 
 
             <div class="modal-footer">
 
+
+
                 <button
+
                     type="button"
+
                     class="btn btn-secondary"
+
                     data-bs-dismiss="modal"
+
                 >
+
                     Cancel
+
                 </button>
+
+
+
 
 
                 <button
+
                     type="button"
+
                     class="btn btn-primary"
+
                     id="confirmExtensionReason"
+
                 >
+
                     Confirm Update
+
                 </button>
+
+
 
             </div>
 
+
+
         </div>
 
+
+
     </div>
+
+
 
 </div>
 
 
+
+
+
 <!-- =========================================================
+
      REPEATED MRC UPDATE WARNING
+
      ========================================================= -->
 
+
+
 <div
+
     class="modal fade extension-modal"
+
     id="mrcUpdateModal"
+
     tabindex="-1"
+
     aria-labelledby="mrcUpdateModalLabel"
+
     aria-hidden="true"
+
 >
+
+
 
     <div class="modal-dialog modal-dialog-centered">
 
+
+
         <div class="modal-content">
+
+
 
             <div class="modal-header">
 
+
+
                 <h5
+
                     class="modal-title"
+
                     id="mrcUpdateModalLabel"
+
                 >
+
                     Repeated MRC Update
+
                 </h5>
 
+
+
                 <button
+
                     type="button"
+
                     class="btn-close btn-close-white"
+
                     data-bs-dismiss="modal"
+
                     aria-label="Close"
+
                 ></button>
 
+
+
             </div>
+
+
+
 
 
             <div class="modal-body">
 
+
+
                 <div
+
                     class="extension-count-badge"
+
                     id="mrcChangeCountBadge"
+
                 >
+
                     Repeated MRC Update
+
                 </div>
+
+
 
                 <p
+
                     class="extension-modal-message"
+
                     id="mrcUpdateMessage"
+
                 >
+
                 </p>
 
+
+
                 <label
+
                     for="mrcReasonInput"
+
                     class="form-label"
+
                 >
+
                     Reason for MRC update
+
                 </label>
 
+
+
                 <textarea
+
                     id="mrcReasonInput"
+
                     class="form-control"
+
                     maxlength="1000"
+
                     placeholder="Enter the reason for changing the MRC..."
+
                 ></textarea>
 
+
+
                 <div
+
                     id="mrcReasonError"
+
                     class="extension-error"
+
                 >
+
                     Please enter a reason before continuing.
+
                 </div>
 
+
+
             </div>
+
+
+
 
 
             <div class="modal-footer">
 
-                <button
-                    type="button"
-                    class="btn btn-secondary"
-                    data-bs-dismiss="modal"
-                >
-                    Cancel
-                </button>
+
 
                 <button
+
                     type="button"
-                    class="btn btn-primary"
-                    id="confirmMrcUpdate"
+
+                    class="btn btn-secondary"
+
+                    data-bs-dismiss="modal"
+
                 >
-                    Confirm Update
+
+                    Cancel
+
                 </button>
+
+
+
+                <button
+
+                    type="button"
+
+                    class="btn btn-primary"
+
+                    id="confirmMrcUpdate"
+
+                >
+
+                    Confirm Update
+
+                </button>
+
+
 
             </div>
 
+
+
         </div>
 
+
+
     </div>
+
+
 
 </div>
 
 
+
+
+
 <script
+
     src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+
 </script>
+
+
+
 
 
 <script>
 
+
+
 document.addEventListener(
+
     'DOMContentLoaded',
+
     function () {
 
+
+
         const editForm =
+
             document.getElementById(
+
                 'editPipelineForm'
+
             );
+
+
 
         const closureDateInput =
+
             document.getElementById(
+
                 'closure_date'
+
             );
+
+
 
         const statusInput =
+
             document.getElementById(
+
                 'status'
+
             );
+
+
 
         const proposalStatusGroup =
+
             document.getElementById(
+
                 'proposalStatusGroup'
+
             );
+
+
 
         const decisionMakerStatusGroup =
+
             document.getElementById(
+
                 'decisionMakerStatusGroup'
+
             );
+
+
 
         const proposalStatusInputs =
+
             document.querySelectorAll(
+
                 'input[name="proposal_status"]'
+
             );
 
+
+
         const decisionMakerStatusInputs =
+
             document.querySelectorAll(
+
                 'input[name="decision_maker_status"]'
+
             );
+
+
+
 
 
         const mrcInput =
+
             document.getElementById(
+
                 'mrc'
+
             );
+
+
 
         const mrcReasonHidden =
+
             document.getElementById(
+
                 'mrcReason'
+
             );
+
+
 
         const reasonHidden =
+
             document.getElementById(
+
                 'extensionReason'
+
             );
+
+
 
         const reasonInput =
+
             document.getElementById(
+
                 'extensionReasonInput'
+
             );
+
+
 
         const reasonError =
+
             document.getElementById(
+
                 'extensionReasonError'
+
             );
+
+
 
         const reasonMessage =
+
             document.getElementById(
+
                 'extensionReasonMessage'
+
             );
+
+
 
         const countBadge =
+
             document.getElementById(
+
                 'extensionCountBadge'
+
             );
+
+
 
         const confirmExtensionButton =
+
             document.getElementById(
+
                 'confirmExtensionReason'
+
             );
+
+
 
         const extensionModalElement =
+
             document.getElementById(
+
                 'extensionReasonModal'
+
             );
+
+
 
         const mrcModalElement =
+
             document.getElementById(
+
                 'mrcUpdateModal'
+
             );
+
+
 
         const mrcChangeCountBadge =
+
             document.getElementById(
+
                 'mrcChangeCountBadge'
+
             );
+
+
 
         const mrcUpdateMessage =
+
             document.getElementById(
+
                 'mrcUpdateMessage'
+
             );
+
+
 
         const mrcReasonInput =
+
             document.getElementById(
+
                 'mrcReasonInput'
+
             );
+
+
 
         const mrcReasonError =
+
             document.getElementById(
+
                 'mrcReasonError'
+
             );
 
+
+
         const confirmMrcButton =
+
             document.getElementById(
+
                 'confirmMrcUpdate'
+
             );
+
+
+
 
 
         const isEdo =
+
             {{ 'true' if is_edo else 'false' }};
 
+
+
         const originalClosureDate =
+
             {{ original_closure_date | tojson }};
 
+
+
         const originalStatus =
+
             {{ original_status | tojson }};
 
+
+
         const originalMrc =
+
             {{ original_mrc | float }};
 
+
+
         const previousExtensionCount =
+
             {{ previous_extension_count | int }};
 
+
+
         const previousMrcChangeCount =
+
             {{ previous_mrc_change_count | int }};
 
+
+
         const closureDateFreeUpdates =
+
             {{ closure_date_free_updates | int }};
 
+
+
         const mrcFreeUpdates =
+
             {{ mrc_free_updates | int }};
 
 
+
+
+
         const extensionModal =
+
             new bootstrap.Modal(
+
                 extensionModalElement
+
             );
 
+
+
         const mrcModal =
+
             new bootstrap.Modal(
+
                 mrcModalElement
+
             );
+
+
+
 
 
         let extensionReasonConfirmed = false;
+
         let mrcUpdateConfirmed = false;
 
 
+
+
+
         function setStageRequired(
+
             inputs,
+
             required
+
         ) {
+
             inputs.forEach(
+
                 function (input) {
+
                     input.required = required;
+
                 }
+
             );
+
         }
+
+
+
 
 
         function updateStageRequirements() {
 
+
+
             const proposalStage =
+
                 statusInput.value ===
+
                 'Ask for Proposal (40%)';
 
+
+
             const decisionStage =
+
                 statusInput.value ===
+
                 'Documentation/Acceptance/Processing (80%)';
 
+
+
             proposalStatusGroup.classList.toggle(
+
                 'visible',
+
                 proposalStage
+
             );
+
+
 
             decisionMakerStatusGroup.classList.toggle(
+
                 'visible',
+
                 decisionStage
+
             );
 
+
+
             setStageRequired(
+
                 proposalStatusInputs,
+
                 proposalStage
+
             );
 
+
+
             setStageRequired(
+
                 decisionMakerStatusInputs,
+
                 decisionStage
+
             );
+
         }
 
 
+
+
+
+        const closedStatuses = [
+
+            'System Entry/Revenue Locked (100%)',
+
+            'Lost to Competitor',
+
+            'Retired - No Decision'
+
+        ];
+
+
+
+        const closedStatusDateNote =
+
+            document.getElementById(
+
+                'closedStatusDateNote'
+
+            );
+
+
+
+        function getLocalToday() {
+
+            const today = new Date();
+
+            const year = today.getFullYear();
+
+            const month = String(
+
+                today.getMonth() + 1
+
+            ).padStart(2, '0');
+
+            const day = String(
+
+                today.getDate()
+
+            ).padStart(2, '0');
+
+            return (
+
+                year +
+
+                '-' +
+
+                month +
+
+                '-' +
+
+                day
+
+            );
+
+        }
+
+
+
+        let closureDateWasAutoSet = false;
+
+
+
+        function handleClosedStatusSelection() {
+
+            const selectedStatus =
+
+                statusInput.value;
+
+
+
+            const isClosedStatus =
+
+                closedStatuses.includes(
+
+                    selectedStatus
+
+                );
+
+
+
+            const changedToClosedStatus = (
+
+                isClosedStatus &&
+
+                selectedStatus !== originalStatus
+
+            );
+
+
+
+            if (changedToClosedStatus) {
+
+                closureDateInput.value =
+
+                    getLocalToday();
+
+                closureDateWasAutoSet = true;
+
+                closedStatusDateNote.style.display =
+
+                    'block';
+
+                return;
+
+            }
+
+
+
+            if (
+
+                closureDateWasAutoSet &&
+
+                !isClosedStatus
+
+            ) {
+
+                closureDateInput.value =
+
+                    originalClosureDate;
+
+                closureDateWasAutoSet = false;
+
+            }
+
+
+
+            closedStatusDateNote.style.display =
+
+                'none';
+
+        }
+
+
+
         statusInput.addEventListener(
+
             'change',
-            updateStageRequirements
+
+            function () {
+
+                updateStageRequirements();
+
+                handleClosedStatusSelection();
+
+            }
+
         );
+
+
 
         updateStageRequirements();
 
 
+
+
+
         function statusHasChanged() {
 
+
+
             return (
+
                 statusInput.value !==
+
                 originalStatus
+
             );
+
         }
+
+
+
 
 
         function isForwardDatePush() {
 
+
+
             if (
+
                 !originalClosureDate ||
+
                 !closureDateInput.value
+
             ) {
+
                 return false;
+
             }
 
 
+
+
+
             const oldDate =
+
                 new Date(
+
                     originalClosureDate +
+
                     'T00:00:00'
+
                 );
 
+
+
             const newDate =
+
                 new Date(
+
                     closureDateInput.value +
+
                     'T00:00:00'
+
                 );
+
+
+
 
 
             return (
+
                 newDate > oldDate
+
             );
+
         }
+
+
+
 
 
         function shouldRequireDateReason() {
 
+
+
             if (!isEdo) {
+
                 return false;
+
             }
+
+
 
             if (!isForwardDatePush()) {
+
                 return false;
+
             }
 
+
+
             if (statusHasChanged()) {
+
                 return false;
+
             }
+
+
+
 
 
             const thisExtensionNumber =
+
                 previousExtensionCount + 1;
 
 
+
+
+
             return (
+
                 thisExtensionNumber >
+
                 closureDateFreeUpdates
+
             );
+
         }
+
+
+
 
 
         function mrcHasChanged() {
 
+
+
             if (
+
                 !isEdo ||
+
                 !mrcInput ||
+
                 mrcInput.value === ''
+
             ) {
+
                 return false;
+
             }
+
+
 
             const newMrc =
+
                 Number(
+
                     mrcInput.value
+
                 );
 
+
+
             if (!Number.isFinite(newMrc)) {
+
                 return false;
+
             }
 
+
+
             return (
+
                 Math.abs(
+
                     newMrc - originalMrc
+
                 ) > 0.000001
+
             );
+
         }
+
+
+
 
 
         function shouldWarnForMrc() {
 
+
+
             if (!mrcHasChanged()) {
+
                 return false;
+
             }
 
+
+
             if (statusHasChanged()) {
+
                 return false;
+
             }
+
+
+
 
 
             const thisMrcChangeNumber =
+
                 previousMrcChangeCount + 1;
 
 
+
+
+
             return (
+
                 thisMrcChangeNumber >
+
                 mrcFreeUpdates
+
             );
+
         }
+
+
+
 
 
         function openExtensionReasonPopup() {
 
+
+
             const thisExtensionNumber =
+
                 previousExtensionCount + 1;
 
 
+
+
+
             countBadge.textContent =
+
                 'Extension ' +
+
                 thisExtensionNumber;
 
 
+
+
+
             reasonMessage.textContent =
+
                 'This pipeline has already used its ' +
+
                 closureDateFreeUpdates +
+
                 ' closure-date update(s) without a ' +
+
                 'Sales Cycle Status change. Please provide ' +
+
                 'a reason for extension ' +
+
                 thisExtensionNumber +
+
                 ' before the date is updated.';
 
 
+
+
+
             reasonError.style.display =
+
                 'none';
+
+
+
 
 
             extensionModal.show();
 
 
+
+
+
             extensionModalElement.addEventListener(
+
                 'shown.bs.modal',
+
                 function focusReason() {
+
+
 
                     reasonInput.focus();
 
+
+
                     extensionModalElement.removeEventListener(
+
                         'shown.bs.modal',
+
                         focusReason
+
                     );
+
                 }
+
             );
+
         }
+
+
+
 
 
         function openMrcWarningPopup() {
 
+
+
             const thisMrcChangeNumber =
+
                 previousMrcChangeCount + 1;
 
 
+
+
+
             mrcChangeCountBadge.textContent =
+
                 'MRC Update ' +
+
                 thisMrcChangeNumber;
 
 
+
+
+
             mrcUpdateMessage.textContent =
+
                 'This pipeline has already had MRC updated ' +
+
                 mrcFreeUpdates +
+
                 ' time(s) without a Sales Cycle Status change. ' +
+
                 'This will be MRC update ' +
+
                 thisMrcChangeNumber +
+
                 '. ARR will also be recalculated automatically. ' +
+
                 'Please provide a reason before continuing.';
 
 
+
+
+
             mrcReasonError.style.display =
+
                 'none';
+
+
 
             mrcModal.show();
 
 
+
+
+
             mrcModalElement.addEventListener(
+
                 'shown.bs.modal',
+
                 function focusMrcReason() {
+
+
 
                     mrcReasonInput.focus();
 
+
+
                     mrcModalElement.removeEventListener(
+
                         'shown.bs.modal',
+
                         focusMrcReason
+
                     );
+
                 }
+
             );
+
         }
 
 
+
+
+
         editForm.addEventListener(
+
             'submit',
+
             function (event) {
 
+
+
                 if (
+
                     shouldRequireDateReason() &&
+
                     !extensionReasonConfirmed
+
                 ) {
 
+
+
                     event.preventDefault();
+
+
 
                     openExtensionReasonPopup();
 
+
+
                     return;
+
                 }
+
+
+
 
 
                 if (
+
                     shouldWarnForMrc() &&
+
                     !mrcUpdateConfirmed
+
                 ) {
+
+
 
                     event.preventDefault();
 
+
+
                     openMrcWarningPopup();
 
+
+
                     return;
+
                 }
+
             }
+
         );
 
 
+
+
+
         confirmExtensionButton.addEventListener(
+
             'click',
+
             function () {
 
+
+
                 const reason =
+
                     reasonInput.value.trim();
+
+
+
 
 
                 if (!reason) {
 
+
+
                     reasonError.style.display =
+
                         'block';
 
+
+
                     return;
+
                 }
 
 
+
+
+
                 reasonError.style.display =
+
                     'none';
 
+
+
                 reasonHidden.value =
+
                     reason;
 
+
+
                 extensionReasonConfirmed =
+
                     true;
+
+
 
                 extensionModal.hide();
 
+
+
                 editForm.requestSubmit();
+
             }
+
         );
 
 
+
+
+
         confirmMrcButton.addEventListener(
+
             'click',
+
             function () {
 
+
+
                 const mrcReason =
+
                     mrcReasonInput.value.trim();
+
+
+
 
 
                 if (!mrcReason) {
 
+
+
                     mrcReasonError.style.display =
+
                         'block';
 
+
+
                     return;
+
                 }
+
+
+
 
 
                 mrcReasonError.style.display =
+
                     'none';
 
+
+
                 mrcReasonHidden.value =
+
                     mrcReason;
 
+
+
                 mrcUpdateConfirmed =
+
                     true;
+
+
 
                 mrcModal.hide();
 
+
+
                 editForm.requestSubmit();
+
             }
+
         );
+
+
+
 
 
         extensionModalElement.addEventListener(
+
             'hidden.bs.modal',
+
             function () {
+
+
 
                 if (!extensionReasonConfirmed) {
 
+
+
                     reasonHidden.value =
+
                         '';
+
                 }
+
             }
+
         );
+
+
+
 
 
         mrcModalElement.addEventListener(
+
             'hidden.bs.modal',
+
             function () {
+
+
 
                 if (!mrcUpdateConfirmed) {
 
+
+
                     mrcReasonHidden.value =
+
                         '';
+
                 }
+
             }
+
         );
 
+
+
     }
+
 );
+
 </script>
 
 
+
+
+
 </body>
+
+
 
 </html>
